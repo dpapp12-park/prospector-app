@@ -2016,3 +2016,22 @@
   }
 
   .ai-upgrade-btn:hover { opacity: 0.88; }
+
+  /* ── DESKTOP: layer panel as left sidebar ── */
+  @media (min-width: 768px) {
+    #layer-panel {
+      top: 0;
+      bottom: 0;
+      left: 0;
+      right: auto;
+      width: 340px;
+      border-radius: 0;
+      border-top: none;
+      border-right: 1px solid rgba(255,255,255,0.07);
+      transform: translateX(-100%);
+      transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+      max-height: 100vh;
+    }
+    #layer-panel.open { transform: translateX(0); }
+    #layer-panel-handle { display: none; }
+  }
