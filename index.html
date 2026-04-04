@@ -2124,6 +2124,12 @@ function toggleLayer(id) {
   if (bullet) bullet.classList.toggle('on', layerState[id]);
   if (name) name.classList.toggle('on', layerState[id]);
 
+  // Highlight the whole row when active
+  if (bullet) {
+    const row = bullet.closest('.layer-row');
+    if (row) row.classList.toggle('on', layerState[id]);
+  }
+
   // Also update hidden toggle for compat
   const toggle = document.getElementById(`toggle-${id}`);
   if (toggle) toggle.classList.toggle('on', layerState[id]);
@@ -2174,6 +2180,7 @@ function toggleLayer(id) {
     layerState[id] = false;
     if (bullet) bullet.classList.remove('on');
     if (name) name.classList.remove('on');
+    if (bullet) { const row = bullet.closest('.layer-row'); if (row) row.classList.remove('on'); }
     return;
   }
 
