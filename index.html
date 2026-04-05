@@ -14,7 +14,2095 @@ window.PROSPECTOR_CONFIG = {
 </script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Mono:wght@400;500&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="style.css?v=20260404">
+<style>
+  :root {
+    --gold: #C9A84C;
+    --gold-bright: #F0C040;
+    --gold-dim: #8A6A20;
+    --ore: #2A2318;
+    --rock: #1A1810;
+    --stone: #2E2B22;
+    --dust: #6B6248;
+    --cream: #E8D9B0;
+    --panel-bg: rgba(20, 18, 12, 0.92);
+    --panel-border: rgba(201, 168, 76, 0.25);
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  html, body {
+    font-family: 'DM Sans', sans-serif;
+    background: var(--rock);
+    color: var(--cream);
+    height: 100%;
+    width: 100%;
+    max-width: 100vw;
+    overflow: hidden;
+    position: fixed;
+  }
+
+  #map {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
+  }
+
+  .mapboxgl-ctrl-top-left {
+    top: 130px !important;
+    left: 12px !important;
+  }
+
+  .mapboxgl-ctrl-zoom-in,
+  .mapboxgl-ctrl-zoom-out {
+    width: 38px !important;
+    height: 38px !important;
+    font-size: 20px !important;
+  }
+
+  .mapboxgl-ctrl-group {
+    border-radius: 10px !important;
+  }
+
+  .mapboxgl-ctrl-bottom-left {
+    bottom: 80px !important;
+    left: 12px !important;
+  }
+
+  /* ── TOP BAR ── */
+  #topbar {
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    z-index: 100;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 12px 16px;
+    padding-right: 20px;
+    background: linear-gradient(to bottom, rgba(16,14,8,0.95) 0%, rgba(16,14,8,0) 100%);
+    pointer-events: none;
+    box-sizing: border-box;
+    max-width: 100vw;
+  }
+
+  #logo {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    pointer-events: auto;
+  }
+
+  #logo .icon {
+    font-size: 22px;
+    line-height: 1;
+  }
+
+  #logo .wordmark {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 26px;
+    letter-spacing: 0.08em;
+    color: var(--gold-bright);
+    text-shadow: 0 0 20px rgba(240, 192, 64, 0.4);
+    line-height: 1;
+  }
+
+  #logo .tagline {
+    font-family: 'DM Mono', monospace;
+    font-size: 9px;
+    color: var(--dust);
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    margin-top: 2px;
+  }
+
+  #top-actions {
+    display: flex;
+    gap: 8px;
+    pointer-events: auto;
+    padding-right: 8px;
+  }
+
+  .icon-btn {
+    width: 38px;
+    height: 38px;
+    border-radius: 8px;
+    border: 1px solid var(--panel-border);
+    background: var(--panel-bg);
+    color: var(--cream);
+    font-size: 17px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.15s;
+    backdrop-filter: blur(8px);
+  }
+
+  .icon-btn:hover, .icon-btn.active {
+    border-color: var(--gold);
+    color: var(--gold-bright);
+    background: rgba(201, 168, 76, 0.12);
+  }
+
+  /* ── SEARCH BAR ── */
+  #searchbar {
+    position: absolute;
+    top: 72px;
+    left: 16px;
+    right: 20px;
+    z-index: 100;
+    box-sizing: border-box;
+  }
+
+  #search-input-wrap {
+    display: flex;
+    align-items: center;
+    background: var(--panel-bg);
+    border: 1px solid var(--panel-border);
+    border-radius: 10px;
+    padding: 0 14px;
+    gap: 10px;
+    backdrop-filter: blur(12px);
+    transition: border-color 0.2s;
+  }
+
+  #search-input-wrap:focus-within {
+    border-color: var(--gold);
+  }
+
+  #search-input-wrap .search-icon {
+    color: var(--dust);
+    font-size: 16px;
+    flex-shrink: 0;
+  }
+
+  #search-input {
+    flex: 1;
+    background: none;
+    border: none;
+    outline: none;
+    color: var(--cream);
+    font-family: 'DM Sans', sans-serif;
+    font-size: 15px;
+    padding: 12px 0;
+  }
+
+  #search-input::placeholder { color: var(--dust); }
+
+  #search-filter-btn {
+    background: none;
+    border: none;
+    color: var(--gold);
+    font-size: 15px;
+    cursor: pointer;
+    padding: 4px;
+    flex-shrink: 0;
+  }
+
+  /* ── LAYER PANEL ── */
+  /* ── LAYER PANEL (full bottom sheet) ── */
+  #layer-panel {
+    position: absolute;
+    bottom: 0; left: 0; right: 0;
+    z-index: 150;
+    background: #0D0C09;
+    border-top: 1px solid rgba(255,255,255,0.07);
+    border-radius: 20px 20px 0 0;
+    transform: translateY(100%);
+    transition: transform 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+    max-height: 88vh;
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  #layer-panel.open { transform: translateY(0); }
+
+  #layer-panel-handle {
+    width: 40px; height: 4px;
+    background: rgba(255,255,255,0.15);
+    border-radius: 2px;
+    margin: 12px auto 0;
+  }
+
+  #layer-panel-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 14px 20px 10px;
+    border-bottom: 1px solid rgba(255,255,255,0.06);
+    position: sticky;
+    top: 0;
+    background: #0D0C09;
+    z-index: 10;
+  }
+
+  #layer-panel-header h3 {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 20px;
+    letter-spacing: 0.1em;
+    color: var(--cream);
+    margin: 0;
+  }
+
+  #layer-panel-close {
+    width: 28px; height: 28px;
+    border-radius: 50%;
+    background: rgba(255,255,255,0.08);
+    border: none;
+    color: var(--cream);
+    font-size: 16px;
+    cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    line-height: 1;
+  }
+
+  #layer-panel-scroll {
+    padding: 8px 0 110px;
+  }
+
+  /* Region banner inside panel */
+  #region-banner {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    background: rgba(76,175,80,0.1);
+    border: 1px solid rgba(76,175,80,0.25);
+    border-radius: 10px;
+    padding: 9px 14px;
+    margin: 8px 16px 4px;
+  }
+  #region-banner .region-left {
+    display: flex; align-items: center; gap: 7px;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 13px; color: #E8D9B0;
+  }
+  #region-banner .region-dot {
+    width: 8px; height: 8px; border-radius: 50%;
+    background: #4CAF50; flex-shrink: 0;
+  }
+  #region-banner .region-state { font-weight: 500; color: #4CAF50; }
+  #region-banner .switch-region {
+    font-family: 'DM Mono', monospace; font-size: 11px;
+    color: var(--gold); cursor: pointer;
+    background: none; border: none; padding: 0;
+    letter-spacing: 0.05em; transition: color 0.15s;
+  }
+  #region-banner .switch-region:hover { color: var(--gold-bright); }
+
+  /* ── ACCORDION GROUPS ── */
+  .layer-group {
+    margin: 4px 0;
+  }
+
+  .group-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 13px 20px 10px;
+    cursor: pointer;
+    user-select: none;
+  }
+
+  .group-header-left { flex: 1; }
+
+  .group-title {
+    font-size: 15px;
+    font-weight: 600;
+    color: #FFFFFF;
+    letter-spacing: 0.01em;
+  }
+
+  .group-count {
+    font-family: 'DM Mono', monospace;
+    font-size: 11px;
+    color: #555;
+    margin-top: 2px;
+    letter-spacing: 0.04em;
+  }
+
+  .group-arrow {
+    font-size: 10px;
+    color: #555;
+    transition: transform 0.2s;
+    flex-shrink: 0;
+    padding-left: 8px;
+  }
+
+  .group-body {
+    overflow: hidden;
+    transition: max-height 0.3s ease;
+    max-height: 600px;
+  }
+
+  .group-body.collapsed {
+    max-height: 0;
+  }
+
+  /* Collapsed group card */
+  .layer-group.is-collapsed .group-header {
+    background: rgba(255,255,255,0.04);
+    border-radius: 10px;
+    margin: 0 12px;
+    padding: 12px 16px;
+  }
+  .layer-group.is-collapsed .group-count { color: #444; }
+  .layer-group.is-collapsed .group-arrow { transform: rotate(180deg); }
+
+  /* Divider between groups */
+  .group-divider {
+    height: 1px;
+    background: rgba(255,255,255,0.05);
+    margin: 4px 20px;
+  }
+
+  /* ── LAYER ROWS ── */
+  .layer-row {
+    display: flex;
+    align-items: center;
+    padding: 10px 20px 10px 24px;
+    cursor: pointer;
+    transition: background 0.12s;
+    gap: 12px;
+  }
+
+  .layer-row:active { background: rgba(255,255,255,0.04); }
+
+  .layer-bullet {
+    font-size: 8px;
+    flex-shrink: 0;
+    color: #3A3A3A;
+    transition: color 0.2s;
+    line-height: 1;
+    margin-top: 1px;
+  }
+
+  .layer-bullet.on { color: #FFFFFF; }
+
+  .layer-name {
+    font-size: 14px;
+    font-weight: 400;
+    color: #CCCCCC;
+    flex: 1;
+    transition: color 0.15s;
+    line-height: 1.3;
+  }
+
+  .layer-row:hover .layer-name { color: #FFFFFF; }
+
+  .layer-name.on { color: #FFFFFF; }
+
+  .layer-badge {
+    font-family: 'DM Mono', monospace;
+    font-size: 9px;
+    padding: 2px 6px;
+    border-radius: 4px;
+    background: rgba(240,192,64,0.12);
+    border: 1px solid rgba(240,192,64,0.25);
+    color: var(--gold-dim);
+    flex-shrink: 0;
+  }
+
+  /* ── TOGGLE SWITCH (keep for compatibility) ── */
+  .toggle {
+    width: 34px; height: 20px;
+    background: #1E1E1E;
+    border-radius: 10px;
+    position: relative;
+    cursor: pointer;
+    transition: background 0.2s;
+    flex-shrink: 0;
+    border: 1px solid rgba(255,255,255,0.06);
+    display: none; /* hidden — bullet indicates state */
+  }
+
+  .toggle.on { background: var(--gold-dim); border-color: var(--gold); }
+
+  .toggle::after {
+    content: '';
+    position: absolute;
+    width: 14px; height: 14px;
+    border-radius: 50%;
+    background: var(--dust);
+    top: 2px; left: 2px;
+    transition: transform 0.2s, background 0.2s;
+  }
+
+  .toggle.on::after {
+    transform: translateX(14px);
+    background: var(--gold-bright);
+  }
+
+  /* ── BOTTOM NAV ── */
+  #bottom-nav {
+    position: absolute;
+    bottom: 0; left: 0; right: 0;
+    z-index: 100;
+    background: linear-gradient(to top, rgba(16,14,8,0.98) 60%, rgba(16,14,8,0) 100%);
+    padding: 12px 8px 28px;
+    display: flex;
+    justify-content: space-around;
+    align-items: center;
+    box-sizing: border-box;
+    max-width: 100vw;
+    overflow: hidden;
+  }
+
+  .nav-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+    cursor: pointer;
+    padding: 6px 16px;
+    border-radius: 10px;
+    transition: all 0.15s;
+    border: 1px solid transparent;
+  }
+
+  .nav-item.active {
+    background: rgba(201, 168, 76, 0.1);
+    border-color: var(--panel-border);
+  }
+
+  .nav-item .nav-icon {
+    font-size: 22px;
+    line-height: 1;
+    transition: transform 0.15s;
+    color: var(--dust);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .nav-item.active .nav-icon {
+    transform: scale(1.1);
+    color: var(--gold);
+    filter: drop-shadow(0 0 5px rgba(240,192,64,0.5));
+  }
+
+  .nav-item:active {
+    transform: scale(0.9);
+    background: rgba(201,168,76,0.15);
+    border-color: var(--gold);
+    transition: transform 0.08s;
+  }
+
+  .nav-item .nav-label {
+    font-family: 'DM Mono', monospace;
+    font-size: 9px;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--dust);
+    transition: color 0.15s;
+  }
+
+  .nav-item.active .nav-label { color: var(--gold); }
+
+  /* ── FAB ── */
+  #fab {
+    position: absolute;
+    bottom: 88px;
+    right: 20px;
+    z-index: 100;
+    width: 52px;
+    height: 52px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, var(--gold-bright), var(--gold-dim));
+    border: none;
+    cursor: grab;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 22px;
+    box-shadow: 0 4px 20px rgba(201, 168, 76, 0.4);
+    transition: all 0.2s;
+    user-select: none;
+    touch-action: none;
+  }
+
+  #fab:hover {
+    transform: scale(1.08);
+    box-shadow: 0 6px 28px rgba(201, 168, 76, 0.55);
+  }
+
+  #fab.dragging {
+    cursor: grabbing;
+    transform: scale(1.2);
+    opacity: 0.85;
+    transition: none;
+    z-index: 200;
+  }
+
+  #fab-hint {
+    position: absolute;
+    bottom: 148px;
+    right: 14px;
+    z-index: 100;
+    font-family: 'DM Mono', monospace;
+    font-size: 9px;
+    letter-spacing: 0.08em;
+    color: var(--dust);
+    text-align: center;
+    width: 64px;
+    line-height: 1.4;
+    pointer-events: none;
+  }
+
+  /* ── MAP STYLE SWITCHER ── */
+  #style-switcher {
+    position: absolute;
+    top: 70px;
+    right: 68px;
+    z-index: 100;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    opacity: 0;
+    pointer-events: none;
+    transform: translateY(-8px);
+    transition: opacity 0.2s, transform 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  }
+
+  #style-switcher.open {
+    opacity: 1;
+    pointer-events: auto;
+    transform: translateY(0);
+  }
+
+  .style-btn {
+    background: var(--panel-bg);
+    border: 1px solid var(--panel-border);
+    color: var(--cream);
+    font-family: 'DM Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 0.08em;
+    padding: 8px 14px;
+    border-radius: 8px;
+    cursor: pointer;
+    text-align: right;
+    backdrop-filter: blur(8px);
+    transition: all 0.15s;
+    white-space: nowrap;
+    align-self: flex-end;
+  }
+
+  .style-btn:hover, .style-btn.active {
+    border-color: var(--gold);
+    color: var(--gold-bright);
+  }
+
+  /* Token input hidden */
+  #token-input { display: none; }
+
+  /* ── SEARCH RESULTS ── */
+  #search-results {
+    position: absolute;
+    top: 100%;
+    left: 0; right: 0;
+    margin-top: 6px;
+    background: var(--panel-bg);
+    border: 1px solid var(--panel-border);
+    border-radius: 10px;
+    overflow: hidden;
+    backdrop-filter: blur(16px);
+    z-index: 200;
+    display: none;
+    max-height: 320px;
+    overflow-y: auto;
+  }
+
+  #search-results.show { display: block; }
+
+  .search-result-item {
+    padding: 11px 16px;
+    cursor: pointer;
+    border-bottom: 1px solid rgba(255,255,255,0.04);
+    transition: background 0.15s;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  .search-result-item:last-child { border-bottom: none; }
+  .search-result-item:hover { background: rgba(201,168,76,0.08); }
+
+  .result-icon { font-size: 14px; flex-shrink: 0; }
+
+  .result-text { flex: 1; min-width: 0; }
+
+  .result-name {
+    font-size: 13px;
+    color: var(--cream);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .result-sub {
+    font-family: 'DM Mono', monospace;
+    font-size: 10px;
+    color: var(--dust);
+    margin-top: 2px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .result-tag {
+    font-family: 'DM Mono', monospace;
+    font-size: 9px;
+    padding: 2px 6px;
+    border-radius: 4px;
+    flex-shrink: 0;
+  }
+
+  .result-tag.active {
+    background: rgba(76,175,80,0.15);
+    border: 1px solid rgba(76,175,80,0.4);
+    color: #4CAF50;
+  }
+
+  .result-tag.place {
+    background: rgba(33,150,243,0.15);
+    border: 1px solid rgba(33,150,243,0.4);
+    color: #2196F3;
+  }
+
+  .search-section-label {
+    padding: 8px 16px 4px;
+    font-family: 'DM Mono', monospace;
+    font-size: 9px;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    color: var(--dust);
+    background: rgba(0,0,0,0.2);
+  }
+
+  /* ── SCALE / COMPASS ── */
+  .mapboxgl-ctrl-scale {
+    background: var(--panel-bg) !important;
+    border-color: var(--gold-dim) !important;
+    color: var(--cream) !important;
+    font-family: 'DM Mono', monospace !important;
+    font-size: 10px !important;
+  }
+
+  .mapboxgl-ctrl-group {
+    background: var(--panel-bg) !important;
+    border: 1px solid var(--panel-border) !important;
+    border-radius: 8px !important;
+  }
+
+  .mapboxgl-ctrl-group button {
+    background-color: transparent !important;
+  }
+
+  /* ── STATUS PILL ── */
+  #status-pill {
+    position: absolute;
+    top: 130px;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 100;
+    background: var(--panel-bg);
+    border: 1px solid var(--panel-border);
+    border-radius: 20px;
+    padding: 6px 14px;
+    font-family: 'DM Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 0.1em;
+    color: var(--dust);
+    backdrop-filter: blur(8px);
+    pointer-events: none;
+    opacity: 0;
+    transition: opacity 0.3s;
+    white-space: nowrap;
+  }
+
+  #status-pill.show { opacity: 1; }
+
+  /* ── FIND LOG PANEL ── */
+  #find-panel {
+    position: absolute;
+    bottom: 0; left: 0; right: 0;
+    z-index: 150;
+    background: var(--panel-bg);
+    border-top: 1px solid var(--panel-border);
+    border-radius: 20px 20px 0 0;
+    padding: 20px 20px 100px;
+    backdrop-filter: blur(20px);
+    transform: translateY(100%);
+    transition: transform 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+    max-height: 70vh;
+    overflow-y: auto;
+  }
+
+  #find-panel.open { transform: translateY(0); }
+
+  #find-panel .panel-handle {
+    width: 40px;
+    height: 4px;
+    background: var(--stone);
+    border-radius: 2px;
+    margin: 0 auto 20px;
+  }
+
+  #find-panel h3 {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 22px;
+    letter-spacing: 0.08em;
+    color: var(--gold);
+    margin-bottom: 18px;
+  }
+
+  .find-form-row {
+    margin-bottom: 14px;
+  }
+
+  .find-form-row label {
+    font-family: 'DM Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--dust);
+    display: block;
+    margin-bottom: 6px;
+  }
+
+  .find-form-row input,
+  .find-form-row select,
+  .find-form-row textarea {
+    width: 100%;
+    background: var(--stone);
+    border: 1px solid var(--panel-border);
+    border-radius: 8px;
+    padding: 11px 14px;
+    color: var(--cream);
+    font-family: 'DM Sans', sans-serif;
+    font-size: 14px;
+    outline: none;
+    transition: border-color 0.2s;
+    -webkit-appearance: none;
+  }
+
+  .find-form-row input:focus,
+  .find-form-row select:focus,
+  .find-form-row textarea:focus {
+    border-color: var(--gold);
+  }
+
+  .find-form-row textarea { resize: none; height: 80px; }
+
+  .find-submit {
+    width: 100%;
+    background: linear-gradient(135deg, var(--gold-bright), var(--gold-dim));
+    border: none;
+    border-radius: 10px;
+    padding: 14px;
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 19px;
+    letter-spacing: 0.1em;
+    color: var(--rock);
+    cursor: pointer;
+    margin-top: 6px;
+  }
+
+  /* ── OVERLAY ── */
+  #overlay {
+    position: absolute;
+    inset: 0;
+    z-index: 140;
+    background: rgba(0,0,0,0.5);
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.3s;
+  }
+
+  #overlay.show {
+    opacity: 1;
+    pointer-events: auto;
+  }
+
+  /* ── GPS PULSE ── */
+  /* ── ACCOUNT PANEL ── */
+  #account-panel {
+    position: absolute;
+    bottom: 0; left: 0; right: 0;
+    z-index: 150;
+    background: var(--panel-bg);
+    border-top: 1px solid var(--panel-border);
+    border-radius: 20px 20px 0 0;
+    padding: 20px 0 100px;
+    backdrop-filter: blur(20px);
+    transform: translateY(100%);
+    transition: transform 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+    max-height: 85vh;
+    overflow-y: auto;
+  }
+
+  #account-panel.open { transform: translateY(0); }
+
+  #account-panel .panel-handle {
+    width: 40px;
+    height: 4px;
+    background: var(--stone);
+    border-radius: 2px;
+    margin: 0 auto 16px;
+  }
+
+  .account-tabs {
+    display: flex;
+    border-bottom: 1px solid var(--panel-border);
+    margin-bottom: 0;
+    padding: 0 20px;
+    gap: 4px;
+  }
+
+  .account-tab {
+    padding: 10px 16px;
+    font-family: 'DM Mono', monospace;
+    font-size: 11px;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--dust);
+    cursor: pointer;
+    border-bottom: 2px solid transparent;
+    transition: all 0.15s;
+    white-space: nowrap;
+  }
+
+  .account-tab.active {
+    color: var(--gold);
+    border-bottom-color: var(--gold);
+  }
+
+  .account-tab-content {
+    display: none;
+    padding: 16px 20px;
+  }
+
+  .account-tab-content.active { display: block; }
+
+  .account-item {
+    padding: 12px 0;
+    border-bottom: 1px solid rgba(255,255,255,0.04);
+    cursor: pointer;
+    transition: background 0.15s;
+  }
+
+  .account-item:last-child { border-bottom: none; }
+  .account-item:hover .account-item-name { color: var(--gold); }
+
+  .account-item-name {
+    font-size: 14px;
+    color: var(--cream);
+    margin-bottom: 3px;
+    transition: color 0.15s;
+  }
+
+  .account-item-sub {
+    font-family: 'DM Mono', monospace;
+    font-size: 10px;
+    color: var(--dust);
+  }
+
+  .account-empty {
+    text-align: center;
+    padding: 40px 20px;
+    color: var(--dust);
+    font-size: 13px;
+    line-height: 1.6;
+  }
+
+  .account-empty .empty-icon { font-size: 36px; margin-bottom: 12px; }
+
+  /* ── SPOT PANEL ── */
+  #spot-panel {
+    position: absolute;
+    bottom: 0; left: 0; right: 0;
+    z-index: 150;
+    background: var(--panel-bg);
+    border-top: 1px solid var(--panel-border);
+    border-radius: 20px 20px 0 0;
+    padding: 20px 20px 100px;
+    backdrop-filter: blur(20px);
+    transform: translateY(100%);
+    transition: transform 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+    max-height: 75vh;
+    overflow-y: auto;
+  }
+
+  #spot-panel.open { transform: translateY(0); }
+
+  #spot-panel .panel-handle {
+    width: 40px;
+    height: 4px;
+    background: var(--stone);
+    border-radius: 2px;
+    margin: 0 auto 20px;
+  }
+
+  #spot-panel h3 {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 22px;
+    letter-spacing: 0.08em;
+    color: var(--gold);
+    margin-bottom: 16px;
+  }
+
+  .spot-categories {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-bottom: 16px;
+  }
+
+  .spot-cat-btn {
+    padding: 6px 12px;
+    border-radius: 20px;
+    border: 1px solid var(--panel-border);
+    background: var(--stone);
+    color: var(--dust);
+    font-size: 12px;
+    cursor: pointer;
+    transition: all 0.15s;
+  }
+
+  .spot-cat-btn.selected {
+    border-color: var(--gold);
+    color: var(--gold-bright);
+    background: rgba(201,168,76,0.12);
+  }
+
+  /* Spot markers on map */
+  .spot-marker {
+    width: 28px;
+    height: 28px;
+    border-radius: 50% 50% 50% 0;
+    transform: rotate(-45deg);
+    border: 2px solid white;
+    cursor: pointer;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.4);
+  }
+
+  /* ── CLAIM PANEL ── */
+  #claim-panel {
+    position: absolute;
+    bottom: 0; left: 0; right: 0;
+    z-index: 150;
+    background: #0D0C09;
+    border-top: 1px solid rgba(201,168,76,0.2);
+    border-radius: 20px 20px 0 0;
+    padding: 0 0 110px;
+    transform: translateY(100%);
+    transition: transform 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+    max-height: 82vh;
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  #claim-panel.open { transform: translateY(0); }
+
+  #claim-panel .panel-handle {
+    width: 40px; height: 4px;
+    background: rgba(255,255,255,0.12);
+    border-radius: 2px;
+    margin: 12px auto 0;
+  }
+
+  #claim-panel-header {
+    padding: 14px 20px 12px;
+    border-bottom: 1px solid rgba(255,255,255,0.06);
+  }
+
+  #claim-panel-name {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 24px;
+    letter-spacing: 0.06em;
+    color: var(--gold-bright);
+    line-height: 1;
+  }
+
+  #claim-panel-serial {
+    font-family: 'DM Mono', monospace;
+    font-size: 11px;
+    color: var(--dust);
+    margin-top: 3px;
+  }
+
+  .claim-section {
+    padding: 14px 20px;
+    border-bottom: 1px solid rgba(255,255,255,0.05);
+  }
+
+  .claim-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 5px 0;
+  }
+
+  .claim-row-label {
+    font-family: 'DM Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--dust);
+  }
+
+  .claim-row-value {
+    font-size: 13px;
+    color: var(--cream);
+    font-weight: 500;
+    text-align: right;
+    max-width: 60%;
+  }
+
+  .claim-badge-row {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+    flex-wrap: wrap;
+    padding: 10px 0 4px;
+  }
+
+  .claim-badge {
+    font-family: 'DM Mono', monospace;
+    font-size: 10px;
+    padding: 4px 10px;
+    border-radius: 20px;
+    letter-spacing: 0.05em;
+  }
+
+  .claim-badge.active {
+    background: rgba(76,175,80,0.15);
+    border: 1px solid rgba(76,175,80,0.4);
+    color: #4CAF50;
+  }
+
+  .claim-badge.type {
+    background: rgba(201,168,76,0.1);
+    border: 1px solid rgba(201,168,76,0.3);
+    color: var(--gold);
+  }
+
+  .claim-type-desc {
+    font-size: 12px;
+    color: var(--dust);
+    margin-top: 4px;
+    line-height: 1.5;
+  }
+
+  .claim-nearby-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+  }
+
+  .claim-nearby-card {
+    background: rgba(255,255,255,0.04);
+    border-radius: 8px;
+    padding: 10px 12px;
+    cursor: pointer;
+    transition: background 0.15s;
+  }
+
+  .claim-nearby-card:hover { background: rgba(255,255,255,0.07); }
+
+  .claim-nearby-num {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 22px;
+    letter-spacing: 0.04em;
+    line-height: 1;
+  }
+
+  .claim-nearby-lbl {
+    font-family: 'DM Mono', monospace;
+    font-size: 9px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--dust);
+    margin-top: 3px;
+  }
+
+  .claim-links {
+    display: flex;
+    gap: 8px;
+    padding: 14px 20px;
+    flex-wrap: wrap;
+  }
+
+  .claim-link-btn {
+    flex: 1;
+    min-width: 80px;
+    background: rgba(255,255,255,0.05);
+    border: 1px solid rgba(255,255,255,0.1);
+    border-radius: 8px;
+    padding: 9px 8px;
+    font-family: 'DM Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 0.06em;
+    color: var(--gold);
+    text-decoration: none;
+    text-align: center;
+    cursor: pointer;
+    transition: all 0.15s;
+    display: block;
+  }
+
+  .claim-link-btn:hover {
+    border-color: var(--gold);
+    background: rgba(201,168,76,0.08);
+  }
+
+  .claim-action-btns {
+    display: flex;
+    gap: 10px;
+    padding: 0 20px 14px;
+  }
+
+  .claim-save-btn {
+    flex: 1;
+    background: rgba(201,168,76,0.12);
+    border: 1px solid rgba(201,168,76,0.4);
+    border-radius: 10px;
+    padding: 13px;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 14px;
+    font-weight: 500;
+    color: var(--gold-bright);
+    cursor: pointer;
+    transition: all 0.15s;
+  }
+
+  .claim-save-btn:hover { background: rgba(201,168,76,0.2); }
+
+  .claim-watch-btn {
+    flex: 1;
+    background: rgba(33,150,243,0.1);
+    border: 1px solid rgba(33,150,243,0.3);
+    border-radius: 10px;
+    padding: 13px;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 14px;
+    font-weight: 500;
+    color: #64B5F6;
+    cursor: pointer;
+    transition: all 0.15s;
+  }
+
+  .claim-watch-btn:hover { background: rgba(33,150,243,0.18); }
+
+  /* ── RESTRICTION LEGEND ── */
+  #restriction-legend {
+    position: absolute;
+    bottom: 100px;
+    left: 16px;
+    z-index: 100;
+    background: var(--panel-bg);
+    border: 1px solid var(--panel-border);
+    border-radius: 10px;
+    padding: 10px 14px;
+    backdrop-filter: blur(12px);
+    display: none;
+    min-width: 180px;
+  }
+
+  #restriction-legend h4 {
+    font-family: 'DM Mono', monospace;
+    font-size: 9px;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    color: var(--dust);
+    margin-bottom: 8px;
+  }
+
+  .legend-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 3px 0;
+    font-size: 11px;
+    color: var(--cream);
+  }
+
+  .legend-dot {
+    width: 12px;
+    height: 12px;
+    border-radius: 2px;
+    flex-shrink: 0;
+  }
+
+  /* ── COMPASS & 3D BUTTON ── */
+  #custom-compass {
+    position: absolute;
+    top: 130px;
+    right: 20px;
+    left: auto;
+    z-index: 100;
+    width: 38px;
+    height: 38px;
+    border-radius: 50%;
+    background: var(--panel-bg);
+    border: 1px solid var(--panel-border);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    backdrop-filter: blur(8px);
+    transition: border-color 0.15s;
+  }
+
+  #custom-compass:hover { border-color: var(--gold); }
+
+  #compass-arrow {
+    font-size: 18px;
+    color: #F44336;
+    transition: transform 0.3s;
+    line-height: 1;
+  }
+
+  #terrain-toggle-btn {
+    position: absolute;
+    top: 176px;
+    right: 20px;
+    left: auto;
+    z-index: 100;
+    width: 38px;
+    height: 38px;
+    border-radius: 8px;
+    border: 1px solid var(--panel-border);
+    background: var(--panel-bg);
+    color: var(--gold);
+    font-family: 'DM Mono', monospace;
+    font-size: 11px;
+    font-weight: 500;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    backdrop-filter: blur(8px);
+    transition: all 0.15s;
+    letter-spacing: 0.05em;
+  }
+
+  #terrain-toggle-btn.active {
+    background: rgba(201,168,76,0.15);
+    border-color: var(--gold);
+  }
+
+  #terrain-toggle-btn:hover { border-color: var(--gold); }
+
+  /* ── DRAW SEARCH ── */
+  #draw-btn {
+    position: absolute;
+    top: 72px;
+    right: 20px;
+    z-index: 100;
+    width: 38px;
+    height: 38px;
+    border-radius: 8px;
+    border: 1px solid var(--panel-border);
+    background: var(--panel-bg);
+    color: var(--cream);
+    font-size: 17px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.15s;
+    backdrop-filter: blur(8px);
+  }
+
+  #draw-btn.active {
+    border-color: var(--gold);
+    color: var(--gold-bright);
+    background: rgba(201,168,76,0.15);
+  }
+
+  #draw-hint {
+    position: absolute;
+    top: 118px;
+    right: 20px;
+    z-index: 100;
+    background: var(--panel-bg);
+    border: 1px solid var(--gold);
+    border-radius: 8px;
+    padding: 8px 12px;
+    font-family: 'DM Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 0.08em;
+    color: var(--gold);
+    backdrop-filter: blur(8px);
+    display: none;
+    max-width: 160px;
+    line-height: 1.5;
+  }
+
+  #draw-results {
+    position: absolute;
+    bottom: 100px;
+    left: 16px;
+    right: 16px;
+    z-index: 100;
+    background: var(--panel-bg);
+    border: 1px solid var(--panel-border);
+    border-radius: 12px;
+    padding: 14px 16px;
+    backdrop-filter: blur(16px);
+    display: none;
+    max-height: 200px;
+    overflow-y: auto;
+  }
+
+  #draw-results h4 {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 16px;
+    letter-spacing: 0.08em;
+    color: var(--gold);
+    margin-bottom: 10px;
+  }
+
+  .draw-result-item {
+    padding: 6px 0;
+    border-bottom: 1px solid rgba(255,255,255,0.04);
+    font-size: 12px;
+    color: var(--cream);
+    cursor: pointer;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+
+  .draw-result-item:hover { color: var(--gold); }
+  .draw-result-item:last-child { border-bottom: none; }
+
+  /* ── AUTH PANEL ── */
+  #auth-panel {
+    position: absolute;
+    bottom: 0; left: 0; right: 0;
+    z-index: 150;
+    background: var(--panel-bg);
+    border-top: 1px solid var(--panel-border);
+    border-radius: 20px 20px 0 0;
+    padding: 24px 20px 100px;
+    backdrop-filter: blur(20px);
+    transform: translateY(100%);
+    transition: transform 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+    max-height: 80vh;
+    overflow-y: auto;
+  }
+
+  #auth-panel.open { transform: translateY(0); }
+
+  #auth-panel .panel-handle {
+    width: 40px;
+    height: 4px;
+    background: var(--stone);
+    border-radius: 2px;
+    margin: 0 auto 20px;
+  }
+
+  #auth-panel h3 {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 26px;
+    letter-spacing: 0.08em;
+    color: var(--gold);
+    margin-bottom: 6px;
+  }
+
+  #auth-panel .auth-sub {
+    font-size: 13px;
+    color: var(--dust);
+    margin-bottom: 24px;
+  }
+
+  .auth-form-row {
+    margin-bottom: 14px;
+  }
+
+  .auth-form-row label {
+    font-family: 'DM Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--dust);
+    display: block;
+    margin-bottom: 6px;
+  }
+
+  .auth-form-row input {
+    width: 100%;
+    background: var(--stone);
+    border: 1px solid var(--panel-border);
+    border-radius: 8px;
+    padding: 12px 14px;
+    color: var(--cream);
+    font-family: 'DM Sans', sans-serif;
+    font-size: 14px;
+    outline: none;
+    transition: border-color 0.2s;
+    -webkit-appearance: none;
+    box-sizing: border-box;
+  }
+
+  .auth-form-row input:focus { border-color: var(--gold); }
+
+  .auth-btn {
+    width: 100%;
+    background: linear-gradient(135deg, var(--gold-bright), var(--gold-dim));
+    border: none;
+    border-radius: 10px;
+    padding: 14px;
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 19px;
+    letter-spacing: 0.1em;
+    color: var(--rock);
+    cursor: pointer;
+    margin-top: 6px;
+    transition: opacity 0.2s;
+  }
+
+  .auth-btn:hover { opacity: 0.88; }
+
+  .auth-google-btn {
+    width: 100%;
+    background: var(--stone);
+    border: 1px solid var(--panel-border);
+    border-radius: 10px;
+    padding: 13px;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 14px;
+    font-weight: 500;
+    color: var(--cream);
+    cursor: pointer;
+    margin-top: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    transition: border-color 0.2s;
+  }
+
+  .auth-google-btn:hover { border-color: var(--gold); }
+
+  .auth-divider {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin: 16px 0;
+    color: var(--dust);
+    font-size: 12px;
+  }
+
+  .auth-divider::before, .auth-divider::after {
+    content: '';
+    flex: 1;
+    height: 1px;
+    background: var(--panel-border);
+  }
+
+  .auth-switch {
+    text-align: center;
+    margin-top: 16px;
+    font-size: 13px;
+    color: var(--dust);
+  }
+
+  .auth-switch a {
+    color: var(--gold);
+    cursor: pointer;
+    text-decoration: none;
+  }
+
+  .auth-error {
+    background: rgba(244,67,54,0.1);
+    border: 1px solid rgba(244,67,54,0.3);
+    border-radius: 8px;
+    padding: 10px 14px;
+    font-size: 12px;
+    color: #F44336;
+    margin-bottom: 14px;
+    display: none;
+  }
+
+  /* User menu */
+  #user-menu {
+    position: absolute;
+    bottom: 100px;
+    left: 50%;
+    transform: translateX(-50%) translateY(20px);
+    z-index: 100;
+    background: var(--panel-bg);
+    border: 1px solid var(--panel-border);
+    border-radius: 14px;
+    padding: 16px;
+    width: 220px;
+    backdrop-filter: blur(16px);
+    opacity: 0;
+    pointer-events: none;
+    transition: all 0.2s;
+  }
+
+  #user-menu.show {
+    opacity: 1;
+    pointer-events: auto;
+    transform: translateX(-50%) translateY(0);
+  }
+
+  #user-email {
+    font-family: 'DM Mono', monospace;
+    font-size: 11px;
+    color: var(--dust);
+    margin-bottom: 12px;
+    padding-bottom: 12px;
+    border-bottom: 1px solid var(--panel-border);
+    word-break: break-all;
+  }
+
+  .user-menu-item {
+    padding: 8px 0;
+    font-size: 13px;
+    color: var(--cream);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .user-menu-item:hover { color: var(--gold); }
+
+  /* Override Mapbox default popup styles */
+  .mapboxgl-popup-content {
+    background: transparent !important;
+    padding: 0 !important;
+    border-radius: 0 !important;
+    box-shadow: none !important;
+  }
+  .mapboxgl-popup-tip {
+    display: none !important;
+  }
+
+  .gps-pulse {
+    width: 18px;
+    height: 18px;
+    border-radius: 50%;
+    background: var(--gold-bright);
+    border: 2px solid white;
+    box-shadow: 0 0 0 0 rgba(240,192,64,0.5);
+    animation: pulse 2s infinite;
+  }
+
+  @keyframes pulse {
+    0% { box-shadow: 0 0 0 0 rgba(240,192,64,0.5); }
+    70% { box-shadow: 0 0 0 12px rgba(240,192,64,0); }
+    100% { box-shadow: 0 0 0 0 rgba(240,192,64,0); }
+  }
+
+  /* ── LAYER INFO BUTTON & TOOLTIP ── */
+  .info-btn {
+    width: 18px;
+    height: 18px;
+    border-radius: 50%;
+    background: none;
+    border: 1px solid var(--dust);
+    color: var(--dust);
+    font-size: 11px;
+    line-height: 1;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    transition: all 0.15s;
+    font-style: normal;
+    font-family: 'DM Sans', sans-serif;
+    padding: 0;
+  }
+  .info-btn:hover, .info-btn.active {
+    border-color: var(--gold);
+    color: var(--gold);
+    background: rgba(201,168,76,0.1);
+  }
+  #layer-tooltip {
+    position: fixed;
+    z-index: 300;
+    background: var(--ore);
+    border: 1px solid var(--gold);
+    border-radius: 8px;
+    padding: 9px 12px;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 12px;
+    color: var(--cream);
+    line-height: 1.5;
+    max-width: 210px;
+    pointer-events: none;
+    opacity: 0;
+    transform: translateY(4px);
+    transition: opacity 0.15s, transform 0.15s;
+    box-shadow: 0 4px 16px rgba(0,0,0,0.5);
+  }
+  #layer-tooltip.show {
+    opacity: 1;
+    transform: translateY(0);
+  }
+
+  /* ── AI TOOLS MENU ── */
+  #ai-tools-menu {
+    position: absolute;
+    top: 70px;
+    right: 20px;
+    z-index: 100;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    opacity: 0;
+    pointer-events: none;
+    transform: translateY(-8px);
+    transition: opacity 0.2s, transform 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  }
+
+  #ai-tools-menu.open {
+    opacity: 1;
+    pointer-events: auto;
+    transform: translateY(0);
+  }
+
+  .ai-menu-btn {
+    background: var(--panel-bg);
+    border: 1px solid var(--panel-border);
+    color: var(--cream);
+    font-family: 'DM Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 0.08em;
+    padding: 9px 14px;
+    border-radius: 8px;
+    cursor: pointer;
+    text-align: right;
+    backdrop-filter: blur(8px);
+    transition: all 0.15s;
+    white-space: nowrap;
+    align-self: flex-end;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .ai-menu-btn:hover {
+    border-color: var(--gold);
+    color: var(--gold-bright);
+  }
+
+  .ai-pro-pill {
+    font-size: 8px;
+    padding: 1px 5px;
+    border-radius: 3px;
+    background: rgba(240,192,64,0.15);
+    border: 1px solid rgba(240,192,64,0.4);
+    color: var(--gold-dim);
+    letter-spacing: 0.08em;
+  }
+
+  /* ── AI PANELS ── */
+  #rock-id-panel,
+  #outcrop-panel {
+    position: absolute;
+    bottom: 0; left: 0; right: 0;
+    z-index: 150;
+    background: #0D0C09;
+    border-top: 1px solid rgba(201,168,76,0.2);
+    border-radius: 20px 20px 0 0;
+    transform: translateY(100%);
+    transition: transform 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+    max-height: 90vh;
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  #rock-id-panel.open,
+  #outcrop-panel.open { transform: translateY(0); }
+
+  .ai-panel-handle {
+    width: 40px; height: 4px;
+    background: rgba(255,255,255,0.12);
+    border-radius: 2px;
+    margin: 12px auto 0;
+  }
+
+  .ai-panel-header {
+    padding: 14px 20px 12px;
+    border-bottom: 1px solid rgba(255,255,255,0.06);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    position: sticky;
+    top: 0;
+    background: #0D0C09;
+    z-index: 10;
+  }
+
+  .ai-panel-title {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 22px;
+    letter-spacing: 0.08em;
+    color: var(--gold);
+    line-height: 1;
+  }
+
+  .ai-panel-subtitle {
+    font-family: 'DM Mono', monospace;
+    font-size: 10px;
+    color: var(--dust);
+    letter-spacing: 0.06em;
+    margin-top: 3px;
+  }
+
+  .ai-panel-close {
+    width: 28px; height: 28px;
+    border-radius: 50%;
+    background: rgba(255,255,255,0.08);
+    border: none;
+    color: var(--cream);
+    font-size: 16px;
+    cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    flex-shrink: 0;
+    line-height: 1;
+  }
+
+  .ai-panel-body {
+    padding: 16px 20px 110px;
+  }
+
+  .ai-usage-bar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    background: rgba(255,255,255,0.04);
+    border: 1px solid rgba(255,255,255,0.07);
+    border-radius: 8px;
+    padding: 8px 12px;
+    margin-bottom: 16px;
+  }
+
+  .ai-usage-label {
+    font-family: 'DM Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 0.06em;
+    color: var(--dust);
+  }
+
+  .ai-usage-count {
+    font-family: 'DM Mono', monospace;
+    font-size: 11px;
+    font-weight: 500;
+    color: var(--gold);
+  }
+
+  .ai-desc {
+    font-size: 13px;
+    color: var(--dust);
+    line-height: 1.65;
+    margin-bottom: 16px;
+  }
+
+  .ai-upload-zone {
+    border: 2px dashed rgba(201,168,76,0.3);
+    border-radius: 14px;
+    padding: 32px 20px;
+    text-align: center;
+    cursor: pointer;
+    transition: all 0.2s;
+    position: relative;
+    overflow: hidden;
+    margin-bottom: 16px;
+  }
+
+  .ai-upload-zone:hover,
+  .ai-upload-zone:active {
+    border-color: var(--gold);
+    background: rgba(201,168,76,0.05);
+  }
+
+  .ai-upload-zone input[type=file] {
+    position: absolute;
+    inset: 0;
+    opacity: 0;
+    cursor: pointer;
+    width: 100%;
+    height: 100%;
+    font-size: 100px;
+  }
+
+  .ai-upload-icon { font-size: 38px; margin-bottom: 10px; }
+
+  .ai-upload-label {
+    font-family: 'DM Sans', sans-serif;
+    font-size: 15px;
+    color: var(--cream);
+    font-weight: 500;
+  }
+
+  .ai-upload-sub {
+    font-family: 'DM Mono', monospace;
+    font-size: 10px;
+    color: var(--dust);
+    margin-top: 5px;
+    letter-spacing: 0.05em;
+  }
+
+  .ai-image-preview {
+    display: none;
+    border-radius: 12px;
+    overflow: hidden;
+    margin-bottom: 16px;
+    position: relative;
+  }
+
+  .ai-image-preview img {
+    width: 100%;
+    max-height: 220px;
+    object-fit: cover;
+    display: block;
+  }
+
+  .ai-preview-change {
+    position: absolute;
+    bottom: 8px;
+    right: 8px;
+    background: rgba(0,0,0,0.72);
+    border: 1px solid rgba(255,255,255,0.18);
+    border-radius: 6px;
+    padding: 5px 11px;
+    font-family: 'DM Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 0.06em;
+    color: var(--cream);
+    cursor: pointer;
+  }
+
+  .ai-loading {
+    display: none;
+    text-align: center;
+    padding: 32px 20px;
+  }
+
+  .ai-loading-ring {
+    width: 38px;
+    height: 38px;
+    border: 3px solid rgba(201,168,76,0.2);
+    border-top-color: var(--gold);
+    border-radius: 50%;
+    animation: ai-spin 0.75s linear infinite;
+    margin: 0 auto 14px;
+  }
+
+  @keyframes ai-spin { to { transform: rotate(360deg); } }
+
+  .ai-loading-text {
+    font-family: 'DM Mono', monospace;
+    font-size: 11px;
+    color: var(--dust);
+    letter-spacing: 0.1em;
+  }
+
+  .ai-result { display: none; }
+
+  .ai-result-section { margin-bottom: 18px; }
+
+  .ai-result-label {
+    font-family: 'DM Mono', monospace;
+    font-size: 9px;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--gold-dim);
+    margin-bottom: 8px;
+    padding-bottom: 6px;
+    border-bottom: 1px solid rgba(201,168,76,0.15);
+  }
+
+  .ai-result-text {
+    font-size: 14px;
+    color: var(--cream);
+    line-height: 1.7;
+  }
+
+  .ai-location-note {
+    margin-top: 14px;
+    padding: 8px 12px;
+    background: rgba(255,255,255,0.04);
+    border-radius: 8px;
+    font-family: 'DM Mono', monospace;
+    font-size: 10px;
+    color: var(--dust);
+    letter-spacing: 0.05em;
+    display: none;
+  }
+
+  .ai-new-btn {
+    width: 100%;
+    background: rgba(201,168,76,0.1);
+    border: 1px solid rgba(201,168,76,0.35);
+    border-radius: 10px;
+    padding: 14px;
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 18px;
+    letter-spacing: 0.1em;
+    color: var(--gold-bright);
+    cursor: pointer;
+    margin-top: 18px;
+    transition: all 0.15s;
+  }
+
+  .ai-new-btn:hover { background: rgba(201,168,76,0.18); }
+
+  .ai-error {
+    display: none;
+    background: rgba(244,67,54,0.1);
+    border: 1px solid rgba(244,67,54,0.3);
+    border-radius: 8px;
+    padding: 12px 14px;
+    font-size: 13px;
+    color: #F44336;
+    margin-top: 12px;
+    line-height: 1.5;
+  }
+
+  .ai-pro-gate {
+    background: rgba(201,168,76,0.06);
+    border: 1px solid rgba(201,168,76,0.2);
+    border-radius: 14px;
+    padding: 28px 20px;
+    text-align: center;
+    margin: 4px 0 16px;
+  }
+
+  .ai-pro-gate-icon { font-size: 34px; margin-bottom: 10px; }
+
+  .ai-pro-gate-title {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 22px;
+    letter-spacing: 0.08em;
+    color: var(--gold);
+    margin-bottom: 8px;
+  }
+
+  .ai-pro-gate-text {
+    font-size: 13px;
+    color: var(--dust);
+    line-height: 1.65;
+    margin-bottom: 18px;
+  }
+
+  .ai-upgrade-btn {
+    background: linear-gradient(135deg, var(--gold-bright), var(--gold-dim));
+    border: none;
+    border-radius: 10px;
+    padding: 12px 28px;
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 18px;
+    letter-spacing: 0.1em;
+    color: var(--rock);
+    cursor: pointer;
+    transition: opacity 0.15s;
+  }
+
+  .ai-upgrade-btn:hover { opacity: 0.88; }
+</style>
+
+<style>
+  /* ── GOLD SPOT PRICE BAR ── */
+  #gold-price-bar {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 20px 12px;
+    border-bottom: 1px solid rgba(201,168,76,0.15);
+    background: rgba(201,168,76,0.04);
+  }
+  #gold-price-label {
+    font-family: 'DM Mono', monospace;
+    font-size: 9px;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: var(--dust);
+  }
+  #gold-price-value {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 22px;
+    color: #F0C040;
+    letter-spacing: 0.04em;
+    line-height: 1;
+  }
+  #gold-price-change {
+    font-family: 'DM Mono', monospace;
+    font-size: 10px;
+    padding: 2px 7px;
+    border-radius: 4px;
+  }
+  #gold-price-change.up   { color: #4CAF50; background: rgba(76,175,80,0.13); }
+  #gold-price-change.down { color: #F44336; background: rgba(244,67,54,0.13); }
+  #gold-price-ts {
+    font-family: 'DM Mono', monospace;
+    font-size: 9px;
+    color: var(--stone);
+    margin-left: auto;
+  }
+
+  /* ── ACTIVE LAYER INDICATOR BAR ── */
+  #active-layer-bar {
+    position: fixed;
+    bottom: 72px;
+    left: 0; right: 0;
+    z-index: 100;
+    padding: 0 8px 0 12px;
+    pointer-events: none;
+    opacity: 0;
+    transform: translateY(6px);
+    transition: opacity 0.2s ease, transform 0.2s ease;
+  }
+  #active-layer-bar.visible {
+    opacity: 1;
+    transform: translateY(0);
+    pointer-events: auto;
+  }
+  #active-layer-chips {
+    display: flex;
+    gap: 5px;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+    padding: 4px 0;
+  }
+  #active-layer-chips::-webkit-scrollbar { display: none; }
+  .layer-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    background: rgba(13,12,9,0.88);
+    border: 1px solid rgba(201,168,76,0.4);
+    border-radius: 20px;
+    padding: 4px 10px 4px 9px;
+    font-family: 'DM Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 0.03em;
+    color: #C9A84C;
+    white-space: nowrap;
+    cursor: pointer;
+    backdrop-filter: blur(14px);
+    -webkit-backdrop-filter: blur(14px);
+    flex-shrink: 0;
+    transition: background 0.12s;
+  }
+  .layer-chip:hover { background: rgba(201,168,76,0.16); }
+  .layer-chip .chip-x {
+    font-size: 10px;
+    color: rgba(201,168,76,0.55);
+    margin-left: 1px;
+    line-height: 1;
+  }
+</style>
 </head>
 <body>
 
@@ -56,6 +2144,11 @@ window.PROSPECTOR_CONFIG = {
 
 <!-- Status Pill -->
 <div id="status-pill"></div>
+
+<!-- Active Layer Indicator Bar -->
+<div id="active-layer-bar">
+  <div id="active-layer-chips"></div>
+</div>
 
 <!-- Layer Tooltip -->
 <div id="layer-tooltip"></div>
@@ -100,13 +2193,11 @@ window.PROSPECTOR_CONFIG = {
         <div class="layer-row" onclick="toggleLayer('placer-heatmap')">
           <div class="layer-bullet" id="bullet-placer-heatmap">●</div>
           <span class="layer-name" id="name-placer-heatmap">Placer Gold Heatmap</span>
-          <span class="layer-badge">Soon</span>
           <button class="info-btn" onclick="showLayerInfo(event,'placer-heatmap')">i</button>
         </div>
         <div class="layer-row" onclick="toggleLayer('lode-heatmap')">
           <div class="layer-bullet" id="bullet-lode-heatmap">●</div>
           <span class="layer-name" id="name-lode-heatmap">Lode Gold Heatmap</span>
-          <span class="layer-badge">Soon</span>
           <button class="info-btn" onclick="showLayerInfo(event,'lode-heatmap')">i</button>
         </div>
       </div>
@@ -118,7 +2209,7 @@ window.PROSPECTOR_CONFIG = {
       <div class="group-header" onclick="toggleGroup('indicator-minerals')">
         <div class="group-header-left">
           <div class="group-title">Indicator Minerals</div>
-          <div class="group-count">2 Layers</div>
+          <div class="group-count">5 Layers</div>
         </div>
         <div class="group-arrow" id="arrow-indicator-minerals">▼</div>
       </div>
@@ -132,24 +2223,6 @@ window.PROSPECTOR_CONFIG = {
           <div class="layer-bullet" id="bullet-chromium" style="color:#00BCD4">●</div>
           <span class="layer-name" id="name-chromium">Chromium Occurrences</span>
           <button class="info-btn" onclick="showLayerInfo(event,'chromium')">i</button>
-        </div>
-        <div class="layer-row" onclick="toggleLayer('copper')">
-          <div class="layer-bullet" id="bullet-copper" style="color:#E87722">●</div>
-          <span class="layer-name" id="name-copper">Copper Occurrences</span>
-          <span class="layer-pro-badge">PRO</span>
-          <button class="info-btn" onclick="showLayerInfo(event,'copper')">i</button>
-        </div>
-        <div class="layer-row" onclick="toggleLayer('antimony')">
-          <div class="layer-bullet" id="bullet-antimony" style="color:#78909C">●</div>
-          <span class="layer-name" id="name-antimony">Antimony Occurrences</span>
-          <span class="layer-pro-badge">PRO</span>
-          <button class="info-btn" onclick="showLayerInfo(event,'antimony')">i</button>
-        </div>
-        <div class="layer-row" onclick="toggleLayer('silver')">
-          <div class="layer-bullet" id="bullet-silver" style="color:#B0BEC5">●</div>
-          <span class="layer-name" id="name-silver">Silver Occurrences</span>
-          <span class="layer-pro-badge">PRO</span>
-          <button class="info-btn" onclick="showLayerInfo(event,'silver')">i</button>
         </div>
       </div>
     </div>
@@ -357,9 +2430,6 @@ window.PROSPECTOR_CONFIG = {
       <div id="toggle-hist-mines" class="toggle"></div>
       <div id="toggle-mercury" class="toggle"></div>
       <div id="toggle-chromium" class="toggle"></div>
-      <div id="toggle-copper" class="toggle"></div>
-      <div id="toggle-antimony" class="toggle"></div>
-      <div id="toggle-silver" class="toggle"></div>
       <div id="toggle-open-to-claim" class="toggle"></div>
       <div id="toggle-monuments" class="toggle"></div>
       <div id="toggle-wild-scenic" class="toggle"></div>
@@ -422,6 +2492,12 @@ window.PROSPECTOR_CONFIG = {
 <!-- Account Panel -->
 <div id="account-panel">
   <div class="panel-handle"></div>
+  <div id="gold-price-bar">
+    <span id="gold-price-label">Au / oz</span>
+    <span id="gold-price-value">—</span>
+    <span id="gold-price-change"></span>
+    <span id="gold-price-ts"></span>
+  </div>
   <div class="account-tabs">
     <div class="account-tab active" onclick="switchAccountTab(this,'finds')">🥇 Finds</div>
     <div class="account-tab" onclick="switchAccountTab(this,'spots')">📍 Spots</div>
@@ -799,9 +2875,6 @@ let layerState = {
   'hist-mines': false,
   'mercury': false,
   'chromium': false,
-  'copper': false,
-  'antimony': false,
-  'silver': false,
   'natl-parks': false,
   'wilderness': false,
   'stream-gauges': false,
@@ -886,16 +2959,16 @@ function startMap(token) {
     // Reload MRDS layers when map pans/zooms — debounced 800ms
     let mrdsReloadTimer = null;
     map.on('moveend', () => {
-      if (!layerState['gold-occurrences'] && !layerState['hist-mines'] && !layerState['mercury'] && !layerState['chromium'] && !layerState['copper'] && !layerState['antimony'] && !layerState['silver']) return;
+      const anyMrds = layerState['gold-occurrences'] || layerState['hist-mines'] ||
+        layerState['mercury'] || layerState['chromium'] ||
+        layerState['placer-heatmap'] || layerState['lode-heatmap'];
+      if (!anyMrds) return;
       clearTimeout(mrdsReloadTimer);
       mrdsReloadTimer = setTimeout(() => {
-        if (layerState['gold-occurrences']) fetchGoldOccurrences(true);
-        if (layerState['hist-mines']) fetchHistoricMines(true);
+        if (layerState['gold-occurrences'] || layerState['placer-heatmap']) fetchGoldOccurrences(true);
+        if (layerState['hist-mines'] || layerState['lode-heatmap']) fetchHistoricMines(true);
         if (layerState['mercury']) fetchMercury(true);
         if (layerState['chromium']) fetchChromium(true);
-        if (layerState['copper']) fetchCopper(true);
-        if (layerState['antimony']) fetchAntimony(true);
-        if (layerState['silver']) fetchSilver(true);
       }, 800);
     });
 
@@ -1432,6 +3505,52 @@ function addDemoLayers() {
     }
   });
 
+  // ── GOLD OCCURRENCES HEATMAP (placer-heatmap layer) ──
+  // Reuses gold-occurrences-src — shows up as a density heat map
+  map.addLayer({
+    id: 'gold-heatmap-layer',
+    type: 'heatmap',
+    source: 'gold-occurrences-src',
+    layout: { visibility: 'none' },
+    paint: {
+      'heatmap-weight': 1,
+      'heatmap-intensity': ['interpolate', ['linear'], ['zoom'], 6, 0.6, 14, 2.5],
+      'heatmap-color': [
+        'interpolate', ['linear'], ['heatmap-density'],
+        0,   'rgba(0,0,0,0)',
+        0.15,'rgba(240,192,64,0.25)',
+        0.4, 'rgba(240,150,0,0.55)',
+        0.7, 'rgba(255,80,0,0.78)',
+        1,   'rgba(220,20,20,0.95)'
+      ],
+      'heatmap-radius': ['interpolate', ['linear'], ['zoom'], 6, 18, 10, 30, 14, 50],
+      'heatmap-opacity': 0.78
+    }
+  });
+
+  // ── MINE SITES HEATMAP (lode-heatmap layer) ──
+  // Reuses hist-mines-src — density of all USGS mine sites
+  map.addLayer({
+    id: 'mines-heatmap-layer',
+    type: 'heatmap',
+    source: 'hist-mines-src',
+    layout: { visibility: 'none' },
+    paint: {
+      'heatmap-weight': 1,
+      'heatmap-intensity': ['interpolate', ['linear'], ['zoom'], 6, 0.6, 14, 2.5],
+      'heatmap-color': [
+        'interpolate', ['linear'], ['heatmap-density'],
+        0,   'rgba(0,0,0,0)',
+        0.15,'rgba(255,111,0,0.25)',
+        0.4, 'rgba(255,80,0,0.55)',
+        0.7, 'rgba(200,30,0,0.78)',
+        1,   'rgba(160,0,0,0.95)'
+      ],
+      'heatmap-radius': ['interpolate', ['linear'], ['zoom'], 6, 18, 10, 30, 14, 50],
+      'heatmap-opacity': 0.78
+    }
+  });
+
   // ── MERCURY SOURCE + LAYER ──
   map.addSource('mercury-src', {
     type: 'geojson',
@@ -1480,7 +3599,7 @@ function addDemoLayers() {
         <div style="font-family:'DM Sans',sans-serif;padding:12px;background:#1A1810;border-radius:8px;color:#E8D9B0">
           <div style="font-family:'Bebas Neue',sans-serif;font-size:16px;color:#9C27B0;letter-spacing:0.06em">☿ ${p.name || 'Mercury Site'}</div>
           <div style="margin-top:6px;font-size:12px;color:#6B6248">${p.county ? p.county + ' County' : ''} ${p.state || ''}</div>
-          <div style="margin-top:8px;font-size:12px;color:#E8D9B0">${[p.commod1, p.commod2, p.commod3].filter(Boolean).join(', ') || ''}</div>
+          <div style="margin-top:8px;font-size:12px;color:#E8D9B0">${p.commod1 || ''}</div>
           <div style="margin-top:6px;font-size:11px;color:#9C27B0;background:rgba(156,39,176,0.1);border-radius:4px;padding:6px">
             Mercury presence can indicate nearby gold — cinnabar and gold often deposit together in hydrothermal systems.
           </div>
@@ -1497,7 +3616,7 @@ function addDemoLayers() {
         <div style="font-family:'DM Sans',sans-serif;padding:12px;background:#1A1810;border-radius:8px;color:#E8D9B0">
           <div style="font-family:'Bebas Neue',sans-serif;font-size:16px;color:#00BCD4;letter-spacing:0.06em">⬡ ${p.name || 'Chromium Site'}</div>
           <div style="margin-top:6px;font-size:12px;color:#6B6248">${p.county ? p.county + ' County' : ''} ${p.state || ''}</div>
-          <div style="margin-top:8px;font-size:12px;color:#E8D9B0">${[p.commod1, p.commod2, p.commod3].filter(Boolean).join(', ') || ''}</div>
+          <div style="margin-top:8px;font-size:12px;color:#E8D9B0">${p.commod1 || ''}</div>
           <div style="margin-top:6px;font-size:11px;color:#00BCD4;background:rgba(0,188,212,0.1);border-radius:4px;padding:6px">
             Chromium deposits form in ultramafic rocks (serpentinite, peridotite) — the same geology that hosts gold in many Oregon and California districts.
           </div>
@@ -1510,108 +3629,6 @@ function addDemoLayers() {
   map.on('mouseleave', 'mercury-layer', () => map.getCanvas().style.cursor = '');
   map.on('mouseenter', 'chromium-layer', () => map.getCanvas().style.cursor = 'pointer');
   map.on('mouseleave', 'chromium-layer', () => map.getCanvas().style.cursor = '');
-
-  // ── COPPER SOURCE + LAYER ──
-  map.addSource('copper-src', {
-    type: 'geojson',
-    data: { type: 'FeatureCollection', features: [] }
-  });
-  map.addLayer({
-    id: 'copper-layer',
-    type: 'circle',
-    source: 'copper-src',
-    layout: { visibility: 'none' },
-    paint: {
-      'circle-radius': ['interpolate', ['linear'], ['zoom'], 8, 4, 14, 8],
-      'circle-color': '#E87722',
-      'circle-stroke-color': '#A04000',
-      'circle-stroke-width': 1,
-      'circle-opacity': 0.85
-    }
-  });
-  map.on('click', 'copper-layer', (e) => {
-    const p = e.features[0].properties;
-    new mapboxgl.Popup({ maxWidth: '300px' })
-      .setLngLat(e.lngLat)
-      .setHTML(`
-        <div style="font-family:'DM Sans',sans-serif;padding:12px;background:#1A1810;border-radius:8px;color:#E8D9B0">
-          <div style="font-family:'Bebas Neue',sans-serif;font-size:16px;color:#E87722;letter-spacing:0.06em">&#x1F7E4; ${p.name || 'Copper Site'}</div>
-          <div style="margin-top:6px;font-size:12px;color:#6B6248">${p.county ? p.county + ' County' : ''} ${p.state || ''}</div>
-          <div style="margin-top:8px;font-size:12px;color:#E8D9B0">${[p.commod1, p.commod2, p.commod3].filter(Boolean).join(', ') || ''}</div>
-          ${p.dep_id ? `<div style="margin-top:10px"><a href="https://mrdata.usgs.gov/mrds/show-mrds.php?dep_id=${p.dep_id}" target="_blank" style="font-family:'DM Mono',monospace;font-size:10px;color:#E87722;text-decoration:none;padding:3px 8px;border:1px solid rgba(232,119,34,0.4);border-radius:4px;">USGS Record &#x2197;</a></div>` : ''}
-        </div>
-      `).addTo(map);
-  });
-  map.on('mouseenter', 'copper-layer', () => map.getCanvas().style.cursor = 'pointer');
-  map.on('mouseleave', 'copper-layer', () => map.getCanvas().style.cursor = '');
-
-  // ── ANTIMONY SOURCE + LAYER ──
-  map.addSource('antimony-src', {
-    type: 'geojson',
-    data: { type: 'FeatureCollection', features: [] }
-  });
-  map.addLayer({
-    id: 'antimony-layer',
-    type: 'circle',
-    source: 'antimony-src',
-    layout: { visibility: 'none' },
-    paint: {
-      'circle-radius': ['interpolate', ['linear'], ['zoom'], 8, 4, 14, 8],
-      'circle-color': '#78909C',
-      'circle-stroke-color': '#455A64',
-      'circle-stroke-width': 1,
-      'circle-opacity': 0.85
-    }
-  });
-  map.on('click', 'antimony-layer', (e) => {
-    const p = e.features[0].properties;
-    new mapboxgl.Popup({ maxWidth: '300px' })
-      .setLngLat(e.lngLat)
-      .setHTML(`
-        <div style="font-family:'DM Sans',sans-serif;padding:12px;background:#1A1810;border-radius:8px;color:#E8D9B0">
-          <div style="font-family:'Bebas Neue',sans-serif;font-size:16px;color:#78909C;letter-spacing:0.06em">&#x2B21; ${p.name || 'Antimony Site'}</div>
-          <div style="margin-top:6px;font-size:12px;color:#6B6248">${p.county ? p.county + ' County' : ''} ${p.state || ''}</div>
-          <div style="margin-top:8px;font-size:12px;color:#E8D9B0">${[p.commod1, p.commod2, p.commod3].filter(Boolean).join(', ') || ''}</div>
-          ${p.dep_id ? `<div style="margin-top:10px"><a href="https://mrdata.usgs.gov/mrds/show-mrds.php?dep_id=${p.dep_id}" target="_blank" style="font-family:'DM Mono',monospace;font-size:10px;color:#78909C;text-decoration:none;padding:3px 8px;border:1px solid rgba(120,144,156,0.4);border-radius:4px;">USGS Record &#x2197;</a></div>` : ''}
-        </div>
-      `).addTo(map);
-  });
-  map.on('mouseenter', 'antimony-layer', () => map.getCanvas().style.cursor = 'pointer');
-  map.on('mouseleave', 'antimony-layer', () => map.getCanvas().style.cursor = '');
-
-  // ── SILVER SOURCE + LAYER ──
-  map.addSource('silver-src', {
-    type: 'geojson',
-    data: { type: 'FeatureCollection', features: [] }
-  });
-  map.addLayer({
-    id: 'silver-layer',
-    type: 'circle',
-    source: 'silver-src',
-    layout: { visibility: 'none' },
-    paint: {
-      'circle-radius': ['interpolate', ['linear'], ['zoom'], 8, 4, 14, 8],
-      'circle-color': '#B0BEC5',
-      'circle-stroke-color': '#78909C',
-      'circle-stroke-width': 1,
-      'circle-opacity': 0.85
-    }
-  });
-  map.on('click', 'silver-layer', (e) => {
-    const p = e.features[0].properties;
-    new mapboxgl.Popup({ maxWidth: '300px' })
-      .setLngLat(e.lngLat)
-      .setHTML(`
-        <div style="font-family:'DM Sans',sans-serif;padding:12px;background:#1A1810;border-radius:8px;color:#E8D9B0">
-          <div style="font-family:'Bebas Neue',sans-serif;font-size:16px;color:#B0BEC5;letter-spacing:0.06em">&#x1FA99; ${p.name || 'Silver Site'}</div>
-          <div style="margin-top:6px;font-size:12px;color:#6B6248">${p.county ? p.county + ' County' : ''} ${p.state || ''}</div>
-          <div style="margin-top:8px;font-size:12px;color:#E8D9B0">${[p.commod1, p.commod2, p.commod3].filter(Boolean).join(', ') || ''}</div>
-          ${p.dep_id ? `<div style="margin-top:10px"><a href="https://mrdata.usgs.gov/mrds/show-mrds.php?dep_id=${p.dep_id}" target="_blank" style="font-family:'DM Mono',monospace;font-size:10px;color:#B0BEC5;text-decoration:none;padding:3px 8px;border:1px solid rgba(176,190,197,0.4);border-radius:4px;">USGS Record &#x2197;</a></div>` : ''}
-        </div>
-      `).addTo(map);
-  });
-  map.on('mouseenter', 'silver-layer', () => map.getCanvas().style.cursor = 'pointer');
-  map.on('mouseleave', 'silver-layer', () => map.getCanvas().style.cursor = '');
 
   map.on('click', 'gold-occurrences-layer', (e) => {
     const p = e.features[0].properties;
@@ -2124,12 +4141,6 @@ function toggleLayer(id) {
   if (bullet) bullet.classList.toggle('on', layerState[id]);
   if (name) name.classList.toggle('on', layerState[id]);
 
-  // Highlight the whole row when active
-  if (bullet) {
-    const row = bullet.closest('.layer-row');
-    if (row) row.classList.toggle('on', layerState[id]);
-  }
-
   // Also update hidden toggle for compat
   const toggle = document.getElementById(`toggle-${id}`);
   if (toggle) toggle.classList.toggle('on', layerState[id]);
@@ -2153,9 +4164,6 @@ function toggleLayer(id) {
     'gold-occurrences': 'gold-occurrences-layer',
     'mercury':        'mercury-layer',
     'chromium':       'chromium-layer',
-    'copper':         'copper-layer',
-    'antimony':       'antimony-layer',
-    'silver':         'silver-layer',
     'stream-gauges':  'stream-gauges-layer',
     'natl-parks':     ['natl-parks-fill', 'natl-parks-line'],
     'wilderness':     ['wilderness-fill', 'wilderness-line'],
@@ -2164,8 +4172,8 @@ function toggleLayer(id) {
     'tribal':         ['tribal-fill', 'tribal-line'],
     'military':       ['military-fill', 'military-line'],
     'terrain-3d':     null,
-    'placer-heatmap': null,
-    'lode-heatmap':   null,
+    'placer-heatmap': 'gold-heatmap-layer',
+    'lode-heatmap':   'mines-heatmap-layer',
     'placer-density': null
   };
 
@@ -2174,13 +4182,29 @@ function toggleLayer(id) {
     return;
   }
 
-  // Coming soon stubs
-  if (['placer-heatmap','lode-heatmap','placer-density'].includes(id)) {
+  // Coming soon stub (placer-density only — heatmaps are now live)
+  if (id === 'placer-density') {
     showStatus('Coming soon — Pro feature');
     layerState[id] = false;
     if (bullet) bullet.classList.remove('on');
     if (name) name.classList.remove('on');
-    if (bullet) { const row = bullet.closest('.layer-row'); if (row) row.classList.remove('on'); }
+    updateActiveLayerBar();
+    return;
+  }
+
+  // Heatmap layers — auto-load underlying point data if not yet fetched
+  if (id === 'placer-heatmap') {
+    if (layerState[id] && !goldLoaded) fetchGoldOccurrences();
+    const htgt = mapLayerMap[id];
+    if (htgt && map.getLayer(htgt)) map.setLayoutProperty(htgt, 'visibility', layerState[id] ? 'visible' : 'none');
+    updateActiveLayerBar();
+    return;
+  }
+  if (id === 'lode-heatmap') {
+    if (layerState[id] && !minesLoaded) fetchHistoricMines();
+    const htgt = mapLayerMap[id];
+    if (htgt && map.getLayer(htgt)) map.setLayoutProperty(htgt, 'visibility', layerState[id] ? 'visible' : 'none');
+    updateActiveLayerBar();
     return;
   }
 
@@ -2189,19 +4213,6 @@ function toggleLayer(id) {
   if (id === 'hist-mines' && layerState[id]) fetchHistoricMines();
   if (id === 'mercury' && layerState[id]) fetchMercury();
   if (id === 'chromium' && layerState[id]) fetchChromium();
-  // Pro tier commodity layers
-  if ((id === 'copper' || id === 'antimony' || id === 'silver') && layerState[id]) {
-    if (!checkProStatus()) {
-      layerState[id] = false;
-      const bullet = document.getElementById('bullet-' + id);
-      if (bullet) bullet.style.opacity = '0.35';
-      showStatus('🔒 ' + id.charAt(0).toUpperCase() + id.slice(1) + ' layer is a Pro feature — upgrade to unlock');
-      return;
-    }
-  }
-  if (id === 'copper' && layerState[id]) fetchCopper();
-  if (id === 'antimony' && layerState[id]) fetchAntimony();
-  if (id === 'silver' && layerState[id]) fetchSilver();
   if (id === 'open-land' && layerState[id]) fetchBLMBoundaries();
   if (id === 'natl-parks' && layerState[id]) fetchNationalParks();
   if (id === 'wilderness' && layerState[id]) fetchWilderness();
@@ -2215,13 +4226,14 @@ function toggleLayer(id) {
   updateRestrictionLegend();
 
   const target = mapLayerMap[id];
-  if (!target) return;
+  if (!target) { updateActiveLayerBar(); return; }
 
   const layers = Array.isArray(target) ? target : [target];
   const vis = layerState[id] ? 'visible' : 'none';
   layers.forEach(l => {
     if (map.getLayer(l)) map.setLayoutProperty(l, 'visibility', vis);
   });
+  updateActiveLayerBar();
 }
 
 function toggleLayers() {
@@ -2432,6 +4444,100 @@ function updateRestrictionLegend() {
   legend.style.display = anyOn ? 'block' : 'none';
 }
 
+// ── GOLD SPOT PRICE ─────────────────────────────────────
+async function fetchGoldPrice() {
+  const valEl    = document.getElementById('gold-price-value');
+  const changeEl = document.getElementById('gold-price-change');
+  const tsEl     = document.getElementById('gold-price-ts');
+  if (!valEl) return;
+  valEl.textContent = '...';
+  try {
+    // metals.live — free, no key, browser-safe
+    const res  = await fetch('https://api.metals.live/v1/spot/gold');
+    const data = await res.json();
+    const price = Array.isArray(data) ? data[0]?.price : data?.price;
+    if (price) {
+      valEl.textContent = '$' + Number(price).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+      changeEl.textContent = '';
+      changeEl.className = '';
+      const now = new Date();
+      if (tsEl) tsEl.textContent = now.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' });
+      return;
+    }
+  } catch(e) { /* fall through to backup */ }
+  try {
+    // Backup: goldprice.org data endpoint
+    const res2  = await fetch('https://data-asg.goldprice.org/dbXRates/USD');
+    const d2    = await res2.json();
+    const price2 = d2?.items?.[0]?.xauPrice;
+    if (price2) {
+      valEl.textContent = '$' + Number(price2).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+      if (tsEl) tsEl.textContent = 'live';
+      return;
+    }
+  } catch(e2) { /* ignore */ }
+  valEl.textContent = '—';
+  if (tsEl) tsEl.textContent = '';
+}
+
+// ── ACTIVE LAYER INDICATOR BAR ──────────────────────────
+const LAYER_CHIP_LABELS = {
+  'placer-claims':   '⬡ Placer',
+  'lode-claims':     '⬡ Lode',
+  'tunnel-claims':   '⬡ Tunnel',
+  'mill-claims':     '⬡ Mill',
+  'closed-claims':   '● Closed Claims',
+  'gold-occurrences':'🥇 Gold Sites',
+  'hist-mines':      '🕳 Mine Sites',
+  'placer-heatmap':  '🔥 Gold Heat',
+  'lode-heatmap':    '🔥 Mine Heat',
+  'mercury':         '☿ Mercury',
+  'chromium':        '⬡ Chromium',
+  'copper':          '🟤 Copper',
+  'antimony':        '⬡ Antimony',
+  'silver':          '🪙 Silver',
+  'stream-gauges':   '💧 Gauges',
+  'open-land':       '🟠 Land Mgmt',
+  'open-to-claim':   '✅ Open BLM',
+  'plss':            '📐 Survey Grid',
+  'blm-roads':       '🛤 BLM Roads',
+  'natl-parks':      '❌ Natl Parks',
+  'wilderness':      '⚠️ Wilderness',
+  'monuments':       '🏛 Monuments',
+  'wild-scenic':     '🌊 Wild Scenic',
+  'tribal':          '🏔 Tribal',
+  'military':        '⚠️ Military',
+  'lidar':           '🗻 LiDAR',
+  'contours':        '📈 Contours',
+  'terrain-3d':      '⛰ 3D Terrain',
+};
+
+function updateActiveLayerBar() {
+  const bar   = document.getElementById('active-layer-bar');
+  const chips = document.getElementById('active-layer-chips');
+  if (!bar || !chips) return;
+
+  // active-claims is always on — don't clutter the bar with it
+  const activeIds = Object.entries(layerState)
+    .filter(([id, on]) => on && id !== 'active-claims')
+    .map(([id]) => id);
+
+  if (activeIds.length === 0) {
+    bar.classList.remove('visible');
+    return;
+  }
+
+  chips.innerHTML = activeIds
+    .filter(id => LAYER_CHIP_LABELS[id])
+    .map(id => `
+      <div class="layer-chip" onclick="toggleLayer('${id}')">
+        ${LAYER_CHIP_LABELS[id]}<span class="chip-x">✕</span>
+      </div>`)
+    .join('');
+
+  bar.classList.add('visible');
+}
+
 function showStatus(msg) {
   const pill = document.getElementById('status-pill');
   pill.textContent = msg;
@@ -2455,9 +4561,6 @@ const LAYER_DESCRIPTIONS = {
   'hist-mines':       'USGS recorded mine sites. Orange dot = surface workings. Never enter underground mines — collapse risk.',
   'mercury':          'USGS recorded mercury sites. Mercury and gold often deposit together in hydrothermal systems — mercury presence nearby is a prospecting indicator.',
   'chromium':         'USGS recorded chromium sites. Chromium forms in ultramafic rocks (serpentinite) that host gold in Oregon and California districts. Strong indicator of gold-bearing geology.',
-  'copper':           'USGS recorded copper occurrences. Copper and gold often deposit together in porphyry and skarn systems. Copper staining on rocks (blue-green) in the field is a classic prospecting indicator. Pro tier feature.',
-  'antimony':         'USGS recorded antimony occurrences. Antimony (stibnite) is a strong gold pathfinder mineral — it deposits at similar temperatures and is commonly found in low-sulfidation epithermal gold systems. Pro tier feature.',
-  'silver':           'USGS recorded silver occurrences. Silver and gold are closely associated in many deposit types, especially epithermal veins. High silver-to-gold ratios indicate shallower, boiling zone epithermal deposits. Pro tier feature.',
   'open-land':        'Federal land surface management — BLM, USFS, NPS, FWS shown by agency.',
   'open-to-claim':    'BLM land currently open for mineral entry under the 1872 Mining Law. Always verify locally.',
   'plss':             'Public Land Survey System grid — the township/range grid used to describe claim locations.',
@@ -2834,136 +4937,47 @@ let mercuryLoaded = false;
 async function fetchMercury(silent = false) {
   if (!sbClient) { showStatus('Auth not ready'); return; }
   if (!silent) showStatus('Loading mercury occurrences...');
+
   const bounds = map.getBounds();
   try {
     const { data, error } = await sbClient
       .from('mrds_sites')
-      .select('dep_id, site_name, latitude, longitude, commod1, commod2, commod3, county, state, dev_stat')
+      .select('dep_id, site_name, latitude, longitude, commod1, county, state, dev_stat')
       .or('commod1.ilike.%mercury%,commod2.ilike.%mercury%')
       .gte('latitude', bounds.getSouth())
       .lte('latitude', bounds.getNorth())
       .gte('longitude', bounds.getWest())
       .lte('longitude', bounds.getEast())
       .limit(500);
+
     if (error) throw error;
     mercuryLoaded = true;
+
     const features = (data || []).map(r => ({
       type: 'Feature',
-      properties: { name: r.site_name, dep_id: r.dep_id, commod1: r.commod1, commod2: r.commod2, commod3: r.commod3, county: r.county, state: r.state, dev_stat: r.dev_stat },
+      properties: {
+        name: r.site_name,
+        dep_id: r.dep_id,
+        commod1: r.commod1,
+        county: r.county,
+        state: r.state,
+        dev_stat: r.dev_stat
+      },
       geometry: { type: 'Point', coordinates: [r.longitude, r.latitude] }
     }));
+
     map.getSource('mercury-src').setData({ type: 'FeatureCollection', features });
     showStatus(`${features.length} mercury sites loaded`);
-  } catch(e) { showStatus('Error loading mercury data'); console.error(e); }
+  } catch(e) {
+    showStatus('Error loading mercury data');
+    console.error(e);
+  }
 }
 
 let chromiumLoaded = false;
 async function fetchChromium(silent = false) {
   if (!sbClient) { showStatus('Auth not ready'); return; }
   if (!silent) showStatus('Loading chromium occurrences...');
-  const bounds = map.getBounds();
-  try {
-    const { data, error } = await sbClient
-      .from('mrds_sites')
-      .select('dep_id, site_name, latitude, longitude, commod1, commod2, commod3, county, state, dev_stat')
-      .or('commod1.ilike.%chromium%,commod2.ilike.%chromium%')
-      .gte('latitude', bounds.getSouth())
-      .lte('latitude', bounds.getNorth())
-      .gte('longitude', bounds.getWest())
-      .lte('longitude', bounds.getEast())
-      .limit(500);
-    if (error) throw error;
-    chromiumLoaded = true;
-    const features = (data || []).map(r => ({
-      type: 'Feature',
-      properties: { name: r.site_name, dep_id: r.dep_id, commod1: r.commod1, commod2: r.commod2, commod3: r.commod3, county: r.county, state: r.state, dev_stat: r.dev_stat },
-      geometry: { type: 'Point', coordinates: [r.longitude, r.latitude] }
-    }));
-    map.getSource('chromium-src').setData({ type: 'FeatureCollection', features });
-    showStatus(`${features.length} chromium sites loaded`);
-  } catch(e) { showStatus('Error loading chromium data'); console.error(e); }
-}
-
-let copperLoaded = false;
-async function fetchCopper(silent = false) {
-  if (!sbClient) { showStatus('Auth not ready'); return; }
-  if (!silent) showStatus('Loading copper occurrences...');
-  const bounds = map.getBounds();
-  try {
-    const { data, error } = await sbClient
-      .from('mrds_sites')
-      .select('dep_id, site_name, latitude, longitude, commod1, commod2, commod3, county, state, dev_stat')
-      .or('commod1.ilike.%copper%,commod2.ilike.%copper%,commod3.ilike.%copper%')
-      .gte('latitude', bounds.getSouth())
-      .lte('latitude', bounds.getNorth())
-      .gte('longitude', bounds.getWest())
-      .lte('longitude', bounds.getEast())
-      .limit(500);
-    if (error) throw error;
-    copperLoaded = true;
-    const features = (data || []).map(r => ({
-      type: 'Feature',
-      properties: { name: r.site_name, dep_id: r.dep_id, commod1: r.commod1, commod2: r.commod2, commod3: r.commod3, county: r.county, state: r.state, dev_stat: r.dev_stat },
-      geometry: { type: 'Point', coordinates: [r.longitude, r.latitude] }
-    }));
-    map.getSource('copper-src').setData({ type: 'FeatureCollection', features });
-    showStatus(`${features.length} copper sites loaded`);
-  } catch(e) { showStatus('Error loading copper data'); console.error(e); }
-}
-
-let antimonyLoaded = false;
-async function fetchAntimony(silent = false) {
-  if (!sbClient) { showStatus('Auth not ready'); return; }
-  if (!silent) showStatus('Loading antimony occurrences...');
-  const bounds = map.getBounds();
-  try {
-    const { data, error } = await sbClient
-      .from('mrds_sites')
-      .select('dep_id, site_name, latitude, longitude, commod1, commod2, commod3, county, state, dev_stat')
-      .or('commod1.ilike.%antimony%,commod2.ilike.%antimony%,commod3.ilike.%antimony%')
-      .gte('latitude', bounds.getSouth())
-      .lte('latitude', bounds.getNorth())
-      .gte('longitude', bounds.getWest())
-      .lte('longitude', bounds.getEast())
-      .limit(500);
-    if (error) throw error;
-    antimonyLoaded = true;
-    const features = (data || []).map(r => ({
-      type: 'Feature',
-      properties: { name: r.site_name, dep_id: r.dep_id, commod1: r.commod1, commod2: r.commod2, commod3: r.commod3, county: r.county, state: r.state, dev_stat: r.dev_stat },
-      geometry: { type: 'Point', coordinates: [r.longitude, r.latitude] }
-    }));
-    map.getSource('antimony-src').setData({ type: 'FeatureCollection', features });
-    showStatus(`${features.length} antimony sites loaded`);
-  } catch(e) { showStatus('Error loading antimony data'); console.error(e); }
-}
-
-let silverLoaded = false;
-async function fetchSilver(silent = false) {
-  if (!sbClient) { showStatus('Auth not ready'); return; }
-  if (!silent) showStatus('Loading silver occurrences...');
-  const bounds = map.getBounds();
-  try {
-    const { data, error } = await sbClient
-      .from('mrds_sites')
-      .select('dep_id, site_name, latitude, longitude, commod1, commod2, commod3, county, state, dev_stat')
-      .or('commod1.ilike.%silver%,commod2.ilike.%silver%,commod3.ilike.%silver%')
-      .gte('latitude', bounds.getSouth())
-      .lte('latitude', bounds.getNorth())
-      .gte('longitude', bounds.getWest())
-      .lte('longitude', bounds.getEast())
-      .limit(500);
-    if (error) throw error;
-    silverLoaded = true;
-    const features = (data || []).map(r => ({
-      type: 'Feature',
-      properties: { name: r.site_name, dep_id: r.dep_id, commod1: r.commod1, commod2: r.commod2, commod3: r.commod3, county: r.county, state: r.state, dev_stat: r.dev_stat },
-      geometry: { type: 'Point', coordinates: [r.longitude, r.latitude] }
-    }));
-    map.getSource('silver-src').setData({ type: 'FeatureCollection', features });
-    showStatus(`${features.length} silver sites loaded`);
-  } catch(e) { showStatus('Error loading silver data'); console.error(e); }
-}
 
   const bounds = map.getBounds();
   try {
@@ -2995,7 +5009,10 @@ async function fetchSilver(silent = false) {
 
     map.getSource('chromium-src').setData({ type: 'FeatureCollection', features });
     showStatus(`${features.length} chromium sites loaded`);
-  } catch(e) { showStatus('Error loading chromium data'); console.error(e); }
+  } catch(e) {
+    showStatus('Error loading chromium data');
+    console.error(e);
+  }
 }
 
 // ── ACCOUNT PANEL ───────────────────────────────────────
@@ -3013,6 +5030,7 @@ async function openAccountPanel() {
   }
   document.getElementById('account-panel').classList.add('open');
   document.getElementById('overlay').classList.add('show');
+  fetchGoldPrice();
   loadAccountData();
 }
 
@@ -3713,8 +5731,9 @@ function closeAIMenu() {
 }
 
 function checkProStatus() {
-  // TEMP: Pro enabled for testing — set back to false before launch
-  return true;
+  // Pro tier not yet built — all users are on free tier for now
+  // When Pro is implemented, check currentUser subscription here
+  return false;
 }
 
 function getRockIdUses() {
