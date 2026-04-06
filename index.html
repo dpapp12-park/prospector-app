@@ -251,6 +251,24 @@ window.PROSPECTOR_CONFIG = {
           <span class="layer-name" id="name-chromium">Chromium Occurrences</span>
           <button class="info-btn" onclick="showLayerInfo(event,'chromium')">i</button>
         </div>
+        <div class="layer-row" onclick="toggleLayer('copper')">
+          <div class="layer-bullet" id="bullet-copper" style="color:#E87722">●</div>
+          <span class="layer-name" id="name-copper">Copper Occurrences</span>
+          <span class="layer-badge pro">PRO</span>
+          <button class="info-btn" onclick="showLayerInfo(event,'copper')">i</button>
+        </div>
+        <div class="layer-row" onclick="toggleLayer('antimony')">
+          <div class="layer-bullet" id="bullet-antimony" style="color:#78909C">●</div>
+          <span class="layer-name" id="name-antimony">Antimony Occurrences</span>
+          <span class="layer-badge pro">PRO</span>
+          <button class="info-btn" onclick="showLayerInfo(event,'antimony')">i</button>
+        </div>
+        <div class="layer-row" onclick="toggleLayer('silver')">
+          <div class="layer-bullet" id="bullet-silver" style="color:#B0BEC5">●</div>
+          <span class="layer-name" id="name-silver">Silver Occurrences</span>
+          <span class="layer-badge pro">PRO</span>
+          <button class="info-btn" onclick="showLayerInfo(event,'silver')">i</button>
+        </div>
       </div>
     </div>
     <div class="group-divider"></div>
@@ -457,6 +475,9 @@ window.PROSPECTOR_CONFIG = {
       <div id="toggle-hist-mines" class="toggle"></div>
       <div id="toggle-mercury" class="toggle"></div>
       <div id="toggle-chromium" class="toggle"></div>
+      <div id="toggle-copper" class="toggle"></div>
+      <div id="toggle-antimony" class="toggle"></div>
+      <div id="toggle-silver" class="toggle"></div>
       <div id="toggle-open-to-claim" class="toggle"></div>
       <div id="toggle-monuments" class="toggle"></div>
       <div id="toggle-wild-scenic" class="toggle"></div>
@@ -530,6 +551,9 @@ window.PROSPECTOR_CONFIG = {
     <div class="account-tab" onclick="switchAccountTab(this,'spots')">📍 Spots</div>
     <div class="account-tab" onclick="switchAccountTab(this,'claims')">⛏️ Saved Claims</div>
     <div class="account-tab" onclick="switchAccountTab(this,'watches')">🔔 Watching</div>
+  </div>
+  <div style="padding:8px 20px 4px;font-family:'DM Mono',monospace;font-size:9px;color:var(--stone);letter-spacing:0.08em;border-bottom:1px solid rgba(255,255,255,0.05)">
+    Claims Data Last Updated &nbsp;·&nbsp; April 5, 2026
   </div>
 
   <div id="tab-finds" class="account-tab-content active">
@@ -902,6 +926,9 @@ let layerState = {
   'hist-mines': false,
   'mercury': false,
   'chromium': false,
+  'copper': false,
+  'antimony': false,
+  'silver': false,
   'natl-parks': false,
   'wilderness': false,
   'stream-gauges': false,
@@ -988,6 +1015,7 @@ function startMap(token) {
     map.on('moveend', () => {
       const anyMrds = layerState['gold-occurrences'] || layerState['hist-mines'] ||
         layerState['mercury'] || layerState['chromium'] ||
+        layerState['copper'] || layerState['antimony'] || layerState['silver'] ||
         layerState['placer-heatmap'] || layerState['lode-heatmap'];
       if (!anyMrds) return;
       clearTimeout(mrdsReloadTimer);
@@ -996,6 +1024,9 @@ function startMap(token) {
         if (layerState['hist-mines'] || layerState['lode-heatmap']) fetchHistoricMines(true);
         if (layerState['mercury']) fetchMercury(true);
         if (layerState['chromium']) fetchChromium(true);
+        if (layerState['copper']) fetchCopper(true);
+        if (layerState['antimony']) fetchAntimony(true);
+        if (layerState['silver']) fetchSilver(true);
       }, 800);
     });
 
@@ -1222,7 +1253,7 @@ function addDemoLayers() {
               <div style="font-size:13px;font-weight:500;margin-top:2px" id="popup-dist-${serial}">—</div>
             </div>
             <div>
-              <div style="font-family:'DM Mono',monospace;font-size:9px;letter-spacing:0.1em;text-transform:uppercase;color:#4A4030">Filed</div>
+              <div style="font-family:'DM Mono',monospace;font-size:9px;letter-spacing:0.1em;text-transform:uppercase;color:#4A4030">Disposition Date</div>
               <div style="font-size:13px;font-weight:500;margin-top:2px" id="popup-filed-${serial}">Loading...</div>
             </div>
             <div>
@@ -1668,6 +1699,121 @@ function addDemoLayers() {
   map.on('mouseleave', 'mercury-layer', () => map.getCanvas().style.cursor = '');
   map.on('mouseenter', 'chromium-layer', () => map.getCanvas().style.cursor = 'pointer');
   map.on('mouseleave', 'chromium-layer', () => map.getCanvas().style.cursor = '');
+
+  // ── COPPER SOURCE + LAYER (Pro tier) ──
+  map.addSource('copper-src', {
+    type: 'geojson',
+    data: { type: 'FeatureCollection', features: [] }
+  });
+  map.addLayer({
+    id: 'copper-layer',
+    type: 'circle',
+    source: 'copper-src',
+    layout: { visibility: 'none' },
+    paint: {
+      'circle-radius': ['interpolate', ['linear'], ['zoom'], 8, 4, 14, 8],
+      'circle-color': '#E87722',
+      'circle-stroke-color': '#A04A00',
+      'circle-stroke-width': 1,
+      'circle-opacity': 0.85
+    }
+  });
+
+  // ── ANTIMONY SOURCE + LAYER (Pro tier) ──
+  map.addSource('antimony-src', {
+    type: 'geojson',
+    data: { type: 'FeatureCollection', features: [] }
+  });
+  map.addLayer({
+    id: 'antimony-layer',
+    type: 'circle',
+    source: 'antimony-src',
+    layout: { visibility: 'none' },
+    paint: {
+      'circle-radius': ['interpolate', ['linear'], ['zoom'], 8, 4, 14, 8],
+      'circle-color': '#78909C',
+      'circle-stroke-color': '#455A64',
+      'circle-stroke-width': 1,
+      'circle-opacity': 0.85
+    }
+  });
+
+  // ── SILVER SOURCE + LAYER (Pro tier) ──
+  map.addSource('silver-src', {
+    type: 'geojson',
+    data: { type: 'FeatureCollection', features: [] }
+  });
+  map.addLayer({
+    id: 'silver-layer',
+    type: 'circle',
+    source: 'silver-src',
+    layout: { visibility: 'none' },
+    paint: {
+      'circle-radius': ['interpolate', ['linear'], ['zoom'], 8, 4, 14, 8],
+      'circle-color': '#B0BEC5',
+      'circle-stroke-color': '#78909C',
+      'circle-stroke-width': 1,
+      'circle-opacity': 0.85
+    }
+  });
+
+  map.on('click', 'copper-layer', (e) => {
+    const p = e.features[0].properties;
+    new mapboxgl.Popup({ maxWidth: '300px' })
+      .setLngLat(e.lngLat)
+      .setHTML(`
+        <div style="font-family:'DM Sans',sans-serif;padding:12px;background:#1A1810;border-radius:8px;color:#E8D9B0">
+          <div style="font-family:'Bebas Neue',sans-serif;font-size:16px;color:#E87722;letter-spacing:0.06em">🟤 ${p.name || 'Copper Site'}</div>
+          <div style="margin-top:6px;font-size:12px;color:#6B6248">${p.county ? p.county + ' County' : ''} ${p.state || ''}</div>
+          <div style="margin-top:8px;font-size:12px;color:#E8D9B0">${p.commod1 || ''}</div>
+          <div style="margin-top:6px;font-size:11px;color:#E87722;background:rgba(232,119,34,0.1);border-radius:4px;padding:6px">
+            Copper and gold are common companions in porphyry and skarn deposits — high copper density can indicate gold-bearing hydrothermal systems.
+          </div>
+          ${p.dep_id ? `<div style="margin-top:10px"><a href="https://mrdata.usgs.gov/mrds/show-mrds.php?dep_id=${p.dep_id}" target="_blank" style="font-family:'DM Mono',monospace;font-size:10px;color:#E87722;text-decoration:none;padding:3px 8px;border:1px solid rgba(232,119,34,0.4);border-radius:4px;">USGS Record ↗</a></div>` : ''}
+        </div>`)
+      .addTo(map);
+  });
+
+  map.on('click', 'antimony-layer', (e) => {
+    const p = e.features[0].properties;
+    new mapboxgl.Popup({ maxWidth: '300px' })
+      .setLngLat(e.lngLat)
+      .setHTML(`
+        <div style="font-family:'DM Sans',sans-serif;padding:12px;background:#1A1810;border-radius:8px;color:#E8D9B0">
+          <div style="font-family:'Bebas Neue',sans-serif;font-size:16px;color:#78909C;letter-spacing:0.06em">⬡ ${p.name || 'Antimony Site'}</div>
+          <div style="margin-top:6px;font-size:12px;color:#6B6248">${p.county ? p.county + ' County' : ''} ${p.state || ''}</div>
+          <div style="margin-top:8px;font-size:12px;color:#E8D9B0">${p.commod1 || ''}</div>
+          <div style="margin-top:6px;font-size:11px;color:#78909C;background:rgba(120,144,156,0.1);border-radius:4px;padding:6px">
+            Antimony (stibnite) is a key pathfinder mineral for gold — many major gold deposits worldwide have antimony anomalies nearby.
+          </div>
+          ${p.dep_id ? `<div style="margin-top:10px"><a href="https://mrdata.usgs.gov/mrds/show-mrds.php?dep_id=${p.dep_id}" target="_blank" style="font-family:'DM Mono',monospace;font-size:10px;color:#78909C;text-decoration:none;padding:3px 8px;border:1px solid rgba(120,144,156,0.4);border-radius:4px;">USGS Record ↗</a></div>` : ''}
+        </div>`)
+      .addTo(map);
+  });
+
+  map.on('click', 'silver-layer', (e) => {
+    const p = e.features[0].properties;
+    new mapboxgl.Popup({ maxWidth: '300px' })
+      .setLngLat(e.lngLat)
+      .setHTML(`
+        <div style="font-family:'DM Sans',sans-serif;padding:12px;background:#1A1810;border-radius:8px;color:#E8D9B0">
+          <div style="font-family:'Bebas Neue',sans-serif;font-size:16px;color:#B0BEC5;letter-spacing:0.06em">🪙 ${p.name || 'Silver Site'}</div>
+          <div style="margin-top:6px;font-size:12px;color:#6B6248">${p.county ? p.county + ' County' : ''} ${p.state || ''}</div>
+          <div style="margin-top:8px;font-size:12px;color:#E8D9B0">${p.commod1 || ''}</div>
+          <div style="margin-top:6px;font-size:11px;color:#B0BEC5;background:rgba(176,190,197,0.1);border-radius:4px;padding:6px">
+            Silver and gold are frequently co-deposited in epithermal veins. Silver-rich areas are strong indicators of precious metal mineralization.
+          </div>
+          ${p.dep_id ? `<div style="margin-top:10px"><a href="https://mrdata.usgs.gov/mrds/show-mrds.php?dep_id=${p.dep_id}" target="_blank" style="font-family:'DM Mono',monospace;font-size:10px;color:#B0BEC5;text-decoration:none;padding:3px 8px;border:1px solid rgba(176,190,197,0.4);border-radius:4px;">USGS Record ↗</a></div>` : ''}
+        </div>`)
+      .addTo(map);
+  });
+
+  map.on('mouseenter', 'copper-layer', () => map.getCanvas().style.cursor = 'pointer');
+  map.on('mouseleave', 'copper-layer', () => map.getCanvas().style.cursor = '');
+  map.on('mouseenter', 'antimony-layer', () => map.getCanvas().style.cursor = 'pointer');
+  map.on('mouseleave', 'antimony-layer', () => map.getCanvas().style.cursor = '');
+  map.on('mouseenter', 'silver-layer', () => map.getCanvas().style.cursor = 'pointer');
+  map.on('mouseleave', 'silver-layer', () => map.getCanvas().style.cursor = '');
 
   map.on('click', 'gold-occurrences-layer', (e) => {
     const p = e.features[0].properties;
@@ -2203,6 +2349,9 @@ function toggleLayer(id) {
     'gold-occurrences': 'gold-occurrences-layer',
     'mercury':        'mercury-layer',
     'chromium':       'chromium-layer',
+    'copper':         'copper-layer',
+    'antimony':       'antimony-layer',
+    'silver':         'silver-layer',
     'stream-gauges':  'stream-gauges-layer',
     'natl-parks':     ['natl-parks-fill', 'natl-parks-line'],
     'wilderness':     ['wilderness-fill', 'wilderness-line'],
@@ -2252,6 +2401,39 @@ function toggleLayer(id) {
   if (id === 'hist-mines' && layerState[id]) fetchHistoricMines();
   if (id === 'mercury' && layerState[id]) fetchMercury();
   if (id === 'chromium' && layerState[id]) fetchChromium();
+  if (id === 'copper' && layerState[id]) {
+    if (!checkProStatus()) {
+      showStatus('🔒 Copper layer is a Pro feature');
+      layerState[id] = false;
+      if (bullet) bullet.classList.remove('on');
+      if (name) name.classList.remove('on');
+      updateActiveLayerBar();
+      return;
+    }
+    fetchCopper();
+  }
+  if (id === 'antimony' && layerState[id]) {
+    if (!checkProStatus()) {
+      showStatus('🔒 Antimony layer is a Pro feature');
+      layerState[id] = false;
+      if (bullet) bullet.classList.remove('on');
+      if (name) name.classList.remove('on');
+      updateActiveLayerBar();
+      return;
+    }
+    fetchAntimony();
+  }
+  if (id === 'silver' && layerState[id]) {
+    if (!checkProStatus()) {
+      showStatus('🔒 Silver layer is a Pro feature');
+      layerState[id] = false;
+      if (bullet) bullet.classList.remove('on');
+      if (name) name.classList.remove('on');
+      updateActiveLayerBar();
+      return;
+    }
+    fetchSilver();
+  }
   if (id === 'open-land' && layerState[id]) fetchBLMBoundaries();
   if (id === 'natl-parks' && layerState[id]) fetchNationalParks();
   if (id === 'wilderness' && layerState[id]) fetchWilderness();
@@ -2600,6 +2782,9 @@ const LAYER_DESCRIPTIONS = {
   'hist-mines':       'USGS recorded mine sites. Orange dot = surface workings. Never enter underground mines — collapse risk.',
   'mercury':          'USGS recorded mercury sites. Mercury and gold often deposit together in hydrothermal systems — mercury presence nearby is a prospecting indicator.',
   'chromium':         'USGS recorded chromium sites. Chromium forms in ultramafic rocks (serpentinite) that host gold in Oregon and California districts. Strong indicator of gold-bearing geology.',
+  'copper':           'USGS recorded copper sites. Copper and gold are common companions in porphyry and skarn deposits — high copper density can indicate gold-bearing hydrothermal systems. Pro tier.',
+  'antimony':         'USGS recorded antimony sites. Antimony (stibnite) is a key pathfinder mineral for gold — many major gold deposits worldwide have antimony anomalies nearby. Pro tier.',
+  'silver':           'USGS recorded silver sites. Silver and gold are frequently co-deposited in epithermal veins. Silver-rich areas are strong indicators of precious metal mineralization. Pro tier.',
   'open-land':        'Federal land surface management — BLM, USFS, NPS, FWS shown by agency.',
   'open-to-claim':    'BLM land currently open for mineral entry under the 1872 Mining Law. Always verify locally.',
   'plss':             'Public Land Survey System grid — the township/range grid used to describe claim locations.',
@@ -3050,6 +3235,129 @@ async function fetchChromium(silent = false) {
     showStatus(`${features.length} chromium sites loaded`);
   } catch(e) {
     showStatus('Error loading chromium data');
+    console.error(e);
+  }
+}
+
+let copperLoaded = false;
+async function fetchCopper(silent = false) {
+  if (!sbClient) { showStatus('Auth not ready'); return; }
+  if (!silent) showStatus('Loading copper occurrences...');
+
+  const bounds = map.getBounds();
+  try {
+    const { data, error } = await sbClient
+      .from('mrds_sites')
+      .select('dep_id, site_name, latitude, longitude, commod1, county, state, dev_stat')
+      .or('commod1.ilike.%copper%,commod2.ilike.%copper%')
+      .gte('latitude', bounds.getSouth())
+      .lte('latitude', bounds.getNorth())
+      .gte('longitude', bounds.getWest())
+      .lte('longitude', bounds.getEast())
+      .limit(500);
+
+    if (error) throw error;
+    copperLoaded = true;
+
+    const features = (data || []).map(r => ({
+      type: 'Feature',
+      properties: {
+        name: r.site_name,
+        dep_id: r.dep_id,
+        commod1: r.commod1,
+        county: r.county,
+        state: r.state,
+        dev_stat: r.dev_stat
+      },
+      geometry: { type: 'Point', coordinates: [r.longitude, r.latitude] }
+    }));
+
+    map.getSource('copper-src').setData({ type: 'FeatureCollection', features });
+    showStatus(`${features.length} copper sites loaded`);
+  } catch(e) {
+    showStatus('Error loading copper data');
+    console.error(e);
+  }
+}
+
+let antimonyLoaded = false;
+async function fetchAntimony(silent = false) {
+  if (!sbClient) { showStatus('Auth not ready'); return; }
+  if (!silent) showStatus('Loading antimony occurrences...');
+
+  const bounds = map.getBounds();
+  try {
+    const { data, error } = await sbClient
+      .from('mrds_sites')
+      .select('dep_id, site_name, latitude, longitude, commod1, county, state, dev_stat')
+      .or('commod1.ilike.%antimony%,commod2.ilike.%antimony%')
+      .gte('latitude', bounds.getSouth())
+      .lte('latitude', bounds.getNorth())
+      .gte('longitude', bounds.getWest())
+      .lte('longitude', bounds.getEast())
+      .limit(500);
+
+    if (error) throw error;
+    antimonyLoaded = true;
+
+    const features = (data || []).map(r => ({
+      type: 'Feature',
+      properties: {
+        name: r.site_name,
+        dep_id: r.dep_id,
+        commod1: r.commod1,
+        county: r.county,
+        state: r.state,
+        dev_stat: r.dev_stat
+      },
+      geometry: { type: 'Point', coordinates: [r.longitude, r.latitude] }
+    }));
+
+    map.getSource('antimony-src').setData({ type: 'FeatureCollection', features });
+    showStatus(`${features.length} antimony sites loaded`);
+  } catch(e) {
+    showStatus('Error loading antimony data');
+    console.error(e);
+  }
+}
+
+let silverLoaded = false;
+async function fetchSilver(silent = false) {
+  if (!sbClient) { showStatus('Auth not ready'); return; }
+  if (!silent) showStatus('Loading silver occurrences...');
+
+  const bounds = map.getBounds();
+  try {
+    const { data, error } = await sbClient
+      .from('mrds_sites')
+      .select('dep_id, site_name, latitude, longitude, commod1, county, state, dev_stat')
+      .or('commod1.ilike.%silver%,commod2.ilike.%silver%')
+      .gte('latitude', bounds.getSouth())
+      .lte('latitude', bounds.getNorth())
+      .gte('longitude', bounds.getWest())
+      .lte('longitude', bounds.getEast())
+      .limit(500);
+
+    if (error) throw error;
+    silverLoaded = true;
+
+    const features = (data || []).map(r => ({
+      type: 'Feature',
+      properties: {
+        name: r.site_name,
+        dep_id: r.dep_id,
+        commod1: r.commod1,
+        county: r.county,
+        state: r.state,
+        dev_stat: r.dev_stat
+      },
+      geometry: { type: 'Point', coordinates: [r.longitude, r.latitude] }
+    }));
+
+    map.getSource('silver-src').setData({ type: 'FeatureCollection', features });
+    showStatus(`${features.length} silver sites loaded`);
+  } catch(e) {
+    showStatus('Error loading silver data');
     console.error(e);
   }
 }
