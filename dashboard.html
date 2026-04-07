@@ -1159,19 +1159,17 @@ function scoreArcSVG(score, color) {
   const r = 34; const cx = 48; const cy = 48;
   const clamp = Math.max(0, Math.min(score, 100));
   const circ = 2 * Math.PI * r;
-  // Ring fills clockwise from top. Gap of 0 at 100%, leaves small gap otherwise.
   const filled = (clamp / 100) * circ;
-  // strokeDashoffset rotates start point to top (12 o'clock)
-  const offset = circ * 0.25;
+  // dashoffset shifts start to 12 o'clock: offset = circ/4 means top
+  // We rotate the circle -90deg so 12 o'clock is the start
   return `<svg width="96" height="96" viewBox="0 0 96 96" style="display:block;margin:0 auto">
     <circle cx="${cx}" cy="${cy}" r="${r}" fill="none" stroke="var(--border-md)" stroke-width="7"/>
     <circle cx="${cx}" cy="${cy}" r="${r}" fill="none" stroke="${color}" stroke-width="7"
       stroke-linecap="round"
-      stroke-dasharray="${filled.toFixed(2)} ${circ.toFixed(2)}"
-      stroke-dashoffset="${offset.toFixed(2)}"
+      stroke-dasharray="${filled.toFixed(2)} ${(circ - filled).toFixed(2)}"
+      stroke-dashoffset="0"
       transform="rotate(-90 ${cx} ${cy})"/>
-    <text x="${cx}" y="${cy + 2}" text-anchor="middle" dominant-baseline="middle" font-family="Bebas Neue,sans-serif" font-size="26" fill="${color}">${clamp}</text>
-    <text x="${cx}" y="${cy + 20}" text-anchor="middle" font-family="DM Mono,monospace" font-size="8" fill="var(--text-3)" letter-spacing="0.06em">OUT OF 100</text>
+    <text x="${cx}" y="${cy + 2}" text-anchor="middle" dominant-baseline="middle" font-family="Bebas Neue,sans-serif" font-size="28" fill="${color}">${clamp}</text>
   </svg>`;
 }
 
@@ -1179,20 +1177,17 @@ function renderIntelCard(el, d, spot) {
   const score = computeGoldScore(d);
   const tier  = scoreTier(score.total);
 
-  // Stat row matches breakdown order: Gold Occs, Historic Mines, Active Claims, Closed Claims, Indicators
+  // Stat row — names match breakdown bars exactly, no info icons needed
   const statRow = [
-    { num: (d.gold_sites        || 0).toLocaleString(), lbl: 'Gold Occs',  cls: 'gold',   tip: 'USGS-documented gold locations' },
-    { num: (d.historic_mines    || 0).toLocaleString(), lbl: 'Mines',      cls: 'orange',  tip: 'Physical mine sites with documented workings' },
-    { num: (d.active_claims     || 0).toLocaleString(), lbl: 'Active Clms',cls: 'green',   tip: 'Currently active mining claims' },
-    { num: (d.closed_claims     || 0).toLocaleString(), lbl: 'Closed Clms',cls: 'red',     tip: 'Lapsed/abandoned claims — historical activity' },
-    { num: (d.indicator_minerals|| 0).toLocaleString(), lbl: 'Indicators', cls: '',        tip: 'Mercury, chromium, copper — minerals near gold' },
+    { num: (d.gold_sites        || 0).toLocaleString(), lbl: 'Gold Occurrences', cls: 'gold'   },
+    { num: (d.historic_mines    || 0).toLocaleString(), lbl: 'Historic Mines',   cls: 'orange' },
+    { num: (d.active_claims     || 0).toLocaleString(), lbl: 'Active Claims',    cls: 'green'  },
+    { num: (d.closed_claims     || 0).toLocaleString(), lbl: 'Closed Claims',    cls: 'red'    },
+    { num: (d.indicator_minerals|| 0).toLocaleString(), lbl: 'Indicators',       cls: ''       },
   ].map(s => `
     <div class="intel-stat">
       <div class="intel-stat-num ${s.cls}">${s.num}</div>
-      <div class="info-wrap" style="justify-content:center;margin-top:2px">
-        <span class="intel-stat-lbl">${s.lbl}</span>
-        <span class="info-icon">i<span class="info-tooltip">${s.tip}</span></span>
-      </div>
+      <div class="intel-stat-lbl" style="margin-top:3px">${s.lbl}</div>
     </div>`).join('');
 
   const breakdownBars = score.breakdown.map(b => {
@@ -1216,15 +1211,15 @@ function renderIntelCard(el, d, spot) {
       <span>Gold potential score</span>
       <span class="intel-radius">${INTEL_RADIUS_MILES} mi radius</span>
     </div>
-    <div style="display:grid;grid-template-columns:110px 1fr;gap:14px;align-items:start;margin-bottom:12px">
+    <div style="display:grid;grid-template-columns:96px 1fr;gap:14px;align-items:center;margin-bottom:8px">
       <div style="text-align:center">
         ${scoreArcSVG(score.total, tier.color)}
-        <div style="font-size:13px;font-weight:500;color:${tier.color};margin-top:4px">${tier.label}</div>
-        <div style="font-size:10px;color:var(--text-2);margin-top:5px;line-height:1.5;padding:0 2px;text-align:left">${tier.desc}</div>
+        <div style="font-size:12px;font-weight:500;color:${tier.color};margin-top:3px">${tier.label}</div>
       </div>
-      <div style="padding-top:2px">${breakdownBars}</div>
+      <div>${breakdownBars}</div>
     </div>
-    <div style="display:grid;grid-template-columns:repeat(5,1fr);gap:5px;padding-top:10px;border-top:0.5px solid var(--border)">
+    <div style="font-size:11px;color:var(--text-2);line-height:1.5;padding:8px 0;border-top:0.5px solid var(--border);border-bottom:0.5px solid var(--border);margin-bottom:8px">${tier.desc}</div>
+    <div style="display:grid;grid-template-columns:repeat(5,1fr);gap:5px">
       ${statRow}
     </div>
     <a class="intel-map-link" onclick="goToMap(${spot.lng}, ${spot.lat})">View on map →</a>
