@@ -215,6 +215,17 @@ body {
   justify-content: space-between;
 }
 .intel-radius { font-size: 9px; color: var(--text-3); }
+.radius-select {
+  font-family: 'DM Mono', monospace;
+  font-size: 10px;
+  color: var(--text-2);
+  background: var(--bg);
+  border: 0.5px solid var(--border-md);
+  border-radius: var(--radius-sm);
+  padding: 2px 6px;
+  cursor: pointer;
+  outline: none;
+}
 .intel-grid {
   display: grid;
   grid-template-columns: repeat(5, 1fr);
@@ -1131,7 +1142,7 @@ function fitMiniMapToSpots() {
 
 // ── SPOT INTELLIGENCE ────────────────────────────────────
 const spotIntelCache = {};
-const INTEL_RADIUS_MILES = 20;
+let INTEL_RADIUS_MILES = 10;
 
 async function loadAllSpotIntelligence() {
   // Fetch all spots in parallel — each updates its own DOM section
@@ -1257,7 +1268,14 @@ function renderIntelCard(el, d, spot) {
   el.innerHTML = `
     <div class="intel-header">
       <span>Gold potential score</span>
-      <span class="intel-radius">${INTEL_RADIUS_MILES} mi radius</span>
+      <div style="display:flex;align-items:center;gap:6px">
+        <select class="radius-select" onchange="changeRadius('${spot.id}', ${spot.lat}, ${spot.lng}, this.value, '${escHtml(spot.name || 'this spot')}')">
+          <option value="5"  ${INTEL_RADIUS_MILES === 5  ? 'selected' : ''}>5 mi</option>
+          <option value="10" ${INTEL_RADIUS_MILES === 10 ? 'selected' : ''}>10 mi</option>
+          <option value="20" ${INTEL_RADIUS_MILES === 20 ? 'selected' : ''}>20 mi</option>
+          <option value="50" ${INTEL_RADIUS_MILES === 50 ? 'selected' : ''}>50 mi</option>
+        </select>
+      </div>
     </div>
     <div style="display:grid;grid-template-columns:96px 1fr;gap:14px;align-items:center;margin-bottom:8px">
       <div style="text-align:center">
@@ -1295,21 +1313,6 @@ async function generateNarrative(spotId, lat, lng, spotName) {
     return;
   }
 
-  // Get Anthropic key from Supabase config
-  let anthropicKey = '';
-  try {
-    const res = await fetch(`${SUPABASE_URL}/rest/v1/app_config?select=key,value&key=eq.anthropic_key`, {
-      headers: { 'apikey': ANON_KEY, 'Authorization': 'Bearer ' + ANON_KEY }
-    });
-    const rows = await res.json();
-    if (Array.isArray(rows) && rows[0]) anthropicKey = rows[0].value;
-  } catch(e) {}
-
-  if (!anthropicKey) {
-    el.innerHTML = '<div style="font-size:11px;color:var(--red);margin-top:8px">Anthropic API key not configured in app_config table.</div>';
-    return;
-  }
-
   btn.disabled = true;
   btn.textContent = 'Analyzing...';
   el.innerHTML = `<div class="narrative-loading"><div class="intel-spinner"></div>Generating area analysis...</div>`;
@@ -1333,14 +1336,10 @@ Area intelligence within 20 miles:
 Write a 3-4 sentence plain English analysis for a beginner gold prospector. Cover: what the data tells us about this area's gold history, what type of gold deposit is likely (placer vs lode), and one specific prospecting tip for this location. Use 10th grade reading level. Be direct and practical. Do not use bullet points or headers. Do not promise gold will be found. Do not mention the score number directly.`;
 
   try {
-    const response = await fetch('https://api.anthropic.com/v1/messages', {
+    // Calls via Cloudflare Pages Function proxy to avoid CORS
+    const response = await fetch('/api/claude', {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'x-api-key': anthropicKey,
-        'anthropic-version': '2023-06-01',
-        'anthropic-dangerous-allow-browser': 'true'
-      },
+      headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         model: 'claude-sonnet-4-20250514',
         max_tokens: 300,
@@ -1371,6 +1370,19 @@ function renderNarrative(el, text) {
       <div class="narrative-label">Area Analysis</div>
       <div class="narrative-text">${escHtml(text)}</div>
     </div>`;
+}
+
+async function changeRadius(spotId, lat, lng, miles, spotName) {
+  INTEL_RADIUS_MILES = parseInt(miles);
+  // Clear cache for this spot so it re-fetches
+  delete spotIntelCache[spotId];
+  delete narrativeCache[spotId];
+  const el = document.getElementById('intel-' + spotId);
+  if (el) {
+    el.innerHTML = `<div class="intel-loading"><div class="intel-spinner"></div>Updating for ${miles} mile radius...</div>`;
+  }
+  const spot = allSpots.find(s => s.id === spotId);
+  if (spot) await fetchSpotIntelligence(spot);
 }
 
 // ── NAVIGATE TO MAP ──────────────────────────────────────
