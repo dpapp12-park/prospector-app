@@ -580,33 +580,62 @@ window.addEventListener('load', async () => {
 function setGreeting() {
   const h = new Date().getHours();
   const part = h < 12 ? 'Good morning' : h < 17 ? 'Good afternoon' : 'Good evening';
-  const name = currentUser.user_metadata?.full_name?.split(' ')[0] || currentUser.email.split('@')[0];
+  const metaName = (currentUser.user_metadata?.full_name || currentUser.user_metadata?.name || '').trim();
+  const firstName = metaName.split(' ')[0];
+  // Fall back to email prefix if Google metadata name is missing or just an initial
+  let name;
+  if (firstName.length > 2) {
+    name = firstName.charAt(0).toUpperCase() + firstName.slice(1);
+  } else {
+    // Clean email username: strip numbers and symbols, capitalize
+    const emailUser = currentUser.email.split('@')[0].replace(/[0-9._-]/g, '');
+    name = emailUser.charAt(0).toUpperCase() + emailUser.slice(1).toLowerCase();
+  }
+  if (!name) name = 'Prospector';
   document.getElementById('greeting-text').textContent = part + ', ' + name;
 }
 
 // ── GOLD PRICE ───────────────────────────────────────────
 async function fetchGoldPrice() {
   const el = document.getElementById('dash-gold-price');
-  const chEl = document.getElementById('dash-gold-change');
+  // Read cache set by main app
+  const cached = localStorage.getItem('prospector_gold_price');
+  const cachedTs = parseInt(localStorage.getItem('prospector_gold_price_ts') || '0');
+  if (cached && (Date.now() - cachedTs) < 3600000) {
+    el.textContent = '$' + cached + ' / oz';
+    return;
+  }
+  // Primary: Coinbase public API — CORS-friendly, no key
   try {
-    const res = await fetch('https://api.metals.live/v1/spot/gold');
-    const data = await res.json();
-    const price = Array.isArray(data) ? data[0]?.price : data?.price;
+    const res = await fetch('https://api.coinbase.com/v2/prices/XAU-USD/spot');
+    if (!res.ok) throw new Error();
+    const d = await res.json();
+    const price = d?.data?.amount;
     if (price) {
-      el.textContent = '$' + Number(price).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + ' / oz';
+      const fmt = Number(price).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+      el.textContent = '$' + fmt + ' / oz';
+      localStorage.setItem('prospector_gold_price', fmt);
+      localStorage.setItem('prospector_gold_price_ts', Date.now().toString());
       return;
     }
   } catch(e) {}
+  // Fallback: metals.live
   try {
-    const res2 = await fetch('https://data-asg.goldprice.org/dbXRates/USD');
+    const res2 = await fetch('https://api.metals.live/v1/spot/gold');
+    if (!res2.ok) throw new Error();
     const d2 = await res2.json();
-    const price2 = d2?.items?.[0]?.xauPrice;
+    const price2 = Array.isArray(d2) ? d2[0]?.price : d2?.price;
     if (price2) {
-      el.textContent = '$' + Number(price2).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + ' / oz';
+      const fmt2 = Number(price2).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+      el.textContent = '$' + fmt2 + ' / oz';
+      localStorage.setItem('prospector_gold_price', fmt2);
+      localStorage.setItem('prospector_gold_price_ts', Date.now().toString());
       return;
     }
   } catch(e) {}
-  el.textContent = 'unavailable';
+  // Show stale cache or dash — never show "unavailable"
+  el.textContent = cached ? '$' + cached + ' / oz' : '—';
+  el.style.color = 'var(--text-3)';
 }
 
 // ── LOAD ALL DATA ────────────────────────────────────────
