@@ -262,6 +262,53 @@ body {
 .intel-map-link { font-size: 11px; color: var(--gold); text-decoration: none; margin-top: 8px; display: inline-block; cursor: pointer; }
 .intel-map-link:hover { text-decoration: underline; }
 
+/* ── NARRATIVE ── */
+.narrative-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 10px;
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--surface);
+  background: var(--gold);
+  border: none;
+  border-radius: var(--radius-sm);
+  padding: 7px 14px;
+  cursor: pointer;
+  transition: background 0.12s;
+}
+.narrative-btn:hover { background: #9A6610; }
+.narrative-btn:disabled { opacity: 0.6; cursor: default; }
+.narrative-section {
+  margin-top: 10px;
+  padding: 12px 14px;
+  background: var(--gold-bg);
+  border-radius: var(--radius-sm);
+  border-left: 3px solid var(--gold);
+}
+.narrative-text {
+  font-size: 12px;
+  line-height: 1.7;
+  color: var(--text);
+}
+.narrative-label {
+  font-family: 'DM Mono', monospace;
+  font-size: 9px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--gold);
+  margin-bottom: 6px;
+}
+.narrative-loading {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 12px;
+  color: var(--text-2);
+  padding: 8px 0;
+}
+
 /* ── INFO TOOLTIP ── */
 .info-wrap { position: relative; display: inline-flex; align-items: center; gap: 4px; }
 .info-icon {
@@ -509,6 +556,7 @@ body {
       Back to map
     </a>
     <div class="logo">Prospector <span>/ My Dashboard</span></div>
+    <div style="font-family:'DM Mono',monospace;font-size:10px;color:var(--text-3);letter-spacing:0.06em">v0.3.0</div>
   </div>
   <div id="topbar-right">
     <div id="user-email-display"></div>
@@ -1223,7 +1271,106 @@ function renderIntelCard(el, d, spot) {
       ${statRow}
     </div>
     <a class="intel-map-link" onclick="goToMap(${spot.lng}, ${spot.lat})">View on map →</a>
+    <div style="margin-top:10px">
+      <button class="narrative-btn" id="narrative-btn-${spot.id}" onclick="generateNarrative('${spot.id}', ${spot.lat}, ${spot.lng}, '${escHtml(spot.name || 'this spot')}')">
+        ✦ Generate Area Analysis
+      </button>
+      <div id="narrative-${spot.id}"></div>
+    </div>
   `;
+}
+
+// ── NARRATIVE GENERATION (Phase 4) ───────────────────────
+const narrativeCache = {};
+
+async function generateNarrative(spotId, lat, lng, spotName) {
+  const btn = document.getElementById('narrative-btn-' + spotId);
+  const el  = document.getElementById('narrative-' + spotId);
+  if (!btn || !el) return;
+
+  // Use cache if available
+  if (narrativeCache[spotId]) {
+    renderNarrative(el, narrativeCache[spotId]);
+    btn.style.display = 'none';
+    return;
+  }
+
+  // Get Anthropic key from Supabase config
+  let anthropicKey = '';
+  try {
+    const res = await fetch(`${SUPABASE_URL}/rest/v1/app_config?select=key,value&key=eq.anthropic_key`, {
+      headers: { 'apikey': ANON_KEY, 'Authorization': 'Bearer ' + ANON_KEY }
+    });
+    const rows = await res.json();
+    if (Array.isArray(rows) && rows[0]) anthropicKey = rows[0].value;
+  } catch(e) {}
+
+  if (!anthropicKey) {
+    el.innerHTML = '<div style="font-size:11px;color:var(--red);margin-top:8px">Anthropic API key not configured in app_config table.</div>';
+    return;
+  }
+
+  btn.disabled = true;
+  btn.textContent = 'Analyzing...';
+  el.innerHTML = `<div class="narrative-loading"><div class="intel-spinner"></div>Generating area analysis...</div>`;
+
+  const intel = spotIntelCache[spotId] || {};
+  const score = computeGoldScore(intel);
+  const tier  = scoreTier(score.total);
+
+  const prompt = `You are a gold prospecting expert helping a beginner understand the potential of a location they have saved.
+
+Location: ${spotName} at ${lat.toFixed(4)}N ${Math.abs(lng).toFixed(4)}W
+Gold Potential Score: ${score.total}/100 (${tier.label})
+
+Area intelligence within 20 miles:
+- Gold Occurrences (USGS documented): ${intel.gold_sites || 0}
+- Historic Mine Sites: ${intel.historic_mines || 0}
+- Active Mining Claims: ${intel.active_claims || 0}
+- Closed/Lapsed Claims: ${intel.closed_claims || 0}
+- Indicator Minerals: ${intel.indicator_minerals || 0}
+
+Write a 3-4 sentence plain English analysis for a beginner gold prospector. Cover: what the data tells us about this area's gold history, what type of gold deposit is likely (placer vs lode), and one specific prospecting tip for this location. Use 10th grade reading level. Be direct and practical. Do not use bullet points or headers. Do not promise gold will be found. Do not mention the score number directly.`;
+
+  try {
+    const response = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'x-api-key': anthropicKey,
+        'anthropic-version': '2023-06-01',
+        'anthropic-dangerous-allow-browser': 'true'
+      },
+      body: JSON.stringify({
+        model: 'claude-sonnet-4-20250514',
+        max_tokens: 300,
+        messages: [{ role: 'user', content: prompt }]
+      })
+    });
+
+    if (!response.ok) throw new Error('API error ' + response.status);
+    const data = await response.json();
+    const text = data.content?.[0]?.text || '';
+    if (!text) throw new Error('Empty response');
+
+    narrativeCache[spotId] = text;
+    renderNarrative(el, text);
+    btn.style.display = 'none';
+
+  } catch(e) {
+    console.error('Narrative error:', e);
+    el.innerHTML = '<div style="font-size:11px;color:var(--red);margin-top:8px">Analysis failed. Check your connection and try again.</div>';
+    btn.disabled = false;
+    btn.textContent = 'Try Again';
+  }
+}
+
+function renderNarrative(el, text) {
+  el.innerHTML = `
+    <div class="narrative-section">
+      <div class="narrative-label">Area Analysis</div>
+      <div class="narrative-text">${escHtml(text)}</div>
+    </div>`;
 }
 
 // ── NAVIGATE TO MAP ──────────────────────────────────────
