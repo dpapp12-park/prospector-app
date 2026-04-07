@@ -273,7 +273,92 @@ body {
 .intel-map-link { font-size: 11px; color: var(--gold); text-decoration: none; margin-top: 8px; display: inline-block; cursor: pointer; }
 .intel-map-link:hover { text-decoration: underline; }
 
-/* ── NARRATIVE ── */
+/* ── CONDITIONS SECTION ── */
+.conditions-section {
+  grid-column: 1 / -1;
+  margin-top: 8px;
+  padding-top: 10px;
+  border-top: 0.5px solid var(--border);
+}
+.conditions-header {
+  font-family: 'DM Mono', monospace;
+  font-size: 9px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--text-3);
+  margin-bottom: 10px;
+  display: flex;
+  justify-content: space-between;
+}
+.conditions-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+  margin-bottom: 10px;
+}
+.conditions-block {
+  background: var(--bg);
+  border-radius: var(--radius-sm);
+  padding: 9px 11px;
+}
+.conditions-block-label {
+  font-family: 'DM Mono', monospace;
+  font-size: 9px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--text-3);
+  margin-bottom: 5px;
+}
+.conditions-main {
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--text);
+  margin-bottom: 2px;
+}
+.conditions-sub {
+  font-size: 11px;
+  color: var(--text-2);
+  line-height: 1.4;
+}
+.conditions-signal {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 11px;
+  font-weight: 500;
+  padding: 3px 9px;
+  border-radius: 20px;
+  margin-top: 5px;
+}
+.signal-green  { background: var(--green-bg);  color: var(--green); }
+.signal-amber  { background: #FDF3E0;           color: var(--orange); }
+.signal-red    { background: var(--red-bg);     color: var(--red); }
+.signal-grey   { background: var(--bg);         color: var(--text-3); }
+.seasonal-wrap { grid-column: 1 / -1; }
+.seasonal-label {
+  font-family: 'DM Mono', monospace;
+  font-size: 9px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--text-3);
+  margin-bottom: 6px;
+}
+.seasonal-months {
+  display: grid;
+  grid-template-columns: repeat(12, 1fr);
+  gap: 3px;
+}
+.month-block {
+  text-align: center;
+  border-radius: 3px;
+  padding: 5px 0;
+  font-family: 'DM Mono', monospace;
+  font-size: 9px;
+}
+.month-green  { background: var(--green-bg);  color: var(--green); }
+.month-amber  { background: #FDF3E0;           color: var(--orange); }
+.month-red    { background: var(--red-bg);     color: var(--red); }
+.month-grey   { background: var(--bg);         color: var(--text-3); }
 .narrative-btn {
   display: inline-flex;
   align-items: center;
@@ -936,9 +1021,16 @@ function renderSpotsTab() {
           Loading area intelligence...
         </div>
       </div>
+      <div class="conditions-section" id="conditions-${s.id}">
+        <div class="intel-loading">
+          <div class="intel-spinner"></div>
+          Loading conditions...
+        </div>
+      </div>
     </div>`;
   }).join('');
   loadAllSpotIntelligence();
+  loadAllSpotConditions();
 }
 
 // ── WATCHES TAB ──────────────────────────────────────────
@@ -1382,6 +1474,222 @@ async function changeRadius(spotId, miles) {
   }
   const spot = allSpots.find(s => s.id === spotId);
   if (spot) await fetchSpotIntelligence(spot);
+}
+
+// ── PHASE 5: CONDITIONS & SEASONAL INTELLIGENCE ──────────
+const conditionsCache = {};
+const MONTHS_SHORT = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+
+async function loadAllSpotConditions() {
+  await Promise.all(allSpots.map(s => fetchSpotConditions(s)));
+}
+
+async function fetchSpotConditions(spot) {
+  if (!spot.lat || !spot.lng) return;
+  const el = document.getElementById('conditions-' + spot.id);
+  if (!el) return;
+  if (conditionsCache[spot.id]) { renderConditions(el, conditionsCache[spot.id]); return; }
+
+  try {
+    const [weather, gaugeData] = await Promise.all([
+      fetchWeather(spot.lat, spot.lng),
+      fetchNearestGauge(spot.lat, spot.lng)
+    ]);
+    let seasonal = null;
+    if (gaugeData && gaugeData.siteNo) {
+      seasonal = await fetchSeasonalStats(gaugeData.siteNo);
+    }
+    const result = { weather, gauge: gaugeData, seasonal };
+    conditionsCache[spot.id] = result;
+    renderConditions(el, result);
+  } catch(e) {
+    console.error('Conditions error:', e);
+    el.innerHTML = '<div style="font-size:11px;color:var(--text-3);padding:4px 0">Conditions unavailable.</div>';
+  }
+}
+
+async function fetchWeather(lat, lng) {
+  try {
+    const ptRes = await fetch(`https://api.weather.gov/points/${lat.toFixed(4)},${lng.toFixed(4)}`);
+    if (!ptRes.ok) return null;
+    const ptData = await ptRes.json();
+    const forecastUrl = ptData.properties?.forecast;
+    if (!forecastUrl) return null;
+    const fcRes = await fetch(forecastUrl);
+    if (!fcRes.ok) return null;
+    const fcData = await fcRes.json();
+    const periods = fcData.properties?.periods || [];
+    const today = periods[0];
+    const tomorrow = periods[2];
+    const dayAfter = periods[4];
+    return {
+      todayName: today?.name || 'Today',
+      todayTemp: today?.temperature,
+      todayUnit: today?.temperatureUnit || 'F',
+      todayDesc: today?.shortForecast || '',
+      todayWind: today?.windSpeed || '',
+      todayRain: today?.probabilityOfPrecipitation?.value || 0,
+      forecast: [today, tomorrow, dayAfter].filter(Boolean).map(p => ({
+        name: p.name,
+        temp: p.temperature,
+        desc: p.shortForecast,
+        rain: p.probabilityOfPrecipitation?.value || 0
+      }))
+    };
+  } catch(e) { return null; }
+}
+
+async function fetchNearestGauge(lat, lng) {
+  try {
+    const delta = 0.75;
+    const url = `https://waterservices.usgs.gov/nwis/iv/?format=json&bBox=${(lng-delta).toFixed(4)},${(lat-delta).toFixed(4)},${(lng+delta).toFixed(4)},${(lat+delta).toFixed(4)}&parameterCd=00060&siteStatus=active`;
+    const res = await fetch(url);
+    if (!res.ok) return null;
+    const data = await res.json();
+    const series = data.value?.timeSeries;
+    if (!series || series.length === 0) return null;
+
+    // Find closest gauge by distance
+    let closest = null; let minDist = Infinity;
+    series.forEach(s => {
+      const gLat = parseFloat(s.sourceInfo?.geoLocation?.geogLocation?.latitude);
+      const gLng = parseFloat(s.sourceInfo?.geoLocation?.geogLocation?.longitude);
+      if (isNaN(gLat) || isNaN(gLng)) return;
+      const d = haversine(lat, lng, gLat, gLng);
+      if (d < minDist) {
+        minDist = d;
+        const cfs = parseFloat(s.values?.[0]?.value?.[0]?.value);
+        closest = {
+          siteNo: s.sourceInfo.siteCode?.[0]?.value,
+          name: s.sourceInfo.siteName,
+          cfs: isNaN(cfs) ? null : Math.round(cfs),
+          distMi: Math.round(minDist * 10) / 10,
+          lat: gLat, lng: gLng
+        };
+      }
+    });
+    return closest;
+  } catch(e) { return null; }
+}
+
+async function fetchSeasonalStats(siteNo) {
+  try {
+    const url = `https://waterservices.usgs.gov/nwis/stat/?format=json&sites=${siteNo}&parameterCd=00060&statReportType=monthly&statType=median`;
+    const res = await fetch(url);
+    if (!res.ok) return null;
+    const data = await res.json();
+    const series = data.value?.timeSeries;
+    if (!series || series.length === 0) return null;
+    const monthly = {};
+    series[0]?.values?.[0]?.value?.forEach(v => {
+      const m = parseInt(v.qualifiers?.[0]?.replace('M', '') || '0');
+      if (m >= 1 && m <= 12) monthly[m] = parseFloat(v.value);
+    });
+    return monthly;
+  } catch(e) { return null; }
+}
+
+function haversine(lat1, lng1, lat2, lng2) {
+  const R = 3959; // miles
+  const dLat = (lat2 - lat1) * Math.PI / 180;
+  const dLng = (lng2 - lng1) * Math.PI / 180;
+  const a = Math.sin(dLat/2)**2 + Math.cos(lat1*Math.PI/180) * Math.cos(lat2*Math.PI/180) * Math.sin(dLng/2)**2;
+  return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+}
+
+function gaugeSignal(cfs, seasonal) {
+  if (cfs === null) return { cls: 'signal-grey', label: 'No reading' };
+  // Use seasonal context if available — compare to median of lowest 4 months
+  if (seasonal) {
+    const vals = Object.values(seasonal).filter(v => !isNaN(v));
+    if (vals.length > 0) {
+      const sorted = [...vals].sort((a,b) => a-b);
+      const lowMedian = sorted[Math.floor(sorted.length * 0.25)] || sorted[0];
+      const highMedian = sorted[Math.floor(sorted.length * 0.75)] || sorted[sorted.length-1];
+      if (cfs <= lowMedian * 1.5) return { cls: 'signal-green', label: 'Good conditions' };
+      if (cfs <= highMedian) return { cls: 'signal-amber', label: 'Use caution' };
+      return { cls: 'signal-red', label: 'High water — avoid' };
+    }
+  }
+  // Fallback absolute thresholds
+  if (cfs < 150)  return { cls: 'signal-green', label: 'Good conditions' };
+  if (cfs < 500)  return { cls: 'signal-amber', label: 'Use caution' };
+  return { cls: 'signal-red', label: 'High water — avoid' };
+}
+
+function seasonalMonthClass(monthNo, seasonal) {
+  if (!seasonal || !seasonal[monthNo]) return 'month-grey';
+  const vals = Object.values(seasonal).filter(v => !isNaN(v));
+  const min = Math.min(...vals); const max = Math.max(...vals);
+  const range = max - min || 1;
+  const pct = (seasonal[monthNo] - min) / range;
+  if (pct <= 0.35) return 'month-green';
+  if (pct <= 0.65) return 'month-amber';
+  return 'month-red';
+}
+
+function renderConditions(el, d) {
+  const { weather, gauge, seasonal } = d;
+  const signal = gauge ? gaugeSignal(gauge.cfs, seasonal) : null;
+  const now = new Date();
+  const ts = now.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' });
+
+  let weatherHtml = '';
+  if (weather) {
+    const rain = weather.todayRain > 0 ? ` · ${weather.todayRain}% rain` : '';
+    weatherHtml = `<div class="conditions-block">
+      <div class="conditions-block-label">Weather today</div>
+      <div class="conditions-main">${weather.todayTemp ? weather.todayTemp + '\u00b0' + weather.todayUnit : ''} &nbsp; ${weather.todayDesc}</div>
+      <div class="conditions-sub">${weather.todayWind}${rain}</div>
+      ${weather.forecast.length > 1 ? `<div class="conditions-sub" style="margin-top:4px">${weather.forecast.slice(1,3).map(f => `${f.name}: ${f.temp}\u00b0${f.rain > 20 ? ' 🌧' : ''}`).join(' &nbsp;·&nbsp; ')}</div>` : ''}
+    </div>`;
+  } else {
+    weatherHtml = `<div class="conditions-block"><div class="conditions-block-label">Weather</div><div class="conditions-sub">Unavailable</div></div>`;
+  }
+
+  let gaugeHtml = '';
+  if (gauge) {
+    const cfsText = gauge.cfs !== null ? gauge.cfs.toLocaleString() + ' cfs' : 'No reading';
+    gaugeHtml = `<div class="conditions-block">
+      <div class="conditions-block-label">Stream gauge &nbsp;·&nbsp; ${gauge.distMi} mi away</div>
+      <div class="conditions-main">${cfsText}</div>
+      <div class="conditions-sub">${gauge.name}</div>
+      ${signal ? `<div class="conditions-signal ${signal.cls}">${signal.label}</div>` : ''}
+    </div>`;
+  } else {
+    gaugeHtml = `<div class="conditions-block"><div class="conditions-block-label">Stream gauge</div><div class="conditions-sub">No gauge within 50 miles</div></div>`;
+  }
+
+  let seasonalHtml = '';
+  if (seasonal && Object.keys(seasonal).length > 0) {
+    const monthBlocks = MONTHS_SHORT.map((m, i) => {
+      const cls = seasonalMonthClass(i + 1, seasonal);
+      return `<div class="month-block ${cls}">${m.slice(0,1)}</div>`;
+    }).join('');
+    const bestMonths = MONTHS_SHORT.filter((m, i) => seasonalMonthClass(i+1, seasonal) === 'month-green');
+    seasonalHtml = `<div class="seasonal-wrap">
+      <div class="seasonal-label">Seasonal workability &nbsp;·&nbsp; based on ${Object.keys(seasonal).length} years of gauge data</div>
+      <div class="seasonal-months">${monthBlocks}</div>
+      ${bestMonths.length ? `<div style="font-size:11px;color:var(--green);margin-top:5px">Best months: ${bestMonths.join(', ')}</div>` : ''}
+      <div style="font-size:10px;color:var(--text-3);margin-top:4px;display:flex;gap:10px">
+        <span style="color:var(--green)">&#9632; Workable</span>
+        <span style="color:var(--orange)">&#9632; Caution</span>
+        <span style="color:var(--red)">&#9632; High water</span>
+        <span style="color:var(--text-3)">&#9632; No data</span>
+      </div>
+    </div>`;
+  }
+
+  el.innerHTML = `
+    <div class="conditions-header">
+      <span>Field conditions</span>
+      <span>${ts}</span>
+    </div>
+    <div class="conditions-grid">
+      ${weatherHtml}
+      ${gaugeHtml}
+      ${seasonalHtml}
+    </div>`;
 }
 
 // ── NAVIGATE TO MAP ──────────────────────────────────────
