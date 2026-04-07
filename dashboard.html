@@ -195,6 +195,78 @@ body {
 .data-item-name { font-size: 13px; font-weight: 500; margin-bottom: 3px; }
 .data-item-meta { font-size: 11px; color: var(--text-2); display: flex; gap: 8px; flex-wrap: wrap; }
 .data-item-note { font-size: 11px; color: var(--text-2); font-style: italic; margin-top: 6px; padding-top: 6px; border-top: 0.5px solid var(--border); grid-column: 1 / -1; }
+
+/* ── INTELLIGENCE CARD ── */
+.intel-section {
+  grid-column: 1 / -1;
+  margin-top: 10px;
+  padding-top: 10px;
+  border-top: 0.5px solid var(--border);
+}
+.intel-header {
+  font-family: 'DM Mono', monospace;
+  font-size: 9px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--text-3);
+  margin-bottom: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+.intel-radius { font-size: 9px; color: var(--text-3); }
+.intel-grid {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 6px;
+}
+.intel-stat {
+  background: var(--bg);
+  border-radius: var(--radius-sm);
+  padding: 7px 6px;
+  text-align: center;
+}
+.intel-stat-num {
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: 20px;
+  line-height: 1;
+  color: var(--text);
+  margin-bottom: 2px;
+}
+.intel-stat-num.gold { color: var(--gold); }
+.intel-stat-num.green { color: var(--green); }
+.intel-stat-num.red { color: var(--red); }
+.intel-stat-num.orange { color: var(--orange); }
+.intel-stat-lbl {
+  font-size: 9px;
+  color: var(--text-3);
+  line-height: 1.3;
+}
+.intel-loading {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 11px;
+  color: var(--text-3);
+  padding: 4px 0;
+}
+.intel-spinner {
+  width: 10px; height: 10px;
+  border: 1.5px solid var(--border-md);
+  border-top-color: var(--gold);
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+  flex-shrink: 0;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+.intel-map-link {
+  font-size: 11px;
+  color: var(--gold);
+  text-decoration: none;
+  margin-top: 8px;
+  display: inline-block;
+}
+.intel-map-link:hover { text-decoration: underline; }
 .data-item-badge {
   font-family: 'DM Mono', monospace;
   font-size: 10px;
@@ -747,25 +819,32 @@ function renderSpotsTab() {
     </div>`;
     return;
   }
-  const icons = { gold: '🥇', prospect: '⛏️', camp: '⛺', workings: '🕳️', waypoint: '📌', avoid: '⚠️' };
+  const icons  = { gold: '🥇', prospect: '⛏️', camp: '⛺', workings: '🕳️', waypoint: '📌', avoid: '⚠️' };
   const labels = { gold: 'Gold Find', prospect: 'Prospect', camp: 'Camp', workings: 'Old Workings', waypoint: 'Waypoint', avoid: 'Avoid' };
   el.innerHTML = allSpots.map(s => {
-    const icon = icons[s.category] || '📍';
-    const label = labels[s.category] || s.category || '';
-    const date = s.created_at ? new Date(s.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : '';
+    const icon   = icons[s.category]  || '📍';
+    const label  = labels[s.category] || s.category || '';
+    const date   = s.created_at ? new Date(s.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : '';
     const coords = (s.lat && s.lng) ? s.lat.toFixed(4) + 'N ' + Math.abs(s.lng).toFixed(4) + 'W' : '';
-    return `<div class="data-item" onclick="goToMap(${s.lng}, ${s.lat})">
+    return `<div class="data-item" id="spot-card-${s.id}">
       <div>
-        <div class="data-item-name">${icon} ${escHtml(s.name || 'Unnamed spot')}</div>
+        <div class="data-item-name" style="cursor:pointer" onclick="goToMap(${s.lng}, ${s.lat})">${icon} ${escHtml(s.name || 'Unnamed spot')}</div>
         <div class="data-item-meta">
           ${coords ? '<span>' + coords + '</span>' : ''}
-          ${date   ? '<span>Saved ' + date + '</span>' : ''}
+          ${date   ? '<span>Saved ' + date   + '</span>' : ''}
         </div>
         ${s.notes ? '<div class="data-item-note">' + escHtml(s.notes) + '</div>' : ''}
       </div>
       <div class="data-item-badge badge-cat">${label}</div>
+      <div class="intel-section" id="intel-${s.id}">
+        <div class="intel-loading">
+          <div class="intel-spinner"></div>
+          Loading area intelligence...
+        </div>
+      </div>
     </div>`;
   }).join('');
+  loadAllSpotIntelligence();
 }
 
 // ── WATCHES TAB ──────────────────────────────────────────
@@ -965,6 +1044,89 @@ function fitMiniMapToSpots() {
   const bounds = new mapboxgl.LngLatBounds();
   allSpots.forEach(s => { if (s.lat && s.lng) bounds.extend([s.lng, s.lat]); });
   if (!bounds.isEmpty()) mbMap.fitBounds(bounds, { padding: 30, maxZoom: 12 });
+}
+
+// ── SPOT INTELLIGENCE ────────────────────────────────────
+const spotIntelCache = {};
+const INTEL_RADIUS_MILES = 20;
+
+async function loadAllSpotIntelligence() {
+  // Fetch all spots in parallel — each updates its own DOM section
+  await Promise.all(allSpots.map(s => fetchSpotIntelligence(s)));
+}
+
+async function fetchSpotIntelligence(spot) {
+  if (!spot.lat || !spot.lng) return;
+  const el = document.getElementById('intel-' + spot.id);
+  if (!el) return;
+
+  // Use cache if available
+  if (spotIntelCache[spot.id]) {
+    renderIntelCard(el, spotIntelCache[spot.id], spot);
+    return;
+  }
+
+  try {
+    const { data, error } = await sbClient.rpc('get_spot_intelligence', {
+      spot_lat: spot.lat,
+      spot_lng: spot.lng,
+      radius_miles: INTEL_RADIUS_MILES
+    });
+
+    if (error) throw error;
+    spotIntelCache[spot.id] = data;
+    renderIntelCard(el, data, spot);
+  } catch(e) {
+    console.error('Intel fetch error:', e);
+    el.innerHTML = '<div style="font-size:11px;color:var(--text-3);padding:4px 0">Area intelligence unavailable — run the SQL function setup first.</div>';
+  }
+}
+
+function renderIntelCard(el, d, spot) {
+  const active   = (d.active_claims   || 0).toLocaleString();
+  const closed   = (d.closed_claims   || 0).toLocaleString();
+  const gold     = (d.gold_sites      || 0).toLocaleString();
+  const mines    = (d.historic_mines  || 0).toLocaleString();
+  const indic    = (d.indicator_minerals || 0).toLocaleString();
+
+  // Simple signal text based on data
+  let signal = '';
+  if (d.gold_sites > 10 && d.historic_mines > 5) signal = 'Strong historical signal';
+  else if (d.gold_sites > 5 || d.historic_mines > 3) signal = 'Moderate historical activity';
+  else if (d.active_claims > 20) signal = 'Active prospecting area';
+  else if (d.gold_sites > 0 || d.historic_mines > 0) signal = 'Some historical activity';
+  else signal = 'Low recorded activity';
+
+  el.innerHTML = `
+    <div class="intel-header">
+      <span>Area intelligence</span>
+      <span class="intel-radius">${INTEL_RADIUS_MILES} mi radius</span>
+    </div>
+    <div class="intel-grid">
+      <div class="intel-stat">
+        <div class="intel-stat-num green">${active}</div>
+        <div class="intel-stat-lbl">Active Claims</div>
+      </div>
+      <div class="intel-stat">
+        <div class="intel-stat-num red">${closed}</div>
+        <div class="intel-stat-lbl">Closed Claims</div>
+      </div>
+      <div class="intel-stat">
+        <div class="intel-stat-num gold">${gold}</div>
+        <div class="intel-stat-lbl">Gold Sites</div>
+      </div>
+      <div class="intel-stat">
+        <div class="intel-stat-num orange">${mines}</div>
+        <div class="intel-stat-lbl">Historic Mines</div>
+      </div>
+      <div class="intel-stat">
+        <div class="intel-stat-num">${indic}</div>
+        <div class="intel-stat-lbl">Indicators</div>
+      </div>
+    </div>
+    <div style="margin-top:7px;font-size:11px;color:var(--text-3)">${signal}</div>
+    <a class="intel-map-link" onclick="goToMap(${spot.lng}, ${spot.lat})">View on map →</a>
+  `;
 }
 
 // ── NAVIGATE TO MAP ──────────────────────────────────────
