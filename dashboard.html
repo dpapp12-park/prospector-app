@@ -1082,49 +1082,101 @@ async function fetchSpotIntelligence(spot) {
   }
 }
 
-function renderIntelCard(el, d, spot) {
-  const active   = (d.active_claims   || 0).toLocaleString();
-  const closed   = (d.closed_claims   || 0).toLocaleString();
-  const gold     = (d.gold_sites      || 0).toLocaleString();
-  const mines    = (d.historic_mines  || 0).toLocaleString();
-  const indic    = (d.indicator_minerals || 0).toLocaleString();
+function computeGoldScore(d) {
+  // Weighted formula — each signal normalized to its reference max then weighted
+  // Reference maxes chosen so a very active area scores ~90-100
+  const goldPts   = Math.min(d.gold_sites      / 50,  1) * 35;
+  const minePts   = Math.min(d.historic_mines  / 30,  1) * 25;
+  const closedPts = Math.min(d.closed_claims   / 500, 1) * 20;
+  const activePts = Math.min(d.active_claims   / 100, 1) * 15;
+  const indicPts  = Math.min(d.indicator_minerals / 30, 1) * 5;
+  const total = Math.round(goldPts + minePts + closedPts + activePts + indicPts);
+  return {
+    total: Math.min(total, 100),
+    breakdown: [
+      { label: 'Gold sites',       pts: Math.round(goldPts),   max: 35, color: '#B87A14' },
+      { label: 'Historic mines',   pts: Math.round(minePts),   max: 25, color: '#854F0B' },
+      { label: 'Historical claims',pts: Math.round(closedPts), max: 20, color: '#A32D2D' },
+      { label: 'Active claims',    pts: Math.round(activePts), max: 15, color: '#3B6D11' },
+      { label: 'Indicators',       pts: Math.round(indicPts),  max: 5,  color: '#6B6248' },
+    ]
+  };
+}
 
-  // Simple signal text based on data
-  let signal = '';
-  if (d.gold_sites > 10 && d.historic_mines > 5) signal = 'Strong historical signal';
-  else if (d.gold_sites > 5 || d.historic_mines > 3) signal = 'Moderate historical activity';
-  else if (d.active_claims > 20) signal = 'Active prospecting area';
-  else if (d.gold_sites > 0 || d.historic_mines > 0) signal = 'Some historical activity';
-  else signal = 'Low recorded activity';
+function scoreTier(score) {
+  if (score >= 85) return { label: 'Exceptional', color: '#B87A14' };
+  if (score >= 65) return { label: 'Strong',      color: '#854F0B' };
+  if (score >= 40) return { label: 'Moderate',    color: '#3B6D11' };
+  if (score >= 20) return { label: 'Low',         color: '#6B6248' };
+  return                  { label: 'Minimal',     color: '#9C8E7A' };
+}
+
+function scoreArcSVG(score, color) {
+  // Semicircle arc gauge, score 0-100 maps to 0-180 degrees
+  const r = 38;
+  const cx = 52; const cy = 52;
+  const startAngle = 180; // degrees, left side
+  const sweep = (score / 100) * 180;
+  const toRad = deg => (deg * Math.PI) / 180;
+  const x1 = cx + r * Math.cos(toRad(startAngle));
+  const y1 = cy + r * Math.sin(toRad(startAngle));
+  const endDeg = startAngle - sweep;
+  const x2 = cx + r * Math.cos(toRad(endDeg));
+  const y2 = cy + r * Math.sin(toRad(endDeg));
+  const largeArc = sweep > 180 ? 1 : 0;
+  return `<svg width="104" height="60" viewBox="0 0 104 60" style="display:block;margin:0 auto">
+    <path d="M ${cx - r} ${cy} A ${r} ${r} 0 0 1 ${cx + r} ${cy}" fill="none" stroke="var(--border-md)" stroke-width="8" stroke-linecap="round"/>
+    ${score > 0 ? `<path d="M ${x1.toFixed(1)} ${y1.toFixed(1)} A ${r} ${r} 0 ${largeArc} 0 ${x2.toFixed(1)} ${y2.toFixed(1)}" fill="none" stroke="${color}" stroke-width="8" stroke-linecap="round"/>` : ''}
+    <text x="${cx}" y="${cy - 4}" text-anchor="middle" font-family="Bebas Neue,sans-serif" font-size="26" fill="${color}">${score}</text>
+    <text x="${cx}" y="${cy + 10}" text-anchor="middle" font-family="DM Mono,monospace" font-size="8" fill="var(--text-3)" letter-spacing="0.08em">GOLD POTENTIAL</text>
+  </svg>`;
+}
+
+function renderIntelCard(el, d, spot) {
+  const score = computeGoldScore(d);
+  const tier  = scoreTier(score.total);
+
+  const active  = (d.active_claims        || 0).toLocaleString();
+  const closed  = (d.closed_claims        || 0).toLocaleString();
+  const gold    = (d.gold_sites           || 0).toLocaleString();
+  const mines   = (d.historic_mines       || 0).toLocaleString();
+  const indic   = (d.indicator_minerals   || 0).toLocaleString();
+
+  const breakdownBars = score.breakdown.map(b => {
+    const pct = b.max > 0 ? Math.round((b.pts / b.max) * 100) : 0;
+    return `<div style="margin-bottom:5px">
+      <div style="display:flex;justify-content:space-between;font-size:10px;color:var(--text-2);margin-bottom:3px">
+        <span>${b.label}</span>
+        <span style="font-family:'DM Mono',monospace;color:var(--text-3)">${b.pts}/${b.max}</span>
+      </div>
+      <div style="height:4px;background:var(--border);border-radius:2px;overflow:hidden">
+        <div style="height:100%;width:${pct}%;background:${b.color};border-radius:2px;transition:width 0.4s ease"></div>
+      </div>
+    </div>`;
+  }).join('');
 
   el.innerHTML = `
     <div class="intel-header">
-      <span>Area intelligence</span>
+      <span>Gold potential score</span>
       <span class="intel-radius">${INTEL_RADIUS_MILES} mi radius</span>
     </div>
-    <div class="intel-grid">
-      <div class="intel-stat">
-        <div class="intel-stat-num green">${active}</div>
-        <div class="intel-stat-lbl">Active Claims</div>
+
+    <div style="display:grid;grid-template-columns:120px 1fr;gap:16px;align-items:center;margin-bottom:12px">
+      <div>
+        ${scoreArcSVG(score.total, tier.color)}
+        <div style="text-align:center;font-size:12px;font-weight:500;color:${tier.color};margin-top:2px">${tier.label}</div>
       </div>
-      <div class="intel-stat">
-        <div class="intel-stat-num red">${closed}</div>
-        <div class="intel-stat-lbl">Closed Claims</div>
-      </div>
-      <div class="intel-stat">
-        <div class="intel-stat-num gold">${gold}</div>
-        <div class="intel-stat-lbl">Gold Sites</div>
-      </div>
-      <div class="intel-stat">
-        <div class="intel-stat-num orange">${mines}</div>
-        <div class="intel-stat-lbl">Historic Mines</div>
-      </div>
-      <div class="intel-stat">
-        <div class="intel-stat-num">${indic}</div>
-        <div class="intel-stat-lbl">Indicators</div>
-      </div>
+      <div>${breakdownBars}</div>
     </div>
-    <div style="margin-top:7px;font-size:11px;color:var(--text-3)">${signal}</div>
+
+    <div style="display:grid;grid-template-columns:repeat(5,1fr);gap:5px;padding-top:10px;border-top:0.5px solid var(--border)">
+      <div class="intel-stat"><div class="intel-stat-num green">${active}</div><div class="intel-stat-lbl">Active</div></div>
+      <div class="intel-stat"><div class="intel-stat-num red">${closed}</div><div class="intel-stat-lbl">Closed</div></div>
+      <div class="intel-stat"><div class="intel-stat-num gold">${gold}</div><div class="intel-stat-lbl">Gold Sites</div></div>
+      <div class="intel-stat"><div class="intel-stat-num orange">${mines}</div><div class="intel-stat-lbl">Mines</div></div>
+      <div class="intel-stat"><div class="intel-stat-num">${indic}</div><div class="intel-stat-lbl">Indicators</div></div>
+    </div>
+
     <a class="intel-map-link" onclick="goToMap(${spot.lng}, ${spot.lat})">View on map →</a>
   `;
 }
