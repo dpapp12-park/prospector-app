@@ -273,7 +273,60 @@ body {
 .intel-map-link { font-size: 11px; color: var(--gold); text-decoration: none; margin-top: 8px; display: inline-block; cursor: pointer; }
 .intel-map-link:hover { text-decoration: underline; }
 
-/* ── CONDITIONS SECTION ── */
+/* ── EXPANDABLE SPOT CARD ── */
+.spot-card {
+  background: var(--surface);
+  border-radius: var(--radius);
+  margin-bottom: 8px;
+  box-shadow: var(--shadow);
+  overflow: hidden;
+}
+.spot-card-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 16px;
+  cursor: pointer;
+  user-select: none;
+  transition: background 0.12s;
+}
+.spot-card-header:hover { background: var(--bg); }
+.spot-card-name {
+  font-size: 13px;
+  font-weight: 500;
+  flex: 1;
+  min-width: 0;
+}
+.spot-card-meta {
+  font-size: 11px;
+  color: var(--text-2);
+  margin-top: 2px;
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+.spot-score-badge {
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: 15px;
+  padding: 2px 8px;
+  border-radius: 20px;
+  white-space: nowrap;
+  flex-shrink: 0;
+  line-height: 1.4;
+}
+.spot-chevron {
+  font-size: 10px;
+  color: var(--text-3);
+  flex-shrink: 0;
+  transition: transform 0.2s;
+}
+.spot-chevron.open { transform: rotate(180deg); }
+.spot-card-body {
+  display: none;
+  padding: 0 16px 14px;
+  border-top: 0.5px solid var(--border);
+}
+.spot-card-body.open { display: block; }
 .conditions-section {
   grid-column: 1 / -1;
   margin-top: 8px;
@@ -988,6 +1041,23 @@ function renderFindsTab() {
 }
 
 // ── SPOTS TAB ────────────────────────────────────────────
+function toggleSpotCard(id) {
+  const body    = document.getElementById('spot-body-' + id);
+  const chevron = document.getElementById('spot-chevron-' + id);
+  const isOpen  = body.classList.contains('open');
+  body.classList.toggle('open', !isOpen);
+  chevron.classList.toggle('open', !isOpen);
+}
+
+function updateSpotScoreBadge(spotId, score, tier) {
+  const badge = document.getElementById('spot-badge-' + spotId);
+  if (!badge) return;
+  badge.textContent = score;
+  badge.style.background = tier.color + '22';
+  badge.style.color = tier.color;
+  badge.style.display = 'inline-block';
+}
+
 function renderSpotsTab() {
   const el = document.getElementById('spots-content');
   if (allSpots.length === 0) {
@@ -1005,26 +1075,26 @@ function renderSpotsTab() {
     const label  = labels[s.category] || s.category || '';
     const date   = s.created_at ? new Date(s.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : '';
     const coords = (s.lat && s.lng) ? s.lat.toFixed(4) + 'N ' + Math.abs(s.lng).toFixed(4) + 'W' : '';
-    return `<div class="data-item" id="spot-card-${s.id}">
-      <div>
-        <div class="data-item-name" style="cursor:pointer" onclick="goToMap(${s.lng}, ${s.lat})">${icon} ${escHtml(s.name || 'Unnamed spot')}</div>
-        <div class="data-item-meta">
-          ${coords ? '<span>' + coords + '</span>' : ''}
-          ${date   ? '<span>Saved ' + date   + '</span>' : ''}
+    return `<div class="spot-card" id="spot-card-${s.id}">
+      <div class="spot-card-header" onclick="toggleSpotCard('${s.id}')">
+        <div style="flex:1;min-width:0">
+          <div class="spot-card-name">${icon} ${escHtml(s.name || 'Unnamed spot')}</div>
+          <div class="spot-card-meta">
+            <span>${label}</span>
+            ${coords ? '<span>' + coords + '</span>' : ''}
+            ${date   ? '<span>Saved ' + date + '</span>' : ''}
+          </div>
         </div>
-        ${s.notes ? '<div class="data-item-note">' + escHtml(s.notes) + '</div>' : ''}
+        <span class="spot-score-badge" id="spot-badge-${s.id}" style="display:none"></span>
+        <span class="spot-chevron" id="spot-chevron-${s.id}">&#9660;</span>
       </div>
-      <div class="data-item-badge badge-cat">${label}</div>
-      <div class="intel-section" id="intel-${s.id}">
-        <div class="intel-loading">
-          <div class="intel-spinner"></div>
-          Loading area intelligence...
+      <div class="spot-card-body" id="spot-body-${s.id}">
+        ${s.notes ? '<div style="font-size:12px;color:var(--text-2);font-style:italic;padding:10px 0 4px">' + escHtml(s.notes) + '</div>' : ''}
+        <div class="intel-section" id="intel-${s.id}" style="border-top:none;margin-top:6px;padding-top:0">
+          <div class="intel-loading"><div class="intel-spinner"></div>Loading area intelligence...</div>
         </div>
-      </div>
-      <div class="conditions-section" id="conditions-${s.id}">
-        <div class="intel-loading">
-          <div class="intel-spinner"></div>
-          Loading conditions...
+        <div class="conditions-section" id="conditions-${s.id}" style="margin-top:4px">
+          <div class="intel-loading"><div class="intel-spinner"></div>Loading conditions...</div>
         </div>
       </div>
     </div>`;
@@ -1332,6 +1402,8 @@ function renderIntelCard(el, d, spot) {
   const radius = spotRadiusMap[spot.id] || DEFAULT_RADIUS;
   const score = computeGoldScore(d);
   const tier  = scoreTier(score.total, radius);
+  // Update the collapsed header badge
+  updateSpotScoreBadge(spot.id, score.total, tier);
 
   // Stat row — names match breakdown bars exactly, no info icons needed
   const statRow = [
