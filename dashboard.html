@@ -1142,7 +1142,9 @@ function fitMiniMapToSpots() {
 
 // ── SPOT INTELLIGENCE ────────────────────────────────────
 const spotIntelCache = {};
-let INTEL_RADIUS_MILES = 10;
+const narrativeCache = {};
+const spotRadiusMap = {}; // per-spot radius, defaults to 10
+const DEFAULT_RADIUS = 5;
 
 async function loadAllSpotIntelligence() {
   // Fetch all spots in parallel — each updates its own DOM section
@@ -1153,6 +1155,7 @@ async function fetchSpotIntelligence(spot) {
   if (!spot.lat || !spot.lng) return;
   const el = document.getElementById('intel-' + spot.id);
   if (!el) return;
+  const radius = spotRadiusMap[spot.id] || DEFAULT_RADIUS;
 
   // Use cache if available
   if (spotIntelCache[spot.id]) {
@@ -1164,7 +1167,7 @@ async function fetchSpotIntelligence(spot) {
     const { data, error } = await sbClient.rpc('get_spot_intelligence', {
       spot_lat: spot.lat,
       spot_lng: spot.lng,
-      radius_miles: INTEL_RADIUS_MILES
+      radius_miles: radius
     });
 
     if (error) throw error;
@@ -1201,7 +1204,8 @@ function computeGoldScore(d) {
   };
 }
 
-function scoreTier(score) {
+function scoreTier(score, radius) {
+  const r = radius || DEFAULT_RADIUS;
   if (score >= 85) return { label: 'Exceptional', color: '#B87A14',
     desc: 'This area has the strongest documented gold history in the dataset. Multiple confirmed producers and dense historical activity — serious prospecting ground.' };
   if (score >= 65) return { label: 'Strong',      color: '#854F0B',
@@ -1211,7 +1215,7 @@ function scoreTier(score) {
   if (score >= 20) return { label: 'Low',         color: '#6B6248',
     desc: 'Limited documented gold history nearby. May be under-explored or simply less productive ground. Proceed with lower expectations.' };
   return                  { label: 'Minimal',     color: '#9C8E7A',
-    desc: 'Little to no recorded gold activity within 20 miles. The data does not support strong prospecting potential for this location.' };
+    desc: `Little to no recorded gold activity within ${r} miles. The data does not support strong prospecting potential for this location.` };
 }
 
 function scoreArcSVG(score, color) {
@@ -1233,8 +1237,9 @@ function scoreArcSVG(score, color) {
 }
 
 function renderIntelCard(el, d, spot) {
+  const radius = spotRadiusMap[spot.id] || DEFAULT_RADIUS;
   const score = computeGoldScore(d);
-  const tier  = scoreTier(score.total);
+  const tier  = scoreTier(score.total, radius);
 
   // Stat row — names match breakdown bars exactly, no info icons needed
   const statRow = [
@@ -1265,15 +1270,16 @@ function renderIntelCard(el, d, spot) {
     </div>`;
   }).join('');
 
+  const spotRadius = spotRadiusMap[spot.id] || DEFAULT_RADIUS;
   el.innerHTML = `
     <div class="intel-header">
       <span>Gold potential score</span>
       <div style="display:flex;align-items:center;gap:6px">
-        <select class="radius-select" onchange="changeRadius('${spot.id}', ${spot.lat}, ${spot.lng}, this.value, '${escHtml(spot.name || 'this spot')}')">
-          <option value="5"  ${INTEL_RADIUS_MILES === 5  ? 'selected' : ''}>5 mi</option>
-          <option value="10" ${INTEL_RADIUS_MILES === 10 ? 'selected' : ''}>10 mi</option>
-          <option value="20" ${INTEL_RADIUS_MILES === 20 ? 'selected' : ''}>20 mi</option>
-          <option value="50" ${INTEL_RADIUS_MILES === 50 ? 'selected' : ''}>50 mi</option>
+        <select class="radius-select" onchange="changeRadius('${spot.id}', this.value)">
+          <option value="5"  ${spotRadius === 5  ? 'selected' : ''}>5 mi</option>
+          <option value="10" ${spotRadius === 10 ? 'selected' : ''}>10 mi</option>
+          <option value="20" ${spotRadius === 20 ? 'selected' : ''}>20 mi</option>
+          <option value="50" ${spotRadius === 50 ? 'selected' : ''}>50 mi</option>
         </select>
       </div>
     </div>
@@ -1318,15 +1324,16 @@ async function generateNarrative(spotId, lat, lng, spotName) {
   el.innerHTML = `<div class="narrative-loading"><div class="intel-spinner"></div>Generating area analysis...</div>`;
 
   const intel = spotIntelCache[spotId] || {};
+  const radius = spotRadiusMap[spotId] || DEFAULT_RADIUS;
   const score = computeGoldScore(intel);
-  const tier  = scoreTier(score.total);
+  const tier  = scoreTier(score.total, radius);
 
   const prompt = `You are a gold prospecting expert helping a beginner understand the potential of a location they have saved.
 
 Location: ${spotName} at ${lat.toFixed(4)}N ${Math.abs(lng).toFixed(4)}W
 Gold Potential Score: ${score.total}/100 (${tier.label})
 
-Area intelligence within 20 miles:
+Area intelligence within ${radius} miles:
 - Gold Occurrences (USGS documented): ${intel.gold_sites || 0}
 - Historic Mine Sites: ${intel.historic_mines || 0}
 - Active Mining Claims: ${intel.active_claims || 0}
@@ -1372,9 +1379,10 @@ function renderNarrative(el, text) {
     </div>`;
 }
 
-async function changeRadius(spotId, lat, lng, miles, spotName) {
-  INTEL_RADIUS_MILES = parseInt(miles);
-  // Clear cache for this spot so it re-fetches
+async function changeRadius(spotId, miles) {
+  const radius = parseInt(miles);
+  spotRadiusMap[spotId] = radius;
+  // Clear cache for this spot only
   delete spotIntelCache[spotId];
   delete narrativeCache[spotId];
   const el = document.getElementById('intel-' + spotId);
