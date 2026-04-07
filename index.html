@@ -3588,6 +3588,17 @@ async function saveSpot() {
   const name = document.getElementById('spot-name').value.trim() || `${SPOT_ICONS[selectedSpotCat]} Spot`;
   const notes = document.getElementById('spot-notes').value.trim();
 
+  // Reverse geocode to get state and county (FCC API — same used for claim popups)
+  let state = null; let county = null;
+  try {
+    const geoRes = await fetch(`https://geo.fcc.gov/api/census/block/find?latitude=${pendingSpotLat}&longitude=${pendingSpotLng}&format=json`);
+    if (geoRes.ok) {
+      const geoData = await geoRes.json();
+      state  = geoData?.State?.name  || null;
+      county = geoData?.County?.name || null;
+    }
+  } catch(e) { /* non-fatal — save without location */ }
+
   try {
     const { error } = await sbClient.from('user_spots').insert({
       user_id: currentUser.id,
@@ -3596,12 +3607,13 @@ async function saveSpot() {
       category: selectedSpotCat,
       lng: pendingSpotLng,
       lat: pendingSpotLat,
+      state,
+      county,
       created_at: new Date().toISOString()
     });
 
     if (error) throw error;
 
-    // Add marker to map immediately
     addSpotMarker(pendingSpotLng, pendingSpotLat, name, selectedSpotCat);
     closeAllPanels();
     showStatus(`${SPOT_ICONS[selectedSpotCat]} ${name} saved!`);

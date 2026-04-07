@@ -308,8 +308,8 @@ body {
 .spot-score-badge {
   font-family: 'Bebas Neue', sans-serif;
   font-size: 15px;
-  padding: 2px 8px;
-  border-radius: 20px;
+  padding: 3px 8px;
+  border-radius: 4px;
   white-space: nowrap;
   flex-shrink: 0;
   line-height: 1.4;
@@ -1075,14 +1075,15 @@ function renderSpotsTab() {
     const label  = labels[s.category] || s.category || '';
     const date   = s.created_at ? new Date(s.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : '';
     const coords = (s.lat && s.lng) ? s.lat.toFixed(4) + 'N ' + Math.abs(s.lng).toFixed(4) + 'W' : '';
+    const location = s.county && s.state ? `${s.county} County, ${s.state}` : coords;
     return `<div class="spot-card" id="spot-card-${s.id}">
       <div class="spot-card-header" onclick="toggleSpotCard('${s.id}')">
         <div style="flex:1;min-width:0">
           <div class="spot-card-name">${icon} ${escHtml(s.name || 'Unnamed spot')}</div>
           <div class="spot-card-meta">
             <span>${label}</span>
-            ${coords ? '<span>' + coords + '</span>' : ''}
-            ${date   ? '<span>Saved ' + date + '</span>' : ''}
+            ${location ? '<span>' + location + '</span>' : ''}
+            ${date     ? '<span>Saved ' + date + '</span>' : ''}
           </div>
         </div>
         <span class="spot-score-badge" id="spot-badge-${s.id}" style="display:none"></span>
