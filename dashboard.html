@@ -259,14 +259,49 @@ body {
   flex-shrink: 0;
 }
 @keyframes spin { to { transform: rotate(360deg); } }
-.intel-map-link {
-  font-size: 11px;
-  color: var(--gold);
-  text-decoration: none;
-  margin-top: 8px;
-  display: inline-block;
-}
+.intel-map-link { font-size: 11px; color: var(--gold); text-decoration: none; margin-top: 8px; display: inline-block; cursor: pointer; }
 .intel-map-link:hover { text-decoration: underline; }
+
+/* ── INFO TOOLTIP ── */
+.info-wrap { position: relative; display: inline-flex; align-items: center; gap: 4px; }
+.info-icon {
+  width: 13px; height: 13px;
+  border-radius: 50%;
+  border: 1px solid var(--text-3);
+  color: var(--text-3);
+  font-size: 9px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: default;
+  flex-shrink: 0;
+  line-height: 1;
+  font-style: normal;
+  font-family: 'DM Sans', sans-serif;
+  font-weight: 500;
+  user-select: none;
+}
+.info-tooltip {
+  display: none;
+  position: absolute;
+  left: 0;
+  top: 100%;
+  margin-top: 4px;
+  background: var(--text);
+  color: var(--surface);
+  font-size: 11px;
+  font-family: 'DM Sans', sans-serif;
+  font-weight: 400;
+  line-height: 1.5;
+  padding: 8px 10px;
+  border-radius: var(--radius-sm);
+  width: 220px;
+  z-index: 200;
+  pointer-events: none;
+  text-transform: none;
+  letter-spacing: 0;
+}
+.info-wrap:hover .info-tooltip { display: block; }
 .data-item-badge {
   font-family: 'DM Mono', monospace;
   font-size: 10px;
@@ -1083,52 +1118,60 @@ async function fetchSpotIntelligence(spot) {
 }
 
 function computeGoldScore(d) {
-  // Weighted formula — each signal normalized to its reference max then weighted
-  // Reference maxes chosen so a very active area scores ~90-100
-  const goldPts   = Math.min(d.gold_sites      / 50,  1) * 35;
-  const minePts   = Math.min(d.historic_mines  / 30,  1) * 25;
-  const closedPts = Math.min(d.closed_claims   / 500, 1) * 20;
-  const activePts = Math.min(d.active_claims   / 100, 1) * 15;
-  const indicPts  = Math.min(d.indicator_minerals / 30, 1) * 5;
-  const total = Math.round(goldPts + minePts + closedPts + activePts + indicPts);
+  // Ordered: strongest gold signals first
+  const goldPts   = Math.min(d.gold_sites          / 50,  1) * 35;
+  const minePts   = Math.min(d.historic_mines       / 30,  1) * 25;
+  const activePts = Math.min(d.active_claims        / 100, 1) * 15;
+  const closedPts = Math.min(d.closed_claims        / 500, 1) * 20;
+  const indicPts  = Math.min(d.indicator_minerals   / 30,  1) * 5;
+  const total = Math.round(goldPts + minePts + activePts + closedPts + indicPts);
   return {
     total: Math.min(total, 100),
     breakdown: [
-      { label: 'Gold sites',       pts: Math.round(goldPts),   max: 35, color: '#B87A14' },
-      { label: 'Historic mines',   pts: Math.round(minePts),   max: 25, color: '#854F0B' },
-      { label: 'Historical claims',pts: Math.round(closedPts), max: 20, color: '#A32D2D' },
-      { label: 'Active claims',    pts: Math.round(activePts), max: 15, color: '#3B6D11' },
-      { label: 'Indicators',       pts: Math.round(indicPts),  max: 5,  color: '#6B6248' },
+      { label: 'Gold Occurrences',   pts: Math.round(goldPts),   max: 35, color: '#B87A14',
+        tip: 'USGS-documented locations where gold has been found, reported, or mined. The strongest single signal for gold-bearing ground.' },
+      { label: 'Historic Mines',     pts: Math.round(minePts),   max: 25, color: '#854F0B',
+        tip: 'Physical mine sites with documented infrastructure — shafts, tunnels, or surface workings. Confirms gold was actually extracted here.' },
+      { label: 'Active Claims',      pts: Math.round(activePts), max: 15, color: '#3B6D11',
+        tip: 'Land currently claimed by active prospectors. High density means other people believe this ground is worth working right now.' },
+      { label: 'Closed Claims',      pts: Math.round(closedPts), max: 20, color: '#A32D2D',
+        tip: 'Lapsed or abandoned claims from the past 150 years. Dense historical activity is one of the strongest signals for gold-bearing ground.' },
+      { label: 'Indicator Minerals', pts: Math.round(indicPts),  max: 5,  color: '#6B6248',
+        tip: 'Minerals like mercury, chromium, and copper that form in the same geological conditions as gold. Their presence suggests gold-friendly geology.' },
     ]
   };
 }
 
 function scoreTier(score) {
-  if (score >= 85) return { label: 'Exceptional', color: '#B87A14' };
-  if (score >= 65) return { label: 'Strong',      color: '#854F0B' };
-  if (score >= 40) return { label: 'Moderate',    color: '#3B6D11' };
-  if (score >= 20) return { label: 'Low',         color: '#6B6248' };
-  return                  { label: 'Minimal',     color: '#9C8E7A' };
+  if (score >= 85) return { label: 'Exceptional', color: '#B87A14',
+    desc: 'This area has the strongest documented gold history in the dataset. Multiple confirmed producers and dense historical activity — serious prospecting ground.' };
+  if (score >= 65) return { label: 'Strong',      color: '#854F0B',
+    desc: 'Solid gold history with confirmed occurrences and significant past mining activity. Worth a serious look — this ground has produced before.' };
+  if (score >= 40) return { label: 'Moderate',    color: '#3B6D11',
+    desc: 'Some documented gold activity in the area. Not the richest ground in the data, but there are real signals worth investigating.' };
+  if (score >= 20) return { label: 'Low',         color: '#6B6248',
+    desc: 'Limited documented gold history nearby. May be under-explored or simply less productive ground. Proceed with lower expectations.' };
+  return                  { label: 'Minimal',     color: '#9C8E7A',
+    desc: 'Little to no recorded gold activity within 20 miles. The data does not support strong prospecting potential for this location.' };
 }
 
 function scoreArcSVG(score, color) {
-  // Semicircle arc gauge, score 0-100 maps to 0-180 degrees
-  const r = 38;
-  const cx = 52; const cy = 52;
-  const startAngle = 180; // degrees, left side
-  const sweep = (score / 100) * 180;
-  const toRad = deg => (deg * Math.PI) / 180;
-  const x1 = cx + r * Math.cos(toRad(startAngle));
-  const y1 = cy + r * Math.sin(toRad(startAngle));
-  const endDeg = startAngle - sweep;
-  const x2 = cx + r * Math.cos(toRad(endDeg));
-  const y2 = cy + r * Math.sin(toRad(endDeg));
-  const largeArc = sweep > 180 ? 1 : 0;
-  return `<svg width="104" height="60" viewBox="0 0 104 60" style="display:block;margin:0 auto">
-    <path d="M ${cx - r} ${cy} A ${r} ${r} 0 0 1 ${cx + r} ${cy}" fill="none" stroke="var(--border-md)" stroke-width="8" stroke-linecap="round"/>
-    ${score > 0 ? `<path d="M ${x1.toFixed(1)} ${y1.toFixed(1)} A ${r} ${r} 0 ${largeArc} 0 ${x2.toFixed(1)} ${y2.toFixed(1)}" fill="none" stroke="${color}" stroke-width="8" stroke-linecap="round"/>` : ''}
-    <text x="${cx}" y="${cy - 4}" text-anchor="middle" font-family="Bebas Neue,sans-serif" font-size="26" fill="${color}">${score}</text>
-    <text x="${cx}" y="${cy + 10}" text-anchor="middle" font-family="DM Mono,monospace" font-size="8" fill="var(--text-3)" letter-spacing="0.08em">GOLD POTENTIAL</text>
+  const r = 34; const cx = 48; const cy = 48;
+  const clamp = Math.max(0, Math.min(score, 100));
+  const circ = 2 * Math.PI * r;
+  // Ring fills clockwise from top. Gap of 0 at 100%, leaves small gap otherwise.
+  const filled = (clamp / 100) * circ;
+  // strokeDashoffset rotates start point to top (12 o'clock)
+  const offset = circ * 0.25;
+  return `<svg width="96" height="96" viewBox="0 0 96 96" style="display:block;margin:0 auto">
+    <circle cx="${cx}" cy="${cy}" r="${r}" fill="none" stroke="var(--border-md)" stroke-width="7"/>
+    <circle cx="${cx}" cy="${cy}" r="${r}" fill="none" stroke="${color}" stroke-width="7"
+      stroke-linecap="round"
+      stroke-dasharray="${filled.toFixed(2)} ${circ.toFixed(2)}"
+      stroke-dashoffset="${offset.toFixed(2)}"
+      transform="rotate(-90 ${cx} ${cy})"/>
+    <text x="${cx}" y="${cy + 2}" text-anchor="middle" dominant-baseline="middle" font-family="Bebas Neue,sans-serif" font-size="26" fill="${color}">${clamp}</text>
+    <text x="${cx}" y="${cy + 20}" text-anchor="middle" font-family="DM Mono,monospace" font-size="8" fill="var(--text-3)" letter-spacing="0.06em">OUT OF 100</text>
   </svg>`;
 }
 
@@ -1136,21 +1179,34 @@ function renderIntelCard(el, d, spot) {
   const score = computeGoldScore(d);
   const tier  = scoreTier(score.total);
 
-  const active  = (d.active_claims        || 0).toLocaleString();
-  const closed  = (d.closed_claims        || 0).toLocaleString();
-  const gold    = (d.gold_sites           || 0).toLocaleString();
-  const mines   = (d.historic_mines       || 0).toLocaleString();
-  const indic   = (d.indicator_minerals   || 0).toLocaleString();
+  // Stat row matches breakdown order: Gold Occs, Historic Mines, Active Claims, Closed Claims, Indicators
+  const statRow = [
+    { num: (d.gold_sites        || 0).toLocaleString(), lbl: 'Gold Occs',  cls: 'gold',   tip: 'USGS-documented gold locations' },
+    { num: (d.historic_mines    || 0).toLocaleString(), lbl: 'Mines',      cls: 'orange',  tip: 'Physical mine sites with documented workings' },
+    { num: (d.active_claims     || 0).toLocaleString(), lbl: 'Active Clms',cls: 'green',   tip: 'Currently active mining claims' },
+    { num: (d.closed_claims     || 0).toLocaleString(), lbl: 'Closed Clms',cls: 'red',     tip: 'Lapsed/abandoned claims — historical activity' },
+    { num: (d.indicator_minerals|| 0).toLocaleString(), lbl: 'Indicators', cls: '',        tip: 'Mercury, chromium, copper — minerals near gold' },
+  ].map(s => `
+    <div class="intel-stat">
+      <div class="intel-stat-num ${s.cls}">${s.num}</div>
+      <div class="info-wrap" style="justify-content:center;margin-top:2px">
+        <span class="intel-stat-lbl">${s.lbl}</span>
+        <span class="info-icon">i<span class="info-tooltip">${s.tip}</span></span>
+      </div>
+    </div>`).join('');
 
   const breakdownBars = score.breakdown.map(b => {
     const pct = b.max > 0 ? Math.round((b.pts / b.max) * 100) : 0;
-    return `<div style="margin-bottom:5px">
-      <div style="display:flex;justify-content:space-between;font-size:10px;color:var(--text-2);margin-bottom:3px">
-        <span>${b.label}</span>
-        <span style="font-family:'DM Mono',monospace;color:var(--text-3)">${b.pts}/${b.max}</span>
+    return `<div style="margin-bottom:6px">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:3px">
+        <div class="info-wrap">
+          <span style="font-size:11px;color:var(--text-2)">${b.label}</span>
+          <span class="info-icon">i<span class="info-tooltip">${b.tip}</span></span>
+        </div>
+        <span style="font-family:'DM Mono',monospace;font-size:10px;color:var(--text-3)">${b.pts} pts</span>
       </div>
       <div style="height:4px;background:var(--border);border-radius:2px;overflow:hidden">
-        <div style="height:100%;width:${pct}%;background:${b.color};border-radius:2px;transition:width 0.4s ease"></div>
+        <div style="height:100%;width:${pct}%;background:${b.color};border-radius:2px"></div>
       </div>
     </div>`;
   }).join('');
@@ -1160,23 +1216,17 @@ function renderIntelCard(el, d, spot) {
       <span>Gold potential score</span>
       <span class="intel-radius">${INTEL_RADIUS_MILES} mi radius</span>
     </div>
-
-    <div style="display:grid;grid-template-columns:120px 1fr;gap:16px;align-items:center;margin-bottom:12px">
-      <div>
+    <div style="display:grid;grid-template-columns:110px 1fr;gap:14px;align-items:start;margin-bottom:12px">
+      <div style="text-align:center">
         ${scoreArcSVG(score.total, tier.color)}
-        <div style="text-align:center;font-size:12px;font-weight:500;color:${tier.color};margin-top:2px">${tier.label}</div>
+        <div style="font-size:13px;font-weight:500;color:${tier.color};margin-top:4px">${tier.label}</div>
+        <div style="font-size:10px;color:var(--text-2);margin-top:5px;line-height:1.5;padding:0 2px;text-align:left">${tier.desc}</div>
       </div>
-      <div>${breakdownBars}</div>
+      <div style="padding-top:2px">${breakdownBars}</div>
     </div>
-
     <div style="display:grid;grid-template-columns:repeat(5,1fr);gap:5px;padding-top:10px;border-top:0.5px solid var(--border)">
-      <div class="intel-stat"><div class="intel-stat-num green">${active}</div><div class="intel-stat-lbl">Active</div></div>
-      <div class="intel-stat"><div class="intel-stat-num red">${closed}</div><div class="intel-stat-lbl">Closed</div></div>
-      <div class="intel-stat"><div class="intel-stat-num gold">${gold}</div><div class="intel-stat-lbl">Gold Sites</div></div>
-      <div class="intel-stat"><div class="intel-stat-num orange">${mines}</div><div class="intel-stat-lbl">Mines</div></div>
-      <div class="intel-stat"><div class="intel-stat-num">${indic}</div><div class="intel-stat-lbl">Indicators</div></div>
+      ${statRow}
     </div>
-
     <a class="intel-map-link" onclick="goToMap(${spot.lng}, ${spot.lat})">View on map →</a>
   `;
 }
