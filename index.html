@@ -1010,6 +1010,16 @@ function startMap(token) {
     initDrawSearch();
     initFABDrag();
 
+    // Fly to location requested from dashboard
+    const flyReq = localStorage.getItem('prospector_fly_to');
+    if (flyReq) {
+      try {
+        const { lng, lat, zoom } = JSON.parse(flyReq);
+        localStorage.removeItem('prospector_fly_to');
+        setTimeout(() => map.flyTo({ center: [lng, lat], zoom: zoom || 14, pitch: 45 }), 800);
+      } catch(e) {}
+    }
+
     // Reload MRDS layers when map pans/zooms — debounced 800ms
     let mrdsReloadTimer = null;
     map.on('moveend', () => {
@@ -3831,7 +3841,12 @@ function updateAuthUI() {
 
 function openAuthPanel() {
   if (currentUser) {
-    document.getElementById('user-menu').classList.toggle('show');
+    // Navigate to dashboard — new tab on desktop, same tab on mobile
+    if (window.innerWidth >= 768) {
+      window.open('dashboard.html', '_blank');
+    } else {
+      window.location.href = 'dashboard.html';
+    }
     return;
   }
   document.getElementById('auth-panel').classList.add('open');

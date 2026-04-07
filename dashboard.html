@@ -1,0 +1,959 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>My Dashboard — Prospector</title>
+<script>
+window.PROSPECTOR_CONFIG = {
+  supabase_url: 'https://condhfwpzlxrzuadgopc.supabase.co',
+  supabase_anon_key: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImNvbmRoZndwemx4cnp1YWRnb3BjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQxOTE4OTcsImV4cCI6MjA4OTc2Nzg5N30.bJBQJuRVyWsO0Xw6CaWcZ9gTzr1b4qcFfhCXi1Au3Fw',
+};
+</script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Mono:wght@400;500&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  --bg:        #F5F2EC;
+  --surface:   #FFFFFF;
+  --border:    rgba(0,0,0,0.09);
+  --border-md: rgba(0,0,0,0.14);
+  --text:      #1A1814;
+  --text-2:    #6B6248;
+  --text-3:    #9C8E7A;
+  --gold:      #B87A14;
+  --gold-bg:   #FDF3E0;
+  --green:     #3B6D11;
+  --green-bg:  #EAF3DE;
+  --red:       #A32D2D;
+  --red-bg:    #FCEBEB;
+  --orange:    #854F0B;
+  --shadow:    0 1px 4px rgba(0,0,0,0.07), 0 0 0 0.5px rgba(0,0,0,0.06);
+  --radius:    10px;
+  --radius-sm: 6px;
+}
+
+body {
+  font-family: 'DM Sans', sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  min-height: 100vh;
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+/* ── TOPBAR ── */
+#topbar {
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 24px;
+  height: 52px;
+  background: var(--surface);
+  border-bottom: 0.5px solid var(--border-md);
+}
+#topbar-left { display: flex; align-items: center; gap: 16px; }
+.back-btn {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 13px;
+  color: var(--text-2);
+  text-decoration: none;
+  padding: 5px 10px;
+  border-radius: var(--radius-sm);
+  transition: background 0.12s;
+}
+.back-btn:hover { background: var(--bg); color: var(--text); }
+.back-btn svg { flex-shrink: 0; }
+.logo {
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: 18px;
+  letter-spacing: 0.06em;
+  color: var(--text);
+}
+.logo span { color: var(--text-3); font-size: 14px; font-family: 'DM Sans', sans-serif; font-weight: 400; letter-spacing: 0; margin-left: 4px; }
+#topbar-right { display: flex; align-items: center; gap: 12px; }
+#user-email-display { font-size: 12px; color: var(--text-2); }
+.signout-btn {
+  font-size: 12px;
+  color: var(--text-2);
+  background: none;
+  border: 0.5px solid var(--border-md);
+  border-radius: var(--radius-sm);
+  padding: 4px 10px;
+  cursor: pointer;
+  transition: background 0.12s;
+}
+.signout-btn:hover { background: var(--bg); color: var(--text); }
+
+/* ── MAIN LAYOUT ── */
+#main {
+  display: grid;
+  grid-template-columns: 1fr 300px;
+  gap: 0;
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0;
+  min-height: calc(100vh - 52px);
+}
+
+/* ── LEFT PANEL ── */
+#left-panel {
+  padding: 24px 28px;
+  border-right: 0.5px solid var(--border);
+  overflow-x: hidden;
+}
+
+/* ── GREETING ── */
+#greeting { margin-bottom: 20px; }
+#greeting h1 { font-size: 20px; font-weight: 500; margin-bottom: 3px; }
+#greeting-sub { font-size: 13px; color: var(--text-2); display: flex; align-items: center; gap: 8px; }
+#dash-gold-price { font-weight: 500; color: var(--gold); }
+#dash-gold-change { font-size: 11px; }
+#dash-gold-change.up { color: var(--green); }
+#dash-gold-change.down { color: var(--red); }
+
+/* ── KPI ROW ── */
+#kpi-row {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 10px;
+  margin-bottom: 24px;
+}
+.kpi-card {
+  background: var(--surface);
+  border-radius: var(--radius);
+  padding: 14px 16px;
+  box-shadow: var(--shadow);
+}
+.kpi-label {
+  font-family: 'DM Mono', monospace;
+  font-size: 10px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--text-3);
+  margin-bottom: 6px;
+}
+.kpi-val {
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: 32px;
+  line-height: 1;
+  color: var(--text);
+}
+.kpi-val.gold { color: var(--gold); }
+.kpi-val.green { color: var(--green); }
+.kpi-val.red { color: var(--red); }
+
+/* ── TABS ── */
+#tab-nav {
+  display: flex;
+  gap: 0;
+  border-bottom: 1px solid var(--border-md);
+  margin-bottom: 16px;
+}
+.tab-btn {
+  font-family: 'DM Sans', sans-serif;
+  font-size: 13px;
+  font-weight: 500;
+  padding: 8px 16px 9px;
+  border: none;
+  background: none;
+  color: var(--text-2);
+  cursor: pointer;
+  border-bottom: 2px solid transparent;
+  margin-bottom: -1px;
+  transition: color 0.12s;
+}
+.tab-btn:hover { color: var(--text); }
+.tab-btn.active { color: var(--gold); border-bottom-color: var(--gold); }
+
+/* ── TAB CONTENT ── */
+.tab-pane { display: none; }
+.tab-pane.active { display: block; }
+
+/* ── DATA ITEMS ── */
+.data-item {
+  background: var(--surface);
+  border-radius: var(--radius);
+  padding: 13px 16px;
+  margin-bottom: 8px;
+  box-shadow: var(--shadow);
+  cursor: pointer;
+  transition: box-shadow 0.12s;
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 4px;
+  align-items: start;
+}
+.data-item:hover { box-shadow: 0 2px 8px rgba(0,0,0,0.1), 0 0 0 0.5px rgba(0,0,0,0.08); }
+.data-item-name { font-size: 13px; font-weight: 500; margin-bottom: 3px; }
+.data-item-meta { font-size: 11px; color: var(--text-2); display: flex; gap: 8px; flex-wrap: wrap; }
+.data-item-note { font-size: 11px; color: var(--text-2); font-style: italic; margin-top: 6px; padding-top: 6px; border-top: 0.5px solid var(--border); grid-column: 1 / -1; }
+.data-item-badge {
+  font-family: 'DM Mono', monospace;
+  font-size: 10px;
+  padding: 3px 8px;
+  border-radius: 20px;
+  white-space: nowrap;
+  align-self: start;
+}
+.badge-default { background: var(--bg); color: var(--text-2); }
+.badge-type { background: var(--gold-bg); color: var(--gold); }
+.badge-cat { background: var(--bg); color: var(--text-2); }
+
+/* ── EMPTY STATE ── */
+.empty-state {
+  text-align: center;
+  padding: 40px 20px;
+  color: var(--text-3);
+}
+.empty-icon { font-size: 32px; margin-bottom: 10px; }
+.empty-text { font-size: 13px; margin-bottom: 12px; line-height: 1.6; }
+.empty-cta {
+  display: inline-block;
+  font-size: 12px;
+  padding: 7px 16px;
+  border-radius: var(--radius-sm);
+  background: var(--gold);
+  color: white;
+  text-decoration: none;
+  font-weight: 500;
+}
+.empty-cta:hover { background: #9A6610; }
+
+/* ── CHARTS SECTION ── */
+#charts-section { margin-top: 28px; }
+.section-title {
+  font-family: 'DM Mono', monospace;
+  font-size: 10px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--text-3);
+  margin-bottom: 14px;
+}
+.charts-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+.chart-card {
+  background: var(--surface);
+  border-radius: var(--radius);
+  padding: 16px;
+  box-shadow: var(--shadow);
+}
+.chart-card.full-width { grid-column: 1 / -1; }
+.chart-label {
+  font-size: 11px;
+  font-weight: 500;
+  color: var(--text-2);
+  margin-bottom: 12px;
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+}
+.chart-label span { font-weight: 400; color: var(--text-3); font-size: 11px; }
+
+/* ── BAR CHART ── */
+.bar-chart-wrap { display: flex; align-items: flex-end; gap: 5px; height: 72px; }
+.bar-col { display: flex; flex-direction: column; align-items: center; gap: 3px; flex: 1; }
+.bar { width: 100%; border-radius: 3px 3px 0 0; background: var(--border); min-height: 3px; }
+.bar.active-bar { background: var(--gold); opacity: 0.75; }
+.bar.current-bar { background: var(--gold); opacity: 1; }
+.bar-count { font-size: 10px; color: var(--text-3); min-height: 14px; }
+.bar-month { font-size: 10px; color: var(--text-3); margin-top: 4px; }
+
+/* ── DONUT ── */
+.donut-wrap { display: flex; align-items: center; gap: 14px; }
+.donut-legend { flex: 1; display: flex; flex-direction: column; gap: 5px; }
+.legend-row { display: flex; align-items: center; gap: 6px; font-size: 11px; color: var(--text-2); }
+.legend-dot { width: 7px; height: 7px; border-radius: 50%; flex-shrink: 0; }
+.legend-count { margin-left: auto; font-size: 11px; color: var(--text-3); }
+
+/* ── WEIGHT LINE ── */
+.weight-chart-wrap { position: relative; }
+
+/* ── RIGHT SIDEBAR ── */
+#right-sidebar {
+  padding: 20px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+.sidebar-label {
+  font-family: 'DM Mono', monospace;
+  font-size: 10px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--text-3);
+  margin-bottom: 10px;
+}
+#mini-map {
+  width: 100%;
+  height: 220px;
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  overflow: hidden;
+  background: #1A1814;
+  position: relative;
+}
+#mini-map-placeholder {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  background: #2A251E;
+  color: var(--text-3);
+  font-size: 12px;
+}
+#mini-map-placeholder .map-dots { font-size: 20px; }
+
+.profile-card {
+  background: var(--surface);
+  border-radius: var(--radius-sm);
+  padding: 9px 12px;
+  margin-bottom: 6px;
+  box-shadow: var(--shadow);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+  transition: box-shadow 0.12s;
+  font-size: 12px;
+}
+.profile-card:hover { box-shadow: 0 2px 8px rgba(0,0,0,0.1); }
+.profile-dot { width: 7px; height: 7px; border-radius: 50%; background: var(--gold); flex-shrink: 0; }
+.profile-meta { font-size: 11px; color: var(--text-3); margin-left: auto; }
+.add-profile {
+  font-size: 12px;
+  color: var(--text-3);
+  padding: 6px 4px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+.add-profile:hover { color: var(--gold); }
+
+/* ── LOADING STATE ── */
+.loading-pulse {
+  background: linear-gradient(90deg, var(--bg) 25%, rgba(184,122,20,0.08) 50%, var(--bg) 75%);
+  background-size: 200% 100%;
+  animation: pulse 1.4s infinite;
+  border-radius: 4px;
+  height: 16px;
+  margin-bottom: 8px;
+}
+@keyframes pulse { 0% { background-position: 200% 0; } 100% { background-position: -200% 0; } }
+
+/* ── NOT LOGGED IN STATE ── */
+#auth-wall {
+  display: none;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 60vh;
+  text-align: center;
+  padding: 40px;
+}
+#auth-wall h2 { font-size: 20px; font-weight: 500; margin-bottom: 10px; }
+#auth-wall p { font-size: 14px; color: var(--text-2); margin-bottom: 20px; line-height: 1.6; }
+.go-map-btn {
+  display: inline-block;
+  padding: 10px 24px;
+  background: var(--gold);
+  color: white;
+  border-radius: var(--radius-sm);
+  text-decoration: none;
+  font-weight: 500;
+  font-size: 14px;
+}
+.go-map-btn:hover { background: #9A6610; }
+
+/* ── RESPONSIVE ── */
+@media (max-width: 768px) {
+  #main { grid-template-columns: 1fr; }
+  #left-panel { padding: 16px; border-right: none; }
+  #right-sidebar { padding: 0 16px 24px; border-top: 0.5px solid var(--border); }
+  #kpi-row { grid-template-columns: repeat(2, 1fr); }
+  .charts-grid { grid-template-columns: 1fr; }
+  .chart-card.full-width { grid-column: 1; }
+  #topbar { padding: 0 16px; }
+  #user-email-display { display: none; }
+}
+</style>
+</head>
+<body>
+
+<!-- Topbar -->
+<div id="topbar">
+  <div id="topbar-left">
+    <a class="back-btn" href="index.html">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
+      Back to map
+    </a>
+    <div class="logo">Prospector <span>/ My Dashboard</span></div>
+  </div>
+  <div id="topbar-right">
+    <div id="user-email-display"></div>
+    <button class="signout-btn" onclick="signOut()">Sign out</button>
+  </div>
+</div>
+
+<!-- Auth wall (shown if not logged in) -->
+<div id="auth-wall">
+  <div style="font-size:36px;margin-bottom:16px">⛏️</div>
+  <h2>Sign in to view your dashboard</h2>
+  <p>Your saved claims, finds, and spots live here.<br>Head back to the map to sign in.</p>
+  <a class="go-map-btn" href="index.html">Go to the map</a>
+</div>
+
+<!-- Main dashboard (hidden until auth confirmed) -->
+<div id="dashboard" style="display:none">
+  <div id="main">
+
+    <!-- Left panel -->
+    <div id="left-panel">
+
+      <!-- Greeting -->
+      <div id="greeting">
+        <h1 id="greeting-text">Good morning</h1>
+        <div id="greeting-sub">
+          Gold spot:&nbsp;<span id="dash-gold-price">loading...</span>
+          <span id="dash-gold-change"></span>
+        </div>
+      </div>
+
+      <!-- KPI row -->
+      <div id="kpi-row">
+        <div class="kpi-card">
+          <div class="kpi-label">Saved claims</div>
+          <div class="kpi-val gold" id="kpi-claims">—</div>
+        </div>
+        <div class="kpi-card">
+          <div class="kpi-label">Finds logged</div>
+          <div class="kpi-val green" id="kpi-finds">—</div>
+        </div>
+        <div class="kpi-card">
+          <div class="kpi-label">Spots pinned</div>
+          <div class="kpi-val" id="kpi-spots">—</div>
+        </div>
+        <div class="kpi-card">
+          <div class="kpi-label">Watching</div>
+          <div class="kpi-val" id="kpi-watches">—</div>
+        </div>
+      </div>
+
+      <!-- Tabs -->
+      <div id="tab-nav">
+        <button class="tab-btn active" onclick="switchTab('claims')">Saved Claims</button>
+        <button class="tab-btn" onclick="switchTab('finds')">Finds</button>
+        <button class="tab-btn" onclick="switchTab('spots')">Spots</button>
+        <button class="tab-btn" onclick="switchTab('watches')">Watching</button>
+      </div>
+
+      <!-- Tab: Saved Claims -->
+      <div id="tab-claims" class="tab-pane active">
+        <div id="claims-content"><div class="loading-pulse"></div><div class="loading-pulse" style="width:70%"></div></div>
+      </div>
+
+      <!-- Tab: Finds -->
+      <div id="tab-finds" class="tab-pane">
+        <div id="finds-content"><div class="loading-pulse"></div><div class="loading-pulse" style="width:70%"></div></div>
+      </div>
+
+      <!-- Tab: Spots -->
+      <div id="tab-spots" class="tab-pane">
+        <div id="spots-content"><div class="loading-pulse"></div><div class="loading-pulse" style="width:70%"></div></div>
+      </div>
+
+      <!-- Tab: Watching -->
+      <div id="tab-watches" class="tab-pane">
+        <div id="watches-content"><div class="loading-pulse"></div><div class="loading-pulse" style="width:70%"></div></div>
+      </div>
+
+      <!-- Charts -->
+      <div id="charts-section">
+        <div class="section-title">Activity overview</div>
+        <div class="charts-grid">
+
+          <!-- Finds by month -->
+          <div class="chart-card">
+            <div class="chart-label">Finds by month <span id="chart-finds-range"></span></div>
+            <div id="bar-chart-wrap" class="bar-chart-wrap"></div>
+          </div>
+
+          <!-- Find types donut -->
+          <div class="chart-card">
+            <div class="chart-label">Find types <span id="chart-total-finds"></span></div>
+            <div class="donut-wrap">
+              <svg id="donut-svg" width="80" height="80" viewBox="0 0 80 80"></svg>
+              <div class="donut-legend" id="donut-legend"></div>
+            </div>
+          </div>
+
+          <!-- Cumulative weight -->
+          <div class="chart-card full-width">
+            <div class="chart-label">Gold found — cumulative weight <span id="chart-total-weight"></span></div>
+            <svg id="weight-svg" width="100%" height="60" viewBox="0 0 500 60" preserveAspectRatio="none" style="display:block"></svg>
+            <div id="weight-months" style="display:flex;justify-content:space-between;font-size:10px;color:var(--text-3);margin-top:4px;padding:0 2px"></div>
+          </div>
+
+        </div>
+      </div>
+
+    </div>
+
+    <!-- Right sidebar -->
+    <div id="right-sidebar">
+
+      <!-- Mini map -->
+      <div>
+        <div class="sidebar-label">Your spots on the map</div>
+        <div id="mini-map">
+          <div id="mini-map-placeholder">
+            <div class="map-dots">📍</div>
+            <div>Loading map...</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Map profiles -->
+      <div>
+        <div class="sidebar-label">Map profiles</div>
+        <div id="profiles-list">
+          <div style="font-size:12px;color:var(--text-3);padding:8px 4px;line-height:1.6">
+            Save named map views — layers, zoom, and location.<br>Coming in Phase 2.
+          </div>
+        </div>
+        <div class="add-profile" onclick="window.location.href='index.html'">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+          Go explore the map first
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<script>
+// ── CONFIG ──────────────────────────────────────────────
+const SUPABASE_URL = window.PROSPECTOR_CONFIG.supabase_url;
+const ANON_KEY = window.PROSPECTOR_CONFIG.supabase_anon_key;
+
+let sbClient = null;
+let currentUser = null;
+let allFinds = [];
+let allSpots = [];
+let allClaims = [];
+let allWatches = [];
+let mapboxToken = null;
+let mbMap = null;
+
+// ── BOOT ────────────────────────────────────────────────
+window.addEventListener('load', async () => {
+  sbClient = window.supabase.createClient(SUPABASE_URL, ANON_KEY);
+  const { data: { session } } = await sbClient.auth.getSession();
+  if (!session) {
+    document.getElementById('auth-wall').style.display = 'flex';
+    return;
+  }
+  currentUser = session.user;
+  document.getElementById('dashboard').style.display = 'block';
+  document.getElementById('user-email-display').textContent = currentUser.email;
+  setGreeting();
+  fetchGoldPrice();
+  await loadAllData();
+  fetchMapboxToken();
+});
+
+// ── GREETING ────────────────────────────────────────────
+function setGreeting() {
+  const h = new Date().getHours();
+  const part = h < 12 ? 'Good morning' : h < 17 ? 'Good afternoon' : 'Good evening';
+  const name = currentUser.user_metadata?.full_name?.split(' ')[0] || currentUser.email.split('@')[0];
+  document.getElementById('greeting-text').textContent = part + ', ' + name;
+}
+
+// ── GOLD PRICE ───────────────────────────────────────────
+async function fetchGoldPrice() {
+  const el = document.getElementById('dash-gold-price');
+  const chEl = document.getElementById('dash-gold-change');
+  try {
+    const res = await fetch('https://api.metals.live/v1/spot/gold');
+    const data = await res.json();
+    const price = Array.isArray(data) ? data[0]?.price : data?.price;
+    if (price) {
+      el.textContent = '$' + Number(price).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + ' / oz';
+      return;
+    }
+  } catch(e) {}
+  try {
+    const res2 = await fetch('https://data-asg.goldprice.org/dbXRates/USD');
+    const d2 = await res2.json();
+    const price2 = d2?.items?.[0]?.xauPrice;
+    if (price2) {
+      el.textContent = '$' + Number(price2).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + ' / oz';
+      return;
+    }
+  } catch(e) {}
+  el.textContent = 'unavailable';
+}
+
+// ── LOAD ALL DATA ────────────────────────────────────────
+async function loadAllData() {
+  const [claims, finds, spots, watches] = await Promise.all([
+    sbClient.from('saved_claims').select('*').eq('user_id', currentUser.id).order('saved_at', { ascending: false }),
+    sbClient.from('find_logs').select('*').eq('user_id', currentUser.id).order('created_at', { ascending: false }),
+    sbClient.from('user_spots').select('*').eq('user_id', currentUser.id).order('created_at', { ascending: false }),
+    sbClient.from('claim_watches').select('*').eq('user_id', currentUser.id).order('created_at', { ascending: false })
+  ]);
+  allClaims = claims.data || [];
+  allFinds  = finds.data  || [];
+  allSpots  = spots.data  || [];
+  allWatches = watches.data || [];
+  updateKPIs();
+  renderClaimsTab();
+  renderFindsTab();
+  renderSpotsTab();
+  renderWatchesTab();
+  buildCharts();
+}
+
+// ── KPIs ─────────────────────────────────────────────────
+function updateKPIs() {
+  document.getElementById('kpi-claims').textContent  = allClaims.length;
+  document.getElementById('kpi-finds').textContent   = allFinds.length;
+  document.getElementById('kpi-spots').textContent   = allSpots.length;
+  document.getElementById('kpi-watches').textContent = allWatches.length;
+}
+
+// ── TABS ─────────────────────────────────────────────────
+function switchTab(name) {
+  document.querySelectorAll('.tab-pane').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById('tab-' + name).classList.add('active');
+  event.target.classList.add('active');
+}
+
+// ── CLAIMS TAB ───────────────────────────────────────────
+function renderClaimsTab() {
+  const el = document.getElementById('claims-content');
+  if (allClaims.length === 0) {
+    el.innerHTML = `<div class="empty-state">
+      <div class="empty-icon">⛏️</div>
+      <div class="empty-text">No saved claims yet.<br>Tap a claim on the map and hit Save.</div>
+      <a class="empty-cta" href="index.html">Explore the map</a>
+    </div>`;
+    return;
+  }
+  const icons = { Placer: '🪨', Lode: '🔩', Tunnel: '🕳️', Mill: '⚙️' };
+  el.innerHTML = allClaims.map(c => {
+    const icon = icons[c.claim_type] || '⛏️';
+    const saved = c.saved_at ? new Date(c.saved_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : '';
+    const acres = c.acres ? parseFloat(c.acres).toFixed(1) + ' ac' : '';
+    return `<div class="data-item" onclick="">
+      <div>
+        <div class="data-item-name">${icon} ${c.claim_name || c.serial_number}</div>
+        <div class="data-item-meta">
+          ${c.serial_number ? '<span>' + c.serial_number + '</span>' : ''}
+          ${acres ? '<span>' + acres + '</span>' : ''}
+          ${saved ? '<span>Saved ' + saved + '</span>' : ''}
+        </div>
+      </div>
+      <div class="data-item-badge badge-type">${c.claim_type || 'Claim'}</div>
+    </div>`;
+  }).join('');
+}
+
+// ── FINDS TAB ────────────────────────────────────────────
+function renderFindsTab() {
+  const el = document.getElementById('finds-content');
+  if (allFinds.length === 0) {
+    el.innerHTML = `<div class="empty-state">
+      <div class="empty-icon">🥇</div>
+      <div class="empty-text">No finds logged yet.<br>Use the pin button on the map to log your first find.</div>
+      <a class="empty-cta" href="index.html">Start prospecting</a>
+    </div>`;
+    return;
+  }
+  const typeIcons = { 'Gold Flake': '✨', 'Gold Nugget': '🪙', 'Placer Gold': '🥇', 'Lode Gold': '🔩', 'Minerals': '💎', 'Old Workings': '🕳️' };
+  el.innerHTML = allFinds.map(f => {
+    const icon = typeIcons[f.find_type] || '🥇';
+    const date = f.created_at ? new Date(f.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : '';
+    const coords = (f.lat && f.lng) ? f.lat.toFixed(4) + 'N ' + Math.abs(f.lng).toFixed(4) + 'W' : '';
+    return `<div class="data-item" onclick="${f.lat && f.lng ? 'goToMap(' + f.lng + ',' + f.lat + ')' : ''}">
+      <div>
+        <div class="data-item-name">${icon} ${f.find_type}</div>
+        <div class="data-item-meta">
+          ${f.weight ? '<span>' + f.weight + '</span>' : ''}
+          ${f.depth  ? '<span>' + f.depth  + '</span>' : ''}
+          ${date     ? '<span>' + date     + '</span>' : ''}
+          ${coords   ? '<span>' + coords   + '</span>' : ''}
+        </div>
+        ${f.notes ? '<div class="data-item-note">' + escHtml(f.notes) + '</div>' : ''}
+      </div>
+      <div class="data-item-badge badge-cat">${f.find_type}</div>
+    </div>`;
+  }).join('');
+}
+
+// ── SPOTS TAB ────────────────────────────────────────────
+function renderSpotsTab() {
+  const el = document.getElementById('spots-content');
+  if (allSpots.length === 0) {
+    el.innerHTML = `<div class="empty-state">
+      <div class="empty-icon">📍</div>
+      <div class="empty-text">No spots saved yet.<br>Long press the map to drop a pin.</div>
+      <a class="empty-cta" href="index.html">Go to map</a>
+    </div>`;
+    return;
+  }
+  const icons = { gold: '🥇', prospect: '⛏️', camp: '⛺', workings: '🕳️', waypoint: '📌', avoid: '⚠️' };
+  const labels = { gold: 'Gold Find', prospect: 'Prospect', camp: 'Camp', workings: 'Old Workings', waypoint: 'Waypoint', avoid: 'Avoid' };
+  el.innerHTML = allSpots.map(s => {
+    const icon = icons[s.category] || '📍';
+    const label = labels[s.category] || s.category || '';
+    const date = s.created_at ? new Date(s.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : '';
+    const coords = (s.lat && s.lng) ? s.lat.toFixed(4) + 'N ' + Math.abs(s.lng).toFixed(4) + 'W' : '';
+    return `<div class="data-item" onclick="goToMap(${s.lng}, ${s.lat})">
+      <div>
+        <div class="data-item-name">${icon} ${escHtml(s.name || 'Unnamed spot')}</div>
+        <div class="data-item-meta">
+          ${coords ? '<span>' + coords + '</span>' : ''}
+          ${date   ? '<span>Saved ' + date + '</span>' : ''}
+        </div>
+        ${s.notes ? '<div class="data-item-note">' + escHtml(s.notes) + '</div>' : ''}
+      </div>
+      <div class="data-item-badge badge-cat">${label}</div>
+    </div>`;
+  }).join('');
+}
+
+// ── WATCHES TAB ──────────────────────────────────────────
+function renderWatchesTab() {
+  const el = document.getElementById('watches-content');
+  if (allWatches.length === 0) {
+    el.innerHTML = `<div class="empty-state">
+      <div class="empty-icon">🔔</div>
+      <div class="empty-text">No claims watched yet.<br>Tap a claim on the map and hit Watch.</div>
+      <a class="empty-cta" href="index.html">Find claims to watch</a>
+    </div>`;
+    return;
+  }
+  el.innerHTML = allWatches.map(w => {
+    const date = w.created_at ? new Date(w.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : '';
+    return `<div class="data-item">
+      <div>
+        <div class="data-item-name">🔔 ${w.claim_name || w.serial_number}</div>
+        <div class="data-item-meta">
+          ${w.serial_number ? '<span>' + w.serial_number + '</span>' : ''}
+          ${date ? '<span>Watching since ' + date + '</span>' : ''}
+        </div>
+      </div>
+      <div class="data-item-badge badge-default">Watching</div>
+    </div>`;
+  }).join('');
+}
+
+// ── CHARTS ───────────────────────────────────────────────
+function buildCharts() {
+  buildBarChart();
+  buildDonut();
+  buildWeightLine();
+}
+
+function buildBarChart() {
+  const wrap = document.getElementById('bar-chart-wrap');
+  if (allFinds.length === 0) {
+    wrap.innerHTML = '<div style="font-size:12px;color:var(--text-3);padding:20px 0;text-align:center;width:100%">Log some finds to see your activity chart</div>';
+    return;
+  }
+  const now = new Date();
+  const months = [];
+  for (let i = 7; i >= 0; i--) {
+    const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
+    months.push({ label: d.toLocaleString('default', { month: 'short' }), year: d.getFullYear(), month: d.getMonth(), count: 0 });
+  }
+  allFinds.forEach(f => {
+    const d = new Date(f.created_at);
+    const m = months.find(m => m.year === d.getFullYear() && m.month === d.getMonth());
+    if (m) m.count++;
+  });
+  const maxCount = Math.max(...months.map(m => m.count), 1);
+  document.getElementById('chart-finds-range').textContent = 'last 8 months';
+  wrap.innerHTML = months.map((m, i) => {
+    const h = Math.round((m.count / maxCount) * 68);
+    const isCurrent = i === months.length - 1;
+    const cls = m.count === 0 ? 'bar' : isCurrent ? 'bar current-bar' : 'bar active-bar';
+    return `<div class="bar-col">
+      <div class="bar-count">${m.count > 0 ? m.count : ''}</div>
+      <div class="${cls}" style="height:${Math.max(h, 3)}px"></div>
+      <div class="bar-month">${m.label}</div>
+    </div>`;
+  }).join('');
+}
+
+function buildDonut() {
+  const svg = document.getElementById('donut-svg');
+  const legend = document.getElementById('donut-legend');
+  const total = allFinds.length;
+  document.getElementById('chart-total-finds').textContent = total > 0 ? total + ' total' : '';
+  if (total === 0) {
+    svg.innerHTML = '<circle cx="40" cy="40" r="28" fill="none" stroke="var(--border-md)" stroke-width="12"/>';
+    legend.innerHTML = '<div style="font-size:11px;color:var(--text-3)">No finds yet</div>';
+    return;
+  }
+  const counts = {};
+  allFinds.forEach(f => { counts[f.find_type] = (counts[f.find_type] || 0) + 1; });
+  const colors = ['#B87A14', '#3B6D11', '#5DCAA5', '#888780', '#E87722', '#378ADD'];
+  const entries = Object.entries(counts).sort((a, b) => b[1] - a[1]);
+  const circ = 2 * Math.PI * 28;
+  let offset = 0;
+  let svgHtml = '';
+  entries.forEach(([ type, count ], i) => {
+    const pct = count / total;
+    const dash = pct * circ;
+    const color = colors[i % colors.length];
+    svgHtml += `<circle cx="40" cy="40" r="28" fill="none" stroke="${color}" stroke-width="12"
+      stroke-dasharray="${dash.toFixed(2)} ${circ.toFixed(2)}"
+      stroke-dashoffset="${(-offset).toFixed(2)}"
+      transform="rotate(-90 40 40)"/>`;
+    offset += dash;
+  });
+  svgHtml += `<text x="40" y="37" text-anchor="middle" font-size="14" font-weight="500" fill="var(--text)" font-family="Bebas Neue,sans-serif">${total}</text>
+    <text x="40" y="49" text-anchor="middle" font-size="9" fill="var(--text-3)" font-family="DM Mono,monospace">FINDS</text>`;
+  svg.innerHTML = svgHtml;
+  legend.innerHTML = entries.slice(0, 4).map(([type, count], i) =>
+    `<div class="legend-row">
+      <div class="legend-dot" style="background:${colors[i % colors.length]}"></div>
+      <span style="font-size:11px">${type}</span>
+      <span class="legend-count">${count}</span>
+    </div>`
+  ).join('') + (entries.length > 4 ? `<div style="font-size:10px;color:var(--text-3);margin-top:2px">+${entries.length - 4} more</div>` : '');
+}
+
+function buildWeightLine() {
+  const svg = document.getElementById('weight-svg');
+  const monthsEl = document.getElementById('weight-months');
+  const findsWithWeight = allFinds.filter(f => f.weight && parseFloat(f.weight) > 0);
+  if (findsWithWeight.length < 2) {
+    svg.style.display = 'none';
+    document.getElementById('chart-total-weight').textContent = findsWithWeight.length === 1 ? parseFloat(findsWithWeight[0].weight).toFixed(2) + 'g total' : '';
+    document.querySelector('.chart-card.full-width .chart-label').nextElementSibling.innerHTML =
+      '<div style="font-size:12px;color:var(--text-3);padding:16px 0;text-align:center">Log finds with weight to see your cumulative chart</div>';
+    monthsEl.style.display = 'none';
+    return;
+  }
+  svg.style.display = 'block';
+  const sorted = [...findsWithWeight].sort((a, b) => new Date(a.created_at) - new Date(b.created_at));
+  let cum = 0;
+  const points = sorted.map(f => { cum += parseFloat(f.weight); return { date: new Date(f.created_at), w: cum }; });
+  document.getElementById('chart-total-weight').textContent = cum.toFixed(2) + 'g total';
+  const minDate = points[0].date.getTime();
+  const maxDate = points[points.length - 1].date.getTime();
+  const dateRange = maxDate - minDate || 1;
+  const W = 500; const H = 56;
+  const toX = d => ((d.getTime() - minDate) / dateRange) * W;
+  const toY = w => H - (w / cum) * H + 2;
+  const pts = points.map(p => toX(p.date).toFixed(1) + ',' + toY(p.w).toFixed(1)).join(' ');
+  const area = `0,${H} ${pts} ${W},${H}`;
+  svg.innerHTML = `
+    <polyline points="${pts}" fill="none" stroke="var(--gold)" stroke-width="2" stroke-linejoin="round"/>
+    <polygon points="${area}" fill="var(--gold)" fill-opacity="0.1"/>
+    <circle cx="${toX(points[points.length-1].date).toFixed(1)}" cy="${toY(cum).toFixed(1)}" r="3" fill="var(--gold)"/>`;
+  const first = points[0].date;
+  const last = points[points.length - 1].date;
+  const fmt = d => d.toLocaleDateString('en-US', { month: 'short', year: '2-digit' });
+  monthsEl.innerHTML = `<span>${fmt(first)}</span><span>${fmt(last)}</span>`;
+}
+
+// ── MINI MAP ─────────────────────────────────────────────
+async function fetchMapboxToken() {
+  try {
+    const res = await fetch(`${SUPABASE_URL}/rest/v1/app_config?select=key,value`, {
+      headers: { 'apikey': ANON_KEY, 'Authorization': 'Bearer ' + ANON_KEY }
+    });
+    const rows = await res.json();
+    const config = {};
+    if (Array.isArray(rows)) rows.forEach(r => config[r.key] = r.value);
+    mapboxToken = config.mapbox_token || localStorage.getItem('prospector_mapbox_token');
+    if (mapboxToken && mapboxToken.startsWith('pk.')) initMiniMap();
+  } catch(e) {
+    document.getElementById('mini-map-placeholder').innerHTML = '<div style="font-size:12px;color:var(--text-3);text-align:center;padding:16px">Map unavailable</div>';
+  }
+}
+
+function initMiniMap() {
+  const mapScript = document.createElement('script');
+  mapScript.src = 'https://api.mapbox.com/mapbox-gl-js/v3.3.0/mapbox-gl.js';
+  mapScript.onload = () => {
+    const cssLink = document.createElement('link');
+    cssLink.rel = 'stylesheet';
+    cssLink.href = 'https://api.mapbox.com/mapbox-gl-js/v3.3.0/mapbox-gl.css';
+    document.head.appendChild(cssLink);
+    document.getElementById('mini-map-placeholder').style.display = 'none';
+    mapboxgl.accessToken = mapboxToken;
+    const center = allSpots.length > 0 ? [allSpots[0].lng, allSpots[0].lat] : [-120.5, 43.8];
+    mbMap = new mapboxgl.Map({
+      container: 'mini-map',
+      style: 'mapbox://styles/mapbox/satellite-streets-v12',
+      center: center,
+      zoom: allSpots.length > 0 ? 10 : 6,
+      interactive: true,
+      attributionControl: false
+    });
+    mbMap.on('load', () => {
+      addSpotsToMiniMap();
+      if (allSpots.length > 1) fitMiniMapToSpots();
+    });
+  };
+  document.head.appendChild(mapScript);
+}
+
+function addSpotsToMiniMap() {
+  const icons = { gold: '#F0C040', prospect: '#4CAF50', camp: '#FF9800', workings: '#795548', waypoint: '#2196F3', avoid: '#F44336' };
+  allSpots.forEach(s => {
+    if (!s.lat || !s.lng) return;
+    const el = document.createElement('div');
+    el.style.cssText = `width:10px;height:10px;border-radius:50%;background:${icons[s.category]||'#F0C040'};border:2px solid white;cursor:pointer`;
+    new mapboxgl.Marker(el).setLngLat([s.lng, s.lat])
+      .setPopup(new mapboxgl.Popup({ offset: 10 }).setText(s.name || 'Spot'))
+      .addTo(mbMap);
+  });
+}
+
+function fitMiniMapToSpots() {
+  const bounds = new mapboxgl.LngLatBounds();
+  allSpots.forEach(s => { if (s.lat && s.lng) bounds.extend([s.lng, s.lat]); });
+  if (!bounds.isEmpty()) mbMap.fitBounds(bounds, { padding: 30, maxZoom: 12 });
+}
+
+// ── NAVIGATE TO MAP ──────────────────────────────────────
+function goToMap(lng, lat) {
+  localStorage.setItem('prospector_fly_to', JSON.stringify({ lng, lat, zoom: 14 }));
+  window.location.href = 'index.html';
+}
+
+// ── SIGN OUT ─────────────────────────────────────────────
+async function signOut() {
+  await sbClient.auth.signOut();
+  window.location.href = 'index.html';
+}
+
+// ── UTILS ────────────────────────────────────────────────
+function escHtml(str) {
+  return String(str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+</script>
+</body>
+</html>
