@@ -1270,18 +1270,10 @@ function renderIntelCard(el, d, spot) {
     </div>`;
   }).join('');
 
-  const spotRadius = spotRadiusMap[spot.id] || DEFAULT_RADIUS;
   el.innerHTML = `
     <div class="intel-header">
       <span>Gold potential score</span>
-      <div style="display:flex;align-items:center;gap:6px">
-        <select class="radius-select" onchange="changeRadius('${spot.id}', this.value)">
-          <option value="5"  ${spotRadius === 5  ? 'selected' : ''}>5 mi</option>
-          <option value="10" ${spotRadius === 10 ? 'selected' : ''}>10 mi</option>
-          <option value="20" ${spotRadius === 20 ? 'selected' : ''}>20 mi</option>
-          <option value="50" ${spotRadius === 50 ? 'selected' : ''}>50 mi</option>
-        </select>
-      </div>
+      <span class="intel-radius">${DEFAULT_RADIUS} mi radius</span>
     </div>
     <div style="display:grid;grid-template-columns:96px 1fr;gap:14px;align-items:center;margin-bottom:8px">
       <div style="text-align:center">
