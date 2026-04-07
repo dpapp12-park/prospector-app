@@ -1649,11 +1649,29 @@ function renderConditions(el, d) {
 
   let gaugeHtml = '';
   if (gauge) {
+    // Expand common USGS gauge name abbreviations
+    const cleanName = (gauge.name || '')
+      .replace(/\bSF\b/g, 'South Fork').replace(/\bNF\b/g, 'North Fork')
+      .replace(/\bMF\b/g, 'Middle Fork').replace(/\bEF\b/g, 'East Fork')
+      .replace(/\bWF\b/g, 'West Fork').replace(/\bCR\b/g, 'Creek')
+      .replace(/\bRV\b/g, 'River').replace(/\bNR\b/g, 'near')
+      .replace(/\bBL\b/g, 'below').replace(/\bAB\b/g, 'above')
+      .toLowerCase().replace(/\b\w/g, c => c.toUpperCase());
+
+    // Plain English CFS translation
+    const cfsDesc = gauge.cfs === null ? 'No reading' :
+      gauge.cfs < 20   ? 'Very low flow — ideal for panning' :
+      gauge.cfs < 100  ? 'Low flow — good conditions' :
+      gauge.cfs < 300  ? 'Moderate flow — wading possible' :
+      gauge.cfs < 800  ? 'High flow — use caution' :
+      'Flood conditions — stay out';
+
     const cfsText = gauge.cfs !== null ? gauge.cfs.toLocaleString() + ' cfs' : 'No reading';
     gaugeHtml = `<div class="conditions-block">
       <div class="conditions-block-label">Stream gauge &nbsp;·&nbsp; ${gauge.distMi} mi away</div>
       <div class="conditions-main">${cfsText}</div>
-      <div class="conditions-sub">${gauge.name}</div>
+      <div class="conditions-sub">${cfsDesc}</div>
+      <div class="conditions-sub" style="margin-top:2px;font-size:10px;color:var(--text-3)">${cleanName}</div>
       ${signal ? `<div class="conditions-signal ${signal.cls}">${signal.label}</div>` : ''}
     </div>`;
   } else {
