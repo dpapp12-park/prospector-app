@@ -2169,30 +2169,46 @@ function addDemoLayers() {
 
   // fetchBLMBoundaries defined globally below
 
-  // ── LIDAR HILLSHADE (USGS 3DEP) ──
-  // LiDAR Hillshade - USGS 3DEP derived
-  map.addSource('lidar-src', {
-    type: 'raster',
-    tiles: [
-      'https://elevation.nationalmap.gov/arcgis/rest/services/3DEPElevation/ImageServer/WMSServer?SERVICE=WMS&REQUEST=GetMap&VERSION=1.3.0&LAYERS=3DEPElevation%3AHillshade+Gray&STYLES=&FORMAT=image%2Fpng&TRANSPARENT=TRUE&CRS=EPSG%3A3857&WIDTH=256&HEIGHT=256&BBOX={bbox-epsg-3857}'
-    ],
-    tileSize: 256,
-    minzoom: 5,
-    maxzoom: 16,
-    attribution: 'USGS 3DEP 1m Hillshade'
+  // ── LIDAR HILLSHADE (USGS 3DEP via Cloudflare R2) ──
+  // 14 regional tile sets — all toggled together under the 'lidar' layer key
+  const R2 = 'https://pub-c80a82175dfe43b49415c146734bfc94.r2.dev';
+  const lidarRegions = [
+    { id: 'lidar-nevada-battle-mountain', path: 'nevada/battle-mountain' },
+    { id: 'lidar-nevada-elko',            path: 'nevada/elko' },
+    { id: 'lidar-california-west',        path: 'california/mother-lode-west' },
+    { id: 'lidar-california-east',        path: 'california/mother-lode-east' },
+    { id: 'lidar-idaho-boise',            path: 'idaho/boise-basin' },
+    { id: 'lidar-montana',                path: 'montana/sw-gold-belt' },
+    { id: 'lidar-colorado',               path: 'colorado/central' },
+    { id: 'lidar-wyoming',                path: 'wyoming/south-pass' },
+    { id: 'lidar-arizona',                path: 'arizona/gold-belt' },
+    { id: 'lidar-new-mexico',             path: 'new-mexico/gold-belt' },
+    { id: 'lidar-utah',                   path: 'utah/gold-belt' },
+    { id: 'lidar-nevada-central',         path: 'nevada/central' },
+    { id: 'lidar-oregon',                 path: 'oregon/sw-gold-belt' },
+    { id: 'lidar-washington',             path: 'washington/okanogan' }
+  ];
+  lidarRegions.forEach(function(r) {
+    map.addSource(r.id + '-src', {
+      type: 'raster',
+      tiles: [ R2 + '/' + r.path + '/{z}/{x}/{y}.png' ],
+      tileSize: 256,
+      minzoom: 8,
+      maxzoom: 15,
+      attribution: 'USGS 3DEP 1m LiDAR'
+    });
+    map.addLayer({
+      id: r.id,
+      type: 'raster',
+      source: r.id + '-src',
+      layout: { visibility: 'none' },
+      paint: {
+        'raster-opacity': 0.7,
+        'raster-contrast': 0.2,
+        'raster-brightness-min': 0.05
+      }
+    }, 'active-claims-fill');
   });
-
-  map.addLayer({
-    id: 'lidar-layer',
-    type: 'raster',
-    source: 'lidar-src',
-    layout: { visibility: 'none' },
-    paint: {
-      'raster-opacity': 0.7,
-      'raster-contrast': 0.2,
-      'raster-brightness-min': 0.05
-    }
-  }, 'active-claims-fill');
 
   // Contour lines - vector from Mapbox terrain
   map.addSource('contours-src', {
@@ -2353,7 +2369,7 @@ function toggleLayer(id) {
     'open-to-claim':  ['open-to-claim-fill', 'open-to-claim-line'],
     'plss':           'plss-layer',
     'blm-roads':      'blm-roads-layer',
-    'lidar':          'lidar-layer',
+    'lidar':          ['lidar-nevada-battle-mountain','lidar-nevada-elko','lidar-california-west','lidar-california-east','lidar-idaho-boise','lidar-montana','lidar-colorado','lidar-wyoming','lidar-arizona','lidar-new-mexico','lidar-utah','lidar-nevada-central','lidar-oregon','lidar-washington'],
     'contours':       ['topo-layer', 'topo-labels'],
     'hist-mines':     'hist-mines-layer',
     'gold-occurrences': 'gold-occurrences-layer',
