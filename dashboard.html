@@ -1084,14 +1084,14 @@ window.addEventListener('load', async () => {
 function setGreeting() {
   const h = new Date().getHours();
   const part = h < 12 ? 'Good morning' : h < 17 ? 'Good afternoon' : 'Good evening';
+  // Prefer saved display name, fall back to Google name, then email
+  const savedName = (profileData?.display_name || '').trim();
   const metaName = (currentUser.user_metadata?.full_name || currentUser.user_metadata?.name || '').trim();
-  const firstName = metaName.split(' ')[0];
-  // Fall back to email prefix if Google metadata name is missing or just an initial
+  const firstName = (savedName || metaName).split(' ')[0];
   let name;
   if (firstName.length > 2) {
     name = firstName.charAt(0).toUpperCase() + firstName.slice(1);
   } else {
-    // Clean email username: strip numbers and symbols, capitalize
     const emailUser = currentUser.email.split('@')[0].replace(/[0-9._-]/g, '');
     name = emailUser.charAt(0).toUpperCase() + emailUser.slice(1).toLowerCase();
   }
@@ -1318,6 +1318,7 @@ async function loadProfile() {
       const displayName = data.display_name || metaName;
       document.getElementById('profile-display-name').value = displayName;
       document.getElementById('profile-name-display').textContent = displayName || currentUser.email.split('@')[0];
+      setGreeting();
       if (data.home_state) document.getElementById('profile-home-state').value = data.home_state;
       if (data.experience_level) selectExperience(data.experience_level);
       if (Array.isArray(data.prospect_states)) { prospectStates = data.prospect_states; renderProspectChips(); }
