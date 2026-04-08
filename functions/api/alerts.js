@@ -77,29 +77,31 @@ async function runAlerts(env) {
   return { message: `Alerts checked`, sent, users: Object.keys(alertsByUser).length };
 }
 
-// ── Get user emails from Supabase Auth ────────────────────────────────────────
+// ── Get user emails from Supabase Auth admin API ─────────────────────────────
 async function getUserEmails(userIds, headers) {
   const emails = {};
-  // Query profiles table or auth.users via RPC
-  // Using the user_spots table pattern — fetch from profiles if available
-  // Fall back: query each user's email from a profiles table
-  for (const uid of userIds) {
-    try {
-      const res = await fetch(
-        `${SUPABASE_URL}/rest/v1/rpc/get_user_email`,
-        {
-          method: 'POST',
-          headers,
-          body: JSON.stringify({ uid })
+  try {
+    const supabaseKey = headers['apikey'];
+    const res = await fetch(
+      `${SUPABASE_URL}/auth/v1/admin/users?per_page=1000`,
+      {
+        headers: {
+          'apikey': supabaseKey,
+          'Authorization': `Bearer ${supabaseKey}`
         }
-      );
-      if (res.ok) {
-        const data = await res.json();
-        if (data?.email) emails[uid] = data.email;
       }
-    } catch(e) {
-      console.error('Failed to get email for user', uid, e);
+    );
+    if (res.ok) {
+      const data = await res.json();
+      const users = data.users || [];
+      for (const user of users) {
+        if (userIds.includes(user.id)) {
+          emails[user.id] = user.email;
+        }
+      }
     }
+  } catch(e) {
+    console.error('Failed to get user emails:', e);
   }
   return emails;
 }
