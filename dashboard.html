@@ -804,22 +804,26 @@ body {
           </div>
 
           <!-- Read-only view -->
-          <div id="profile-readonly" style="display:flex;flex-direction:column;gap:12px;">
-            <div style="display:flex;justify-content:space-between;padding:11px 14px;background:var(--bg-2);border:1px solid var(--border);border-radius:8px;">
-              <span style="font-size:12px;color:var(--text-3);text-transform:uppercase;letter-spacing:0.05em;">Display Name</span>
-              <span id="ro-display-name" style="font-size:14px;color:var(--text);">—</span>
+          <div id="profile-readonly" style="display:flex;flex-direction:column;gap:0;border-top:1px solid var(--border);margin-bottom:4px;">
+            <div style="display:flex;justify-content:space-between;align-items:baseline;padding:9px 2px;border-bottom:1px solid var(--border);">
+              <span style="font-size:12px;color:var(--text-3);">Display Name</span>
+              <span id="ro-display-name" style="font-size:14px;color:var(--text);font-weight:500;">—</span>
             </div>
-            <div style="display:flex;justify-content:space-between;padding:11px 14px;background:var(--bg-2);border:1px solid var(--border);border-radius:8px;">
-              <span style="font-size:12px;color:var(--text-3);text-transform:uppercase;letter-spacing:0.05em;">Home State</span>
-              <span id="ro-home-state" style="font-size:14px;color:var(--text);">—</span>
+            <div style="display:flex;justify-content:space-between;align-items:baseline;padding:9px 2px;border-bottom:1px solid var(--border);">
+              <span style="font-size:12px;color:var(--text-3);">Home State</span>
+              <span id="ro-home-state" style="font-size:14px;color:var(--text);font-weight:500;">—</span>
             </div>
-            <div style="display:flex;justify-content:space-between;padding:11px 14px;background:var(--bg-2);border:1px solid var(--border);border-radius:8px;">
-              <span style="font-size:12px;color:var(--text-3);text-transform:uppercase;letter-spacing:0.05em;">Experience</span>
-              <span id="ro-experience" style="font-size:14px;color:var(--text);">—</span>
+            <div style="display:flex;justify-content:space-between;align-items:baseline;padding:9px 2px;border-bottom:1px solid var(--border);">
+              <span style="font-size:12px;color:var(--text-3);">Prospecting In</span>
+              <span id="ro-prospect-states" style="font-size:14px;color:var(--text);font-weight:500;text-align:right;max-width:60%;">—</span>
             </div>
-            <div style="display:flex;justify-content:space-between;align-items:center;padding:11px 14px;background:var(--bg-2);border:1px solid var(--border);border-radius:8px;">
-              <span style="font-size:12px;color:var(--text-3);text-transform:uppercase;letter-spacing:0.05em;">Claim Alerts</span>
-              <span id="ro-alerts" style="font-size:14px;color:var(--text);">—</span>
+            <div style="display:flex;justify-content:space-between;align-items:baseline;padding:9px 2px;border-bottom:1px solid var(--border);">
+              <span style="font-size:12px;color:var(--text-3);">Experience</span>
+              <span id="ro-experience" style="font-size:14px;color:var(--text);font-weight:500;">—</span>
+            </div>
+            <div style="display:flex;justify-content:space-between;align-items:baseline;padding:9px 2px;border-bottom:1px solid var(--border);">
+              <span style="font-size:12px;color:var(--text-3);">Claim Alerts</span>
+              <span id="ro-alerts" style="font-size:14px;color:var(--text);font-weight:500;">—</span>
             </div>
           </div>
 
@@ -842,20 +846,17 @@ body {
               <label style="display:block;font-size:12px;font-weight:500;color:var(--text-2);margin-bottom:6px;letter-spacing:0.05em;text-transform:uppercase;">Home State</label>
               <select id="profile-home-state"
                 style="width:100%;background:var(--bg-2);border:1px solid var(--border);border-radius:8px;padding:10px 14px;color:var(--text);font-family:'DM Sans',sans-serif;font-size:14px;outline:none;box-sizing:border-box;cursor:pointer;">
-                <option value="">Select your state</option>
-                <option value="AK">Alaska</option>
-                <option value="AZ">Arizona</option>
-                <option value="CA">California</option>
-                <option value="CO">Colorado</option>
-                <option value="ID">Idaho</option>
-                <option value="MT">Montana</option>
-                <option value="NM">New Mexico</option>
-                <option value="NV">Nevada</option>
-                <option value="OR">Oregon</option>
-                <option value="UT">Utah</option>
-                <option value="WA">Washington</option>
-                <option value="WY">Wyoming</option>
-                <option value="OTHER">Other</option>
+                <option value="">Select your home state</option>
+              </select>
+            </div>
+
+            <div>
+              <label style="display:block;font-size:12px;font-weight:500;color:var(--text-2);margin-bottom:6px;letter-spacing:0.05em;text-transform:uppercase;">Where Do You Prospect?</label>
+              <div style="font-size:12px;color:var(--text-3);margin-bottom:8px;">Tap states to add — helps us show relevant layers and alerts</div>
+              <div id="prospect-chips" style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:8px;min-height:28px;"></div>
+              <select id="prospect-state-picker"
+                style="width:100%;background:var(--bg-2);border:1px solid var(--border);border-radius:8px;padding:10px 14px;color:var(--text-2);font-family:'DM Sans',sans-serif;font-size:14px;outline:none;box-sizing:border-box;cursor:pointer;">
+                <option value="">+ Add a prospecting state</option>
               </select>
             </div>
 
@@ -1127,12 +1128,54 @@ function switchTab(name) {
 let profileData = {};
 
 const STATE_NAMES = {
-  AK:'Alaska', AZ:'Arizona', CA:'California', CO:'Colorado', ID:'Idaho',
-  MT:'Montana', NM:'New Mexico', NV:'Nevada', OR:'Oregon', UT:'Utah',
-  WA:'Washington', WY:'Wyoming', OTHER:'Other'
+  AL:'Alabama', AK:'Alaska', AZ:'Arizona', AR:'Arkansas', CA:'California',
+  CO:'Colorado', CT:'Connecticut', DE:'Delaware', FL:'Florida', GA:'Georgia',
+  HI:'Hawaii', ID:'Idaho', IL:'Illinois', IN:'Indiana', IA:'Iowa',
+  KS:'Kansas', KY:'Kentucky', LA:'Louisiana', ME:'Maine', MD:'Maryland',
+  MA:'Massachusetts', MI:'Michigan', MN:'Minnesota', MS:'Mississippi', MO:'Missouri',
+  MT:'Montana', NE:'Nebraska', NV:'Nevada', NH:'New Hampshire', NJ:'New Jersey',
+  NM:'New Mexico', NY:'New York', NC:'North Carolina', ND:'North Dakota', OH:'Ohio',
+  OK:'Oklahoma', OR:'Oregon', PA:'Pennsylvania', RI:'Rhode Island', SC:'South Carolina',
+  SD:'South Dakota', TN:'Tennessee', TX:'Texas', UT:'Utah', VT:'Vermont',
+  VA:'Virginia', WA:'Washington', WV:'West Virginia', WI:'Wisconsin', WY:'Wyoming'
 };
 
 const EXP_LABELS = { beginner:'🥾 Beginner', intermediate:'⛏️ Intermediate', advanced:'🏆 Advanced' };
+
+let prospectStates = [];
+
+function initStateDropdowns() {
+  const opts = Object.entries(STATE_NAMES).map(([k,v]) => `<option value="${k}">${v}</option>`).join('');
+  const homeEl = document.getElementById('profile-home-state');
+  if (homeEl) homeEl.innerHTML = '<option value="">Select your home state</option>' + opts;
+  const pickEl = document.getElementById('prospect-state-picker');
+  if (pickEl) { pickEl.innerHTML = '<option value="">+ Add a prospecting state</option>' + opts; pickEl.onchange = addProspectState; }
+}
+
+function addProspectState() {
+  const sel = document.getElementById('prospect-state-picker');
+  const val = sel.value;
+  if (!val || prospectStates.includes(val)) { sel.value = ''; return; }
+  prospectStates.push(val);
+  sel.value = '';
+  renderProspectChips();
+}
+
+function removeProspectState(code) {
+  prospectStates = prospectStates.filter(s => s !== code);
+  renderProspectChips();
+}
+
+function renderProspectChips() {
+  const el = document.getElementById('prospect-chips');
+  if (!el) return;
+  el.innerHTML = prospectStates.map(code =>
+    `<span style="display:inline-flex;align-items:center;gap:5px;padding:4px 10px;background:var(--gold);color:#fff;border-radius:20px;font-size:13px;font-weight:500;">
+      ${STATE_NAMES[code] || code}
+      <span onclick="removeProspectState('${code}')" style="cursor:pointer;font-size:15px;line-height:1;">&times;</span>
+    </span>`
+  ).join('');
+}
 
 function setProfileEditMode(editing) {
   document.getElementById('profile-readonly').style.display = editing ? 'none' : 'flex';
@@ -1156,6 +1199,8 @@ function updateReadonlyView() {
   document.getElementById('ro-display-name').textContent = dn || '—';
   document.getElementById('ro-home-state').textContent = STATE_NAMES[hs] || '—';
   document.getElementById('ro-experience').textContent = EXP_LABELS[exp] || '—';
+  document.getElementById('ro-prospect-states').textContent =
+    prospectStates.length ? prospectStates.map(s => STATE_NAMES[s] || s).join(', ') : '—';
 
   const alertParts = ['Status change'];
   if (expiry) alertParts.push('Expiry');
@@ -1165,6 +1210,8 @@ function updateReadonlyView() {
 
 async function loadProfile() {
   if (!currentUser) return;
+
+  initStateDropdowns();
 
   // Set avatar
   const avatarEl = document.getElementById('profile-avatar');
@@ -1194,6 +1241,7 @@ async function loadProfile() {
       if (data.display_name) document.getElementById('profile-display-name').value = data.display_name;
       if (data.home_state) document.getElementById('profile-home-state').value = data.home_state;
       if (data.experience_level) selectExperience(data.experience_level);
+      if (Array.isArray(data.prospect_states)) { prospectStates = data.prospect_states; renderProspectChips(); }
       document.getElementById('alert-expiry').checked = data.alert_expiry !== false;
       document.getElementById('alert-nearby').checked = data.alert_nearby !== false;
     } else {
@@ -1229,6 +1277,7 @@ async function saveProfile() {
     display_name: document.getElementById('profile-display-name').value.trim() || null,
     home_state: document.getElementById('profile-home-state').value || null,
     experience_level: profileData.experience_level || 'beginner',
+    prospect_states: prospectStates,
     alert_expiry: document.getElementById('alert-expiry').checked,
     alert_nearby: document.getElementById('alert-nearby').checked,
     updated_at: new Date().toISOString()
