@@ -763,6 +763,7 @@ body {
         <button class="tab-btn" onclick="switchTab('finds')">Finds</button>
         <button class="tab-btn" onclick="switchTab('spots')">Spots</button>
         <button class="tab-btn" onclick="switchTab('watches')">Watching</button>
+        <button class="tab-btn" onclick="switchTab('profile')">Profile</button>
       </div>
 
       <!-- Tab: Saved Claims -->
@@ -783,6 +784,86 @@ body {
       <!-- Tab: Watching -->
       <div id="tab-watches" class="tab-pane">
         <div id="watches-content"><div class="loading-pulse"></div><div class="loading-pulse" style="width:70%"></div></div>
+      </div>
+
+      <!-- Tab: Profile -->
+      <div id="tab-profile" class="tab-pane">
+        <div id="profile-content">
+          <!-- Avatar + name -->
+          <div style="display:flex;align-items:center;gap:16px;margin-bottom:24px;">
+            <div id="profile-avatar" style="width:64px;height:64px;border-radius:50%;background:var(--gold);display:flex;align-items:center;justify-content:center;font-size:24px;font-weight:700;color:#fff;flex-shrink:0;overflow:hidden;"></div>
+            <div>
+              <div id="profile-name-display" style="font-size:18px;font-weight:600;color:var(--text);"></div>
+              <div id="profile-email-display" style="font-size:13px;color:var(--text-2);margin-top:2px;"></div>
+              <div id="profile-member-since" style="font-size:12px;color:var(--text-3);margin-top:2px;"></div>
+            </div>
+          </div>
+
+          <!-- Profile form -->
+          <div style="display:flex;flex-direction:column;gap:16px;">
+
+            <div>
+              <label style="display:block;font-size:12px;font-weight:500;color:var(--text-2);margin-bottom:6px;letter-spacing:0.05em;text-transform:uppercase;">Display Name</label>
+              <input id="profile-display-name" type="text" placeholder="Your prospector name"
+                style="width:100%;background:var(--bg-2);border:1px solid var(--border);border-radius:8px;padding:10px 14px;color:var(--text);font-family:'DM Sans',sans-serif;font-size:14px;outline:none;box-sizing:border-box;">
+            </div>
+
+            <div>
+              <label style="display:block;font-size:12px;font-weight:500;color:var(--text-2);margin-bottom:6px;letter-spacing:0.05em;text-transform:uppercase;">Home State</label>
+              <select id="profile-home-state"
+                style="width:100%;background:var(--bg-2);border:1px solid var(--border);border-radius:8px;padding:10px 14px;color:var(--text);font-family:'DM Sans',sans-serif;font-size:14px;outline:none;box-sizing:border-box;cursor:pointer;">
+                <option value="">Select your state</option>
+                <option value="AK">Alaska</option>
+                <option value="AZ">Arizona</option>
+                <option value="CA">California</option>
+                <option value="CO">Colorado</option>
+                <option value="ID">Idaho</option>
+                <option value="MT">Montana</option>
+                <option value="NM">New Mexico</option>
+                <option value="NV">Nevada</option>
+                <option value="OR">Oregon</option>
+                <option value="UT">Utah</option>
+                <option value="WA">Washington</option>
+                <option value="WY">Wyoming</option>
+                <option value="OTHER">Other</option>
+              </select>
+            </div>
+
+            <div>
+              <label style="display:block;font-size:12px;font-weight:500;color:var(--text-2);margin-bottom:6px;letter-spacing:0.05em;text-transform:uppercase;">Experience Level</label>
+              <div style="display:flex;gap:8px;">
+                <button class="exp-btn" data-level="beginner" onclick="selectExperience('beginner')"
+                  style="flex:1;padding:10px;border-radius:8px;border:1px solid var(--border);background:var(--bg-2);color:var(--text-2);font-family:'DM Sans',sans-serif;font-size:13px;cursor:pointer;">
+                  🥾 Beginner
+                </button>
+                <button class="exp-btn" data-level="intermediate" onclick="selectExperience('intermediate')"
+                  style="flex:1;padding:10px;border-radius:8px;border:1px solid var(--border);background:var(--bg-2);color:var(--text-2);font-family:'DM Sans',sans-serif;font-size:13px;cursor:pointer;">
+                  ⛏️ Intermediate
+                </button>
+                <button class="exp-btn" data-level="advanced" onclick="selectExperience('advanced')"
+                  style="flex:1;padding:10px;border-radius:8px;border:1px solid var(--border);background:var(--bg-2);color:var(--text-2);font-family:'DM Sans',sans-serif;font-size:13px;cursor:pointer;">
+                  🏆 Advanced
+                </button>
+              </div>
+            </div>
+
+            <div>
+              <label style="display:block;font-size:12px;font-weight:500;color:var(--text-2);margin-bottom:6px;letter-spacing:0.05em;text-transform:uppercase;">Claim Alerts</label>
+              <label style="display:flex;align-items:center;gap:12px;cursor:pointer;padding:12px 14px;background:var(--bg-2);border:1px solid var(--border);border-radius:8px;">
+                <input type="checkbox" id="profile-alerts-enabled" style="width:16px;height:16px;cursor:pointer;">
+                <span style="font-size:14px;color:var(--text);">Email me when watched claims change</span>
+              </label>
+            </div>
+
+            <button onclick="saveProfile()"
+              style="width:100%;padding:12px;background:var(--gold);color:#fff;border:none;border-radius:8px;font-family:'DM Sans',sans-serif;font-size:14px;font-weight:600;cursor:pointer;margin-top:4px;">
+              Save Profile
+            </button>
+
+            <div id="profile-save-status" style="text-align:center;font-size:13px;color:var(--text-2);min-height:20px;"></div>
+
+          </div>
+        </div>
       </div>
 
       <!-- Charts -->
@@ -976,6 +1057,87 @@ function switchTab(name) {
   document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
   document.getElementById('tab-' + name).classList.add('active');
   event.target.classList.add('active');
+  if (name === 'profile') loadProfile();
+}
+
+// ── PROFILE TAB ──────────────────────────────────────────
+let profileData = {};
+
+async function loadProfile() {
+  if (!currentUser) return;
+
+  // Set avatar
+  const avatarEl = document.getElementById('profile-avatar');
+  const photoUrl = currentUser.user_metadata?.avatar_url || currentUser.user_metadata?.picture;
+  if (photoUrl) {
+    avatarEl.innerHTML = `<img src="${photoUrl}" style="width:100%;height:100%;object-fit:cover;">`;
+  } else {
+    const name = currentUser.user_metadata?.full_name || currentUser.email || '';
+    avatarEl.textContent = name.charAt(0).toUpperCase() || '?';
+  }
+
+  // Set name and email
+  const metaName = currentUser.user_metadata?.full_name || currentUser.user_metadata?.name || '';
+  document.getElementById('profile-name-display').textContent = metaName || currentUser.email.split('@')[0];
+  document.getElementById('profile-email-display').textContent = currentUser.email;
+
+  // Member since
+  const since = new Date(currentUser.created_at);
+  document.getElementById('profile-member-since').textContent =
+    'Member since ' + since.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
+
+  // Load saved profile from Supabase
+  try {
+    const { data } = await sbClient.from('user_profiles').select('*').eq('id', currentUser.id).single();
+    if (data) {
+      profileData = data;
+      if (data.display_name) document.getElementById('profile-display-name').value = data.display_name;
+      if (data.home_state) document.getElementById('profile-home-state').value = data.home_state;
+      if (data.experience_level) selectExperience(data.experience_level);
+      document.getElementById('profile-alerts-enabled').checked = data.alerts_enabled !== false;
+    } else {
+      // Default alerts on
+      document.getElementById('profile-alerts-enabled').checked = true;
+    }
+  } catch(e) {
+    console.error('Error loading profile:', e);
+  }
+}
+
+function selectExperience(level) {
+  document.querySelectorAll('.exp-btn').forEach(btn => {
+    const isSelected = btn.dataset.level === level;
+    btn.style.background = isSelected ? 'var(--gold)' : 'var(--bg-2)';
+    btn.style.color = isSelected ? '#fff' : 'var(--text-2)';
+    btn.style.borderColor = isSelected ? 'var(--gold)' : 'var(--border)';
+    btn.style.fontWeight = isSelected ? '600' : '400';
+  });
+  profileData.experience_level = level;
+}
+
+async function saveProfile() {
+  if (!currentUser) return;
+  const statusEl = document.getElementById('profile-save-status');
+  statusEl.textContent = 'Saving...';
+
+  const payload = {
+    id: currentUser.id,
+    display_name: document.getElementById('profile-display-name').value.trim() || null,
+    home_state: document.getElementById('profile-home-state').value || null,
+    experience_level: profileData.experience_level || 'beginner',
+    alerts_enabled: document.getElementById('profile-alerts-enabled').checked,
+    updated_at: new Date().toISOString()
+  };
+
+  try {
+    const { error } = await sbClient.from('user_profiles').upsert(payload, { onConflict: 'id' });
+    if (error) throw error;
+    statusEl.textContent = '✓ Profile saved';
+    setTimeout(() => statusEl.textContent = '', 3000);
+  } catch(e) {
+    console.error('Error saving profile:', e);
+    statusEl.textContent = 'Error saving profile';
+  }
 }
 
 // ── CLAIMS TAB ───────────────────────────────────────────
