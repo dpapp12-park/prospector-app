@@ -829,103 +829,117 @@ body {
           </div>
 
           <!-- Edit form (hidden by default) -->
-          <div id="profile-editform" style="display:none;flex-direction:column;gap:14px;">
+          <div id="profile-editform" style="display:none;flex-direction:column;gap:0;">
 
-            <div>
-              <label style="display:block;font-size:12px;font-weight:500;color:var(--text-2);margin-bottom:6px;letter-spacing:0.05em;text-transform:uppercase;">Display Name</label>
-              <input id="profile-display-name" type="text" placeholder="Your prospector name"
-                style="width:100%;background:var(--bg-2);border:1px solid var(--border);border-radius:8px;padding:10px 14px;color:var(--text);font-family:'DM Sans',sans-serif;font-size:14px;outline:none;box-sizing:border-box;">
-            </div>
-
-            <div>
-              <label style="display:block;font-size:12px;font-weight:500;color:var(--text-2);margin-bottom:6px;letter-spacing:0.05em;text-transform:uppercase;">Email</label>
-              <div style="padding:10px 14px;background:var(--bg-2);border:1px solid var(--border);border-radius:8px;font-size:14px;color:var(--text-3);" id="profile-email-readonly"></div>
-              <div style="font-size:11px;color:var(--text-3);margin-top:4px;">Email is managed through your account provider</div>
-            </div>
-
-            <div>
-              <label style="display:block;font-size:12px;font-weight:500;color:var(--text-2);margin-bottom:6px;letter-spacing:0.05em;text-transform:uppercase;">Home State</label>
-              <select id="profile-home-state"
-                style="width:100%;background:var(--bg-2);border:1px solid var(--border);border-radius:8px;padding:10px 14px;color:var(--text);font-family:'DM Sans',sans-serif;font-size:14px;outline:none;box-sizing:border-box;cursor:pointer;">
-                <option value="">Select your home state</option>
-              </select>
-            </div>
-
-            <div>
-              <label style="display:block;font-size:12px;font-weight:500;color:var(--text-2);margin-bottom:6px;letter-spacing:0.05em;text-transform:uppercase;">Where Do You Prospect?</label>
-              <div style="font-size:12px;color:var(--text-3);margin-bottom:8px;">Tap states to add — helps us show relevant layers and alerts</div>
-              <div id="prospect-chips" style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:8px;min-height:28px;"></div>
-              <select id="prospect-state-picker"
-                style="width:100%;background:var(--bg-2);border:1px solid var(--border);border-radius:8px;padding:10px 14px;color:var(--text-2);font-family:'DM Sans',sans-serif;font-size:14px;outline:none;box-sizing:border-box;cursor:pointer;">
-                <option value="">+ Add a prospecting state</option>
-              </select>
-            </div>
-
-            <div>
-              <label style="display:block;font-size:12px;font-weight:500;color:var(--text-2);margin-bottom:6px;letter-spacing:0.05em;text-transform:uppercase;">Experience Level</label>
-              <div style="display:flex;gap:8px;">
-                <button class="exp-btn" data-level="beginner" onclick="selectExperience('beginner')"
-                  style="flex:1;padding:9px;border-radius:8px;border:1px solid var(--border);background:var(--bg-2);color:var(--text-2);font-family:'DM Sans',sans-serif;font-size:13px;cursor:pointer;">
-                  🥾 Beginner
-                </button>
-                <button class="exp-btn" data-level="intermediate" onclick="selectExperience('intermediate')"
-                  style="flex:1;padding:9px;border-radius:8px;border:1px solid var(--border);background:var(--bg-2);color:var(--text-2);font-family:'DM Sans',sans-serif;font-size:13px;cursor:pointer;">
-                  ⛏️ Intermediate
-                </button>
-                <button class="exp-btn" data-level="advanced" onclick="selectExperience('advanced')"
-                  style="flex:1;padding:9px;border-radius:8px;border:1px solid var(--border);background:var(--bg-2);color:var(--text-2);font-family:'DM Sans',sans-serif;font-size:13px;cursor:pointer;">
-                  🏆 Advanced
-                </button>
-              </div>
-            </div>
-
-            <div>
-              <label style="display:block;font-size:12px;font-weight:500;color:var(--text-2);margin-bottom:8px;letter-spacing:0.05em;text-transform:uppercase;">Claim Alerts</label>
-              <div style="display:flex;flex-direction:column;gap:8px;">
-
-                <!-- Status change — always on -->
-                <div style="padding:12px 14px;background:var(--bg-2);border:1px solid var(--border);border-radius:8px;">
-                  <div style="display:flex;align-items:center;justify-content:space-between;">
-                    <span style="font-size:14px;font-weight:500;color:var(--text);">Status Change</span>
-                    <span style="font-size:11px;color:var(--text-3);background:var(--bg-3);padding:2px 8px;border-radius:10px;">Always on</span>
-                  </div>
-                  <div style="font-size:12px;color:var(--text-3);margin-top:4px;">Alert when a watched claim is no longer active — lapsed, closed, or transferred.</div>
+            <!-- Section: Identity -->
+            <div style="padding:16px 0 4px;">
+              <div style="font-size:10px;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;color:var(--text-3);margin-bottom:12px;">Identity</div>
+              <div style="display:flex;flex-direction:column;gap:10px;">
+                <div>
+                  <label style="display:block;font-size:12px;color:var(--text-2);margin-bottom:5px;">Display Name</label>
+                  <input id="profile-display-name" type="text" placeholder="Your prospector name"
+                    style="width:100%;background:var(--bg-2);border:1px solid var(--border);border-radius:8px;padding:9px 12px;color:var(--text);font-family:'DM Sans',sans-serif;font-size:14px;outline:none;box-sizing:border-box;">
                 </div>
-
-                <!-- Expiry alerts — toggleable -->
-                <label style="display:block;padding:12px 14px;background:var(--bg-2);border:1px solid var(--border);border-radius:8px;cursor:pointer;">
-                  <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px;">
-                    <span style="font-size:14px;font-weight:500;color:var(--text);">Expiry Warning</span>
-                    <input type="checkbox" id="alert-expiry" style="width:16px;height:16px;cursor:pointer;" checked>
-                  </div>
-                  <div style="font-size:12px;color:var(--text-3);">Alert 90 days before a watched claim expires — time to renew or let it lapse.</div>
-                </label>
-
-                <!-- Nearby filings — toggleable -->
-                <label style="display:block;padding:12px 14px;background:var(--bg-2);border:1px solid var(--border);border-radius:8px;cursor:pointer;">
-                  <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px;">
-                    <span style="font-size:14px;font-weight:500;color:var(--text);">Nearby Filings</span>
-                    <input type="checkbox" id="alert-nearby" style="width:16px;height:16px;cursor:pointer;" checked>
-                  </div>
-                  <div style="font-size:12px;color:var(--text-3);">Alert when a new claim is filed within 5 miles of a watched claim — someone is working your area.</div>
-                </label>
-
+                <div>
+                  <label style="display:block;font-size:12px;color:var(--text-2);margin-bottom:5px;">Email</label>
+                  <div style="padding:9px 12px;background:var(--bg-2);border:1px solid var(--border);border-radius:8px;font-size:14px;color:var(--text-3);" id="profile-email-readonly"></div>
+                  <div style="font-size:11px;color:var(--text-3);margin-top:3px;">Managed through your account provider</div>
+                </div>
               </div>
             </div>
+
+            <div style="border-top:1px solid var(--border);"></div>
+
+            <!-- Section: Location -->
+            <div style="padding:16px 0 4px;">
+              <div style="font-size:10px;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;color:var(--text-3);margin-bottom:12px;">Location</div>
+              <div style="display:flex;flex-direction:column;gap:10px;">
+                <div>
+                  <label style="display:block;font-size:12px;color:var(--text-2);margin-bottom:5px;">Home State</label>
+                  <select id="profile-home-state"
+                    style="width:100%;background:var(--bg-2);border:1px solid var(--border);border-radius:8px;padding:9px 12px;color:var(--text);font-family:'DM Sans',sans-serif;font-size:14px;outline:none;box-sizing:border-box;cursor:pointer;">
+                    <option value="">Select your home state</option>
+                  </select>
+                </div>
+                <div>
+                  <label style="display:block;font-size:12px;color:var(--text-2);margin-bottom:5px;">Where Do You Prospect?</label>
+                  <div style="font-size:11px;color:var(--text-3);margin-bottom:7px;">Helps us show relevant layers and alerts</div>
+                  <div id="prospect-chips" style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:7px;min-height:24px;"></div>
+                  <select id="prospect-state-picker"
+                    style="width:100%;background:var(--bg-2);border:1px solid var(--border);border-radius:8px;padding:9px 12px;color:var(--text-2);font-family:'DM Sans',sans-serif;font-size:14px;outline:none;box-sizing:border-box;cursor:pointer;">
+                    <option value="">+ Add a prospecting state</option>
+                  </select>
+                </div>
+              </div>
+            </div>
+
+            <div style="border-top:1px solid var(--border);"></div>
+
+            <!-- Section: Preferences -->
+            <div style="padding:16px 0 4px;">
+              <div style="font-size:10px;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;color:var(--text-3);margin-bottom:12px;">Preferences</div>
+              <div style="display:flex;flex-direction:column;gap:10px;">
+                <div>
+                  <label style="display:block;font-size:12px;color:var(--text-2);margin-bottom:8px;">Experience Level</label>
+                  <div style="display:flex;gap:6px;">
+                    <button class="exp-btn" data-level="beginner" onclick="selectExperience('beginner')"
+                      style="flex:1;padding:8px 4px;border-radius:8px;border:1px solid var(--border);background:var(--bg-2);color:var(--text-2);font-family:'DM Sans',sans-serif;font-size:12px;cursor:pointer;">
+                      🥾 Beginner
+                    </button>
+                    <button class="exp-btn" data-level="intermediate" onclick="selectExperience('intermediate')"
+                      style="flex:1;padding:8px 4px;border-radius:8px;border:1px solid var(--border);background:var(--bg-2);color:var(--text-2);font-family:'DM Sans',sans-serif;font-size:12px;cursor:pointer;">
+                      ⛏️ Intermediate
+                    </button>
+                    <button class="exp-btn" data-level="advanced" onclick="selectExperience('advanced')"
+                      style="flex:1;padding:8px 4px;border-radius:8px;border:1px solid var(--border);background:var(--bg-2);color:var(--text-2);font-family:'DM Sans',sans-serif;font-size:12px;cursor:pointer;">
+                      🏆 Advanced
+                    </button>
+                  </div>
+                </div>
+                <div>
+                  <label style="display:block;font-size:12px;color:var(--text-2);margin-bottom:8px;">Claim Alerts</label>
+                  <div style="display:flex;flex-direction:column;gap:6px;">
+                    <div style="padding:10px 12px;background:var(--bg-2);border:1px solid var(--border);border-radius:8px;">
+                      <div style="display:flex;align-items:center;justify-content:space-between;">
+                        <span style="font-size:13px;font-weight:500;color:var(--text);">Status Change</span>
+                        <span style="font-size:10px;color:var(--text-3);background:var(--bg-3);padding:2px 7px;border-radius:10px;">Always on</span>
+                      </div>
+                      <div style="font-size:11px;color:var(--text-3);margin-top:3px;">Claim disappears from the active database — lapsed, closed, or transferred.</div>
+                    </div>
+                    <label style="display:block;padding:10px 12px;background:var(--bg-2);border:1px solid var(--border);border-radius:8px;cursor:pointer;">
+                      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:3px;">
+                        <span style="font-size:13px;font-weight:500;color:var(--text);">Expiry Warning</span>
+                        <input type="checkbox" id="alert-expiry" style="width:15px;height:15px;cursor:pointer;" checked>
+                      </div>
+                      <div style="font-size:11px;color:var(--text-3);">90 days before a watched claim expires.</div>
+                    </label>
+                    <label style="display:block;padding:10px 12px;background:var(--bg-2);border:1px solid var(--border);border-radius:8px;cursor:pointer;">
+                      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:3px;">
+                        <span style="font-size:13px;font-weight:500;color:var(--text);">Nearby Filings</span>
+                        <input type="checkbox" id="alert-nearby" style="width:15px;height:15px;cursor:pointer;" checked>
+                      </div>
+                      <div style="font-size:11px;color:var(--text-3);">New claim filed within 5 miles of a watched claim.</div>
+                    </label>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div style="border-top:1px solid var(--border);"></div>
 
             <!-- Save + Cancel row -->
-            <div style="display:flex;gap:10px;margin-top:4px;">
+            <div style="display:flex;gap:8px;padding:14px 0 4px;">
               <button onclick="setProfileEditMode(false)"
-                style="flex:1;padding:10px;background:transparent;border:1px solid var(--border);border-radius:8px;color:var(--text-2);font-family:'DM Sans',sans-serif;font-size:14px;cursor:pointer;">
+                style="flex:1;padding:9px;background:transparent;border:1px solid var(--border);border-radius:8px;color:var(--text-2);font-family:'DM Sans',sans-serif;font-size:13px;cursor:pointer;">
                 Cancel
               </button>
               <button onclick="saveProfile()"
-                style="flex:2;padding:10px;background:var(--gold);color:#fff;border:none;border-radius:8px;font-family:'DM Sans',sans-serif;font-size:14px;font-weight:600;cursor:pointer;">
+                style="flex:2;padding:9px;background:var(--gold);color:#fff;border:none;border-radius:8px;font-family:'DM Sans',sans-serif;font-size:13px;font-weight:600;cursor:pointer;">
                 Save Profile
               </button>
             </div>
 
-            <div id="profile-save-status" style="text-align:center;font-size:13px;color:var(--text-2);min-height:18px;"></div>
+            <div id="profile-save-status" style="text-align:center;font-size:12px;color:var(--text-2);min-height:16px;"></div>
 
           </div>
         </div><!-- end left col -->
