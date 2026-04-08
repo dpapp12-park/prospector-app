@@ -1239,7 +1239,7 @@ function setProfileEditMode(editing) {
   const content = document.getElementById('profile-content');
   if (content) {
     content.style.background = editing ? 'var(--bg-2)' : '';
-    content.style.border = editing ? '1px solid var(--border)' : '';
+    content.style.border = editing ? '2px solid var(--gold)' : '';
     content.style.borderRadius = editing ? '12px' : '';
     content.style.padding = editing ? '16px' : '';
   }
@@ -1317,6 +1317,7 @@ async function loadProfile() {
       const metaName = currentUser.user_metadata?.full_name || currentUser.user_metadata?.name || '';
       const displayName = data.display_name || metaName;
       document.getElementById('profile-display-name').value = displayName;
+      document.getElementById('profile-name-display').textContent = displayName || currentUser.email.split('@')[0];
       if (data.home_state) document.getElementById('profile-home-state').value = data.home_state;
       if (data.experience_level) selectExperience(data.experience_level);
       if (Array.isArray(data.prospect_states)) { prospectStates = data.prospect_states; renderProspectChips(); }
