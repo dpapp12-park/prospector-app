@@ -25,7 +25,7 @@ export async function scheduled(event, env) {
 
 // ── Main alert runner ─────────────────────────────────────────────────────────
 async function runAlerts(env) {
-  const supabaseKey = env.SUPABASE_ANON_KEY;
+  const supabaseKey = env.SUPABASE_SERVICE_KEY;
   const resendKey   = env.RESEND_KEY;
 
   if (!supabaseKey || !resendKey) {
