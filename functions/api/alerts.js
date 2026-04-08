@@ -46,9 +46,10 @@ async function runAlerts(env) {
   const watches = await watchRes.json();
   if (!watches?.length) return { message: 'No watches found', sent: 0 };
 
-  // 2. Get user emails for all watched users
+  // 2. Get user emails + alert preferences
   const userIds = [...new Set(watches.map(w => w.user_id))];
   const userEmails = await getUserEmails(userIds, headers);
+  const userProfiles = await getUserProfiles(userIds, headers);
 
   // 3. Check each watch and collect alerts
   const alertsByUser = {};
@@ -58,7 +59,8 @@ async function runAlerts(env) {
     const email = userEmails[watch.user_id];
     if (!email) continue;
 
-    const alerts = await checkClaim(watch, today, headers);
+    const prefs = userProfiles[watch.user_id] || {};
+    const alerts = await checkClaim(watch, today, headers, prefs);
     if (!alerts.length) continue;
 
     if (!alertsByUser[email]) {
@@ -75,6 +77,25 @@ async function runAlerts(env) {
   }
 
   return { message: `Alerts checked`, sent, users: Object.keys(alertsByUser).length };
+}
+
+// -- Get user alert preferences from user_profiles
+async function getUserProfiles(userIds, headers) {
+  const profiles = {};
+  try {
+    const ids = userIds.join(',');
+    const res = await fetch(
+      `${SUPABASE_URL}/rest/v1/user_profiles?id=in.(${ids})&select=id,alert_expiry,alert_nearby`,
+      { headers }
+    );
+    if (res.ok) {
+      const data = await res.json();
+      for (const p of data) profiles[p.id] = p;
+    }
+  } catch(e) {
+    console.error('Failed to get user profiles:', e);
+  }
+  return profiles;
 }
 
 // ── Get user emails from Supabase Auth admin API ─────────────────────────────
@@ -107,7 +128,7 @@ async function getUserEmails(userIds, headers) {
 }
 
 // ── Check a single claim for alert conditions ─────────────────────────────────
-async function checkClaim(watch, today, headers) {
+async function checkClaim(watch, today, headers, prefs = {}) {
   const alerts = [];
   const serial = watch.serial_number;
 
@@ -131,8 +152,8 @@ async function checkClaim(watch, today, headers) {
 
     const claim = claims[0];
 
-    // Check expiry approaching
-    if (claim.cse_exp_dt) {
+    // Check expiry approaching (if user has this alert enabled)
+    if (prefs.alert_expiry !== false && claim.cse_exp_dt) {
       const expDate = new Date(claim.cse_exp_dt);
       const daysUntilExpiry = Math.floor((expDate - today) / (1000 * 60 * 60 * 24));
       if (daysUntilExpiry <= EXPIRY_WARN_DAYS && daysUntilExpiry > 0) {
@@ -145,8 +166,8 @@ async function checkClaim(watch, today, headers) {
       }
     }
 
-    // Check for new claims filed nearby (within ~5 miles)
-    if (claim.latitude && claim.longitude) {
+    // Check for new claims filed nearby (if user has this alert enabled)
+    if (prefs.alert_nearby !== false && claim.latitude && claim.longitude) {
       const nearbyAlerts = await checkNearbyClaims(
         claim.latitude, claim.longitude, watch, headers
       );

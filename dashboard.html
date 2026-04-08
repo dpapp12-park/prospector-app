@@ -789,23 +789,53 @@ body {
       <!-- Tab: Profile -->
       <div id="tab-profile" class="tab-pane">
         <div id="profile-content">
-          <!-- Avatar + name -->
-          <div style="display:flex;align-items:center;gap:16px;margin-bottom:24px;">
-            <div id="profile-avatar" style="width:64px;height:64px;border-radius:50%;background:var(--gold);display:flex;align-items:center;justify-content:center;font-size:24px;font-weight:700;color:#fff;flex-shrink:0;overflow:hidden;"></div>
-            <div>
-              <div id="profile-name-display" style="font-size:18px;font-weight:600;color:var(--text);"></div>
+          <!-- Avatar + name row -->
+          <div style="display:flex;align-items:center;gap:16px;margin-bottom:20px;">
+            <div id="profile-avatar" style="width:60px;height:60px;border-radius:50%;background:var(--gold);display:flex;align-items:center;justify-content:center;font-size:22px;font-weight:700;color:#fff;flex-shrink:0;overflow:hidden;"></div>
+            <div style="flex:1;min-width:0;">
+              <div id="profile-name-display" style="font-size:17px;font-weight:600;color:var(--text);"></div>
               <div id="profile-email-display" style="font-size:13px;color:var(--text-2);margin-top:2px;"></div>
               <div id="profile-member-since" style="font-size:12px;color:var(--text-3);margin-top:2px;"></div>
             </div>
+            <button id="profile-edit-btn" onclick="setProfileEditMode(true)"
+              style="flex-shrink:0;padding:7px 14px;background:transparent;border:1px solid var(--border);border-radius:7px;color:var(--text-2);font-family:'DM Sans',sans-serif;font-size:13px;cursor:pointer;">
+              Edit
+            </button>
           </div>
 
-          <!-- Profile form -->
-          <div style="display:flex;flex-direction:column;gap:16px;">
+          <!-- Read-only view -->
+          <div id="profile-readonly" style="display:flex;flex-direction:column;gap:12px;">
+            <div style="display:flex;justify-content:space-between;padding:11px 14px;background:var(--bg-2);border:1px solid var(--border);border-radius:8px;">
+              <span style="font-size:12px;color:var(--text-3);text-transform:uppercase;letter-spacing:0.05em;">Display Name</span>
+              <span id="ro-display-name" style="font-size:14px;color:var(--text);">—</span>
+            </div>
+            <div style="display:flex;justify-content:space-between;padding:11px 14px;background:var(--bg-2);border:1px solid var(--border);border-radius:8px;">
+              <span style="font-size:12px;color:var(--text-3);text-transform:uppercase;letter-spacing:0.05em;">Home State</span>
+              <span id="ro-home-state" style="font-size:14px;color:var(--text);">—</span>
+            </div>
+            <div style="display:flex;justify-content:space-between;padding:11px 14px;background:var(--bg-2);border:1px solid var(--border);border-radius:8px;">
+              <span style="font-size:12px;color:var(--text-3);text-transform:uppercase;letter-spacing:0.05em;">Experience</span>
+              <span id="ro-experience" style="font-size:14px;color:var(--text);">—</span>
+            </div>
+            <div style="display:flex;justify-content:space-between;align-items:center;padding:11px 14px;background:var(--bg-2);border:1px solid var(--border);border-radius:8px;">
+              <span style="font-size:12px;color:var(--text-3);text-transform:uppercase;letter-spacing:0.05em;">Claim Alerts</span>
+              <span id="ro-alerts" style="font-size:14px;color:var(--text);">—</span>
+            </div>
+          </div>
+
+          <!-- Edit form (hidden by default) -->
+          <div id="profile-editform" style="display:none;flex-direction:column;gap:14px;">
 
             <div>
               <label style="display:block;font-size:12px;font-weight:500;color:var(--text-2);margin-bottom:6px;letter-spacing:0.05em;text-transform:uppercase;">Display Name</label>
               <input id="profile-display-name" type="text" placeholder="Your prospector name"
                 style="width:100%;background:var(--bg-2);border:1px solid var(--border);border-radius:8px;padding:10px 14px;color:var(--text);font-family:'DM Sans',sans-serif;font-size:14px;outline:none;box-sizing:border-box;">
+            </div>
+
+            <div>
+              <label style="display:block;font-size:12px;font-weight:500;color:var(--text-2);margin-bottom:6px;letter-spacing:0.05em;text-transform:uppercase;">Email</label>
+              <div style="padding:10px 14px;background:var(--bg-2);border:1px solid var(--border);border-radius:8px;font-size:14px;color:var(--text-3);" id="profile-email-readonly"></div>
+              <div style="font-size:11px;color:var(--text-3);margin-top:4px;">Email is managed through your account provider</div>
             </div>
 
             <div>
@@ -833,34 +863,67 @@ body {
               <label style="display:block;font-size:12px;font-weight:500;color:var(--text-2);margin-bottom:6px;letter-spacing:0.05em;text-transform:uppercase;">Experience Level</label>
               <div style="display:flex;gap:8px;">
                 <button class="exp-btn" data-level="beginner" onclick="selectExperience('beginner')"
-                  style="flex:1;padding:10px;border-radius:8px;border:1px solid var(--border);background:var(--bg-2);color:var(--text-2);font-family:'DM Sans',sans-serif;font-size:13px;cursor:pointer;">
+                  style="flex:1;padding:9px;border-radius:8px;border:1px solid var(--border);background:var(--bg-2);color:var(--text-2);font-family:'DM Sans',sans-serif;font-size:13px;cursor:pointer;">
                   🥾 Beginner
                 </button>
                 <button class="exp-btn" data-level="intermediate" onclick="selectExperience('intermediate')"
-                  style="flex:1;padding:10px;border-radius:8px;border:1px solid var(--border);background:var(--bg-2);color:var(--text-2);font-family:'DM Sans',sans-serif;font-size:13px;cursor:pointer;">
+                  style="flex:1;padding:9px;border-radius:8px;border:1px solid var(--border);background:var(--bg-2);color:var(--text-2);font-family:'DM Sans',sans-serif;font-size:13px;cursor:pointer;">
                   ⛏️ Intermediate
                 </button>
                 <button class="exp-btn" data-level="advanced" onclick="selectExperience('advanced')"
-                  style="flex:1;padding:10px;border-radius:8px;border:1px solid var(--border);background:var(--bg-2);color:var(--text-2);font-family:'DM Sans',sans-serif;font-size:13px;cursor:pointer;">
+                  style="flex:1;padding:9px;border-radius:8px;border:1px solid var(--border);background:var(--bg-2);color:var(--text-2);font-family:'DM Sans',sans-serif;font-size:13px;cursor:pointer;">
                   🏆 Advanced
                 </button>
               </div>
             </div>
 
             <div>
-              <label style="display:block;font-size:12px;font-weight:500;color:var(--text-2);margin-bottom:6px;letter-spacing:0.05em;text-transform:uppercase;">Claim Alerts</label>
-              <label style="display:flex;align-items:center;gap:12px;cursor:pointer;padding:12px 14px;background:var(--bg-2);border:1px solid var(--border);border-radius:8px;">
-                <input type="checkbox" id="profile-alerts-enabled" style="width:16px;height:16px;cursor:pointer;">
-                <span style="font-size:14px;color:var(--text);">Email me when watched claims change</span>
-              </label>
+              <label style="display:block;font-size:12px;font-weight:500;color:var(--text-2);margin-bottom:8px;letter-spacing:0.05em;text-transform:uppercase;">Claim Alerts</label>
+              <div style="display:flex;flex-direction:column;gap:8px;">
+
+                <!-- Status change — always on -->
+                <div style="padding:12px 14px;background:var(--bg-2);border:1px solid var(--border);border-radius:8px;">
+                  <div style="display:flex;align-items:center;justify-content:space-between;">
+                    <span style="font-size:14px;font-weight:500;color:var(--text);">Status Change</span>
+                    <span style="font-size:11px;color:var(--text-3);background:var(--bg-3);padding:2px 8px;border-radius:10px;">Always on</span>
+                  </div>
+                  <div style="font-size:12px;color:var(--text-3);margin-top:4px;">Alert when a watched claim is no longer active — lapsed, closed, or transferred.</div>
+                </div>
+
+                <!-- Expiry alerts — toggleable -->
+                <label style="display:block;padding:12px 14px;background:var(--bg-2);border:1px solid var(--border);border-radius:8px;cursor:pointer;">
+                  <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px;">
+                    <span style="font-size:14px;font-weight:500;color:var(--text);">Expiry Warning</span>
+                    <input type="checkbox" id="alert-expiry" style="width:16px;height:16px;cursor:pointer;" checked>
+                  </div>
+                  <div style="font-size:12px;color:var(--text-3);">Alert 90 days before a watched claim expires — time to renew or let it lapse.</div>
+                </label>
+
+                <!-- Nearby filings — toggleable -->
+                <label style="display:block;padding:12px 14px;background:var(--bg-2);border:1px solid var(--border);border-radius:8px;cursor:pointer;">
+                  <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px;">
+                    <span style="font-size:14px;font-weight:500;color:var(--text);">Nearby Filings</span>
+                    <input type="checkbox" id="alert-nearby" style="width:16px;height:16px;cursor:pointer;" checked>
+                  </div>
+                  <div style="font-size:12px;color:var(--text-3);">Alert when a new claim is filed within 5 miles of a watched claim — someone is working your area.</div>
+                </label>
+
+              </div>
             </div>
 
-            <button onclick="saveProfile()"
-              style="width:100%;padding:12px;background:var(--gold);color:#fff;border:none;border-radius:8px;font-family:'DM Sans',sans-serif;font-size:14px;font-weight:600;cursor:pointer;margin-top:4px;">
-              Save Profile
-            </button>
+            <!-- Save + Cancel row -->
+            <div style="display:flex;gap:10px;margin-top:4px;">
+              <button onclick="setProfileEditMode(false)"
+                style="flex:1;padding:10px;background:transparent;border:1px solid var(--border);border-radius:8px;color:var(--text-2);font-family:'DM Sans',sans-serif;font-size:14px;cursor:pointer;">
+                Cancel
+              </button>
+              <button onclick="saveProfile()"
+                style="flex:2;padding:10px;background:var(--gold);color:#fff;border:none;border-radius:8px;font-family:'DM Sans',sans-serif;font-size:14px;font-weight:600;cursor:pointer;">
+                Save Profile
+              </button>
+            </div>
 
-            <div id="profile-save-status" style="text-align:center;font-size:13px;color:var(--text-2);min-height:20px;"></div>
+            <div id="profile-save-status" style="text-align:center;font-size:13px;color:var(--text-2);min-height:18px;"></div>
 
           </div>
         </div>
@@ -1063,6 +1126,43 @@ function switchTab(name) {
 // ── PROFILE TAB ──────────────────────────────────────────
 let profileData = {};
 
+const STATE_NAMES = {
+  AK:'Alaska', AZ:'Arizona', CA:'California', CO:'Colorado', ID:'Idaho',
+  MT:'Montana', NM:'New Mexico', NV:'Nevada', OR:'Oregon', UT:'Utah',
+  WA:'Washington', WY:'Wyoming', OTHER:'Other'
+};
+
+const EXP_LABELS = { beginner:'🥾 Beginner', intermediate:'⛏️ Intermediate', advanced:'🏆 Advanced' };
+
+function setProfileEditMode(editing) {
+  document.getElementById('profile-readonly').style.display = editing ? 'none' : 'flex';
+  document.getElementById('profile-editform').style.display = editing ? 'flex' : 'none';
+  document.getElementById('profile-edit-btn').style.display = editing ? 'none' : '';
+  if (editing) {
+    // Populate email readonly field in form
+    document.getElementById('profile-email-readonly').textContent = currentUser?.email || '';
+  } else {
+    updateReadonlyView();
+  }
+}
+
+function updateReadonlyView() {
+  const dn = document.getElementById('profile-display-name')?.value?.trim();
+  const hs = document.getElementById('profile-home-state')?.value;
+  const exp = profileData.experience_level;
+  const expiry = document.getElementById('alert-expiry')?.checked;
+  const nearby = document.getElementById('alert-nearby')?.checked;
+
+  document.getElementById('ro-display-name').textContent = dn || '—';
+  document.getElementById('ro-home-state').textContent = STATE_NAMES[hs] || '—';
+  document.getElementById('ro-experience').textContent = EXP_LABELS[exp] || '—';
+
+  const alertParts = ['Status change'];
+  if (expiry) alertParts.push('Expiry');
+  if (nearby) alertParts.push('Nearby');
+  document.getElementById('ro-alerts').textContent = alertParts.join(', ');
+}
+
 async function loadProfile() {
   if (!currentUser) return;
 
@@ -1076,7 +1176,7 @@ async function loadProfile() {
     avatarEl.textContent = name.charAt(0).toUpperCase() || '?';
   }
 
-  // Set name and email
+  // Set name and email in header
   const metaName = currentUser.user_metadata?.full_name || currentUser.user_metadata?.name || '';
   document.getElementById('profile-name-display').textContent = metaName || currentUser.email.split('@')[0];
   document.getElementById('profile-email-display').textContent = currentUser.email;
@@ -1094,14 +1194,18 @@ async function loadProfile() {
       if (data.display_name) document.getElementById('profile-display-name').value = data.display_name;
       if (data.home_state) document.getElementById('profile-home-state').value = data.home_state;
       if (data.experience_level) selectExperience(data.experience_level);
-      document.getElementById('profile-alerts-enabled').checked = data.alerts_enabled !== false;
+      document.getElementById('alert-expiry').checked = data.alert_expiry !== false;
+      document.getElementById('alert-nearby').checked = data.alert_nearby !== false;
     } else {
-      // Default alerts on
-      document.getElementById('profile-alerts-enabled').checked = true;
+      document.getElementById('alert-expiry').checked = true;
+      document.getElementById('alert-nearby').checked = true;
     }
   } catch(e) {
     console.error('Error loading profile:', e);
   }
+
+  // Start in read-only mode
+  setProfileEditMode(false);
 }
 
 function selectExperience(level) {
@@ -1125,15 +1229,19 @@ async function saveProfile() {
     display_name: document.getElementById('profile-display-name').value.trim() || null,
     home_state: document.getElementById('profile-home-state').value || null,
     experience_level: profileData.experience_level || 'beginner',
-    alerts_enabled: document.getElementById('profile-alerts-enabled').checked,
+    alert_expiry: document.getElementById('alert-expiry').checked,
+    alert_nearby: document.getElementById('alert-nearby').checked,
     updated_at: new Date().toISOString()
   };
 
   try {
     const { error } = await sbClient.from('user_profiles').upsert(payload, { onConflict: 'id' });
     if (error) throw error;
-    statusEl.textContent = '✓ Profile saved';
-    setTimeout(() => statusEl.textContent = '', 3000);
+    statusEl.textContent = '✓ Saved';
+    setTimeout(() => {
+      statusEl.textContent = '';
+      setProfileEditMode(false);
+    }, 1000);
   } catch(e) {
     console.error('Error saving profile:', e);
     statusEl.textContent = 'Error saving profile';
