@@ -788,6 +788,7 @@ body {
 
       <!-- Tab: Profile -->
       <div id="tab-profile" class="tab-pane">
+        <div style="display:grid;grid-template-columns:420px 1fr;gap:32px;align-items:start;">
         <div id="profile-content">
           <!-- Avatar + name row -->
           <div style="display:flex;align-items:center;gap:16px;margin-bottom:20px;">
@@ -927,8 +928,47 @@ body {
             <div id="profile-save-status" style="text-align:center;font-size:13px;color:var(--text-2);min-height:18px;"></div>
 
           </div>
-        </div>
-      </div>
+        </div><!-- end left col -->
+
+        <!-- Right column: prospecting snapshot -->
+        <div style="display:flex;flex-direction:column;gap:16px;padding-top:4px;">
+
+          <div style="background:var(--bg-2);border:1px solid var(--border);border-radius:12px;padding:20px;">
+            <div style="font-size:11px;font-weight:600;letter-spacing:0.08em;text-transform:uppercase;color:var(--text-3);margin-bottom:14px;">Prospecting Snapshot</div>
+            <div style="display:flex;flex-direction:column;gap:0;border-top:1px solid var(--border);">
+              <div style="display:flex;justify-content:space-between;padding:9px 0;border-bottom:1px solid var(--border);">
+                <span style="font-size:12px;color:var(--text-3);">Watched Claims</span>
+                <span style="font-size:14px;font-weight:600;color:var(--text);" id="snap-claims">—</span>
+              </div>
+              <div style="display:flex;justify-content:space-between;padding:9px 0;border-bottom:1px solid var(--border);">
+                <span style="font-size:12px;color:var(--text-3);">Spots Pinned</span>
+                <span style="font-size:14px;font-weight:600;color:var(--text);" id="snap-spots">—</span>
+              </div>
+              <div style="display:flex;justify-content:space-between;padding:9px 0;border-bottom:1px solid var(--border);">
+                <span style="font-size:12px;color:var(--text-3);">Finds Logged</span>
+                <span style="font-size:14px;font-weight:600;color:var(--text);" id="snap-finds">—</span>
+              </div>
+              <div style="display:flex;justify-content:space-between;padding:9px 0;">
+                <span style="font-size:12px;color:var(--text-3);">Gold Found</span>
+                <span style="font-size:14px;font-weight:600;color:var(--gold);" id="snap-gold">—</span>
+              </div>
+            </div>
+          </div>
+
+          <div style="background:var(--bg-2);border:1px solid var(--border);border-radius:12px;padding:20px;">
+            <div style="font-size:11px;font-weight:600;letter-spacing:0.08em;text-transform:uppercase;color:var(--text-3);margin-bottom:8px;">Gold Price Today</div>
+            <div id="snap-gold-price" style="font-size:28px;font-weight:700;color:var(--gold);letter-spacing:-0.5px;">—</div>
+            <div style="font-size:12px;color:var(--text-3);margin-top:4px;">per troy ounce · live</div>
+          </div>
+
+          <div style="background:var(--bg-2);border:1px solid var(--border);border-radius:12px;padding:20px;text-align:center;">
+            <div style="font-size:11px;font-weight:600;letter-spacing:0.08em;text-transform:uppercase;color:var(--text-3);margin-bottom:10px;">Activity Chart</div>
+            <div style="font-size:12px;color:var(--text-3);padding:24px 0;">Appears once you log your first find</div>
+          </div>
+
+        </div><!-- end right col -->
+        </div><!-- end 2-col grid -->
+      </div><!-- end tab-profile -->
 
       <!-- Charts -->
       <div id="charts-section">
@@ -1254,6 +1294,24 @@ async function loadProfile() {
 
   // Start in read-only mode
   setProfileEditMode(false);
+
+  // Populate right-column snapshot
+  const snapClaims = document.getElementById('snap-claims');
+  const snapSpots  = document.getElementById('snap-spots');
+  const snapFinds  = document.getElementById('snap-finds');
+  const snapGold   = document.getElementById('snap-gold');
+  const snapPrice  = document.getElementById('snap-gold-price');
+  if (snapClaims) snapClaims.textContent = allWatches.length || '0';
+  if (snapSpots)  snapSpots.textContent  = allSpots.length  || '0';
+  if (snapFinds)  snapFinds.textContent  = allFinds.length  || '0';
+  if (snapGold) {
+    const totalGrams = allFinds.reduce((sum, f) => sum + (parseFloat(f.weight_grams) || 0), 0);
+    snapGold.textContent = totalGrams > 0 ? totalGrams.toFixed(2) + ' g' : '0 g';
+  }
+  if (snapPrice) {
+    const cached = localStorage.getItem('prospector_gold_price');
+    snapPrice.textContent = cached ? '$' + cached : '—';
+  }
 }
 
 function selectExperience(level) {
