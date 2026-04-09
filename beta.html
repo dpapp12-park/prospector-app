@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Prospector Beta — Private Tester Signup</title>
+<title>Unworked Gold Beta — Private Tester Signup</title>
 <script>
 window.PROSPECTOR_CONFIG = {
   supabase_url: 'https://condhfwpzlxrzuadgopc.supabase.co',
@@ -105,7 +105,7 @@ window.PROSPECTOR_CONFIG = {
 <div class="shell">
   <div class="top">
     <div class="brand">
-      <h1>Prospector Beta</h1>
+      <h1>Unworked Gold Beta</h1>
       <p>Private tester preview · map intelligence for modern prospectors</p>
     </div>
     <a class="btn" href="index.html" id="open-app-link">Open App</a>
@@ -141,7 +141,7 @@ window.PROSPECTOR_CONFIG = {
           <label for="role">Role</label>
           <select id="role" name="role" required>
             <option value="">Choose one</option>
-            <option>Prospector</option>
+            <option>Unworked Gold user</option>
             <option>Claim owner</option>
             <option>Geologist</option>
             <option>Other explorer</option>
@@ -209,10 +209,10 @@ window.PROSPECTOR_CONFIG = {
   </section>
 </div>
 
-<button id="ai-fab" title="Ask Prospector AI">⛏</button>
+<button id="ai-fab" title="Ask Unworked Gold AI">⛏</button>
 <div id="ai-box">
   <div id="ai-head">
-    <strong style="font-size:13px;color:var(--gold)">Prospector AI Helper</strong>
+    <strong style="font-size:13px;color:var(--gold)">Unworked Gold AI Helper</strong>
     <button id="ai-close" style="background:none;border:none;color:var(--text-dim);cursor:pointer">✕</button>
   </div>
   <div id="ai-log">
@@ -348,7 +348,7 @@ async function askAnthropic(text) {
       body: JSON.stringify({
         model: 'claude-sonnet-4-20250514',
         max_tokens: 450,
-        system: 'You are Prospector beta assistant. Keep answers concise, practical, and plain language for gold prospectors.',
+        system: 'You are the Unworked Gold beta assistant. Keep answers concise, practical, and plain language for gold prospectors.',
         messages: [{ role: 'user', content: text }]
       })
     });
