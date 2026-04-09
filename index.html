@@ -9,19 +9,13 @@
 <script>
 const APP_ENTRY_PATH = '/index.html';
 const BETA_LANDING_PATH = '/beta.html';
-const INDEX_GATE_BYPASS_KEYS = ['prospector_beta_access_granted', 'prospector_beta_access_code_ok'];
 
 function shouldBypassLandingGate() {
   try {
-    const params = new URLSearchParams(window.location.search || '');
-    if (params.get('beta_access') === '1') {
-      localStorage.setItem('prospector_beta_access_granted', 'true');
-      return true;
-    }
     if (window.location.pathname.endsWith(BETA_LANDING_PATH)) return true;
     if (window.location.pathname.endsWith('/dashboard.html')) return true;
     if (window.location.pathname.includes('/api/')) return true;
-    return INDEX_GATE_BYPASS_KEYS.some((k) => localStorage.getItem(k) === 'true');
+    return false;
   } catch (e) {
     return false;
   }
@@ -4142,9 +4136,6 @@ function promptSupabaseKey() {
 function updateAuthUI() {
   const profileLabel = document.querySelector('.nav-item:last-child .nav-label');
   if (currentUser) {
-    try {
-      localStorage.setItem('prospector_beta_access_granted', 'true');
-    } catch (e) {}
     if (profileLabel) profileLabel.textContent = 'Account';
     document.getElementById('user-email').textContent = currentUser.email;
     if (map) loadUserSpots();

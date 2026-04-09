@@ -240,18 +240,11 @@ function initSupabaseClient() {
   sbClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 }
 
-function grantBetaAccess() {
-  try {
-    localStorage.setItem('prospector_beta_access_granted', 'true');
-  } catch (e) {}
-}
-
 async function gateToAppIfLoggedIn() {
   if (!sbClient) return;
   try {
     const { data } = await sbClient.auth.getSession();
     if (data?.session?.user) {
-      grantBetaAccess();
       window.location.replace('index.html');
     }
   } catch (e) {
@@ -297,10 +290,6 @@ document.getElementById('signup-form').addEventListener('submit', async (e) => {
 
 document.querySelectorAll('.faq-q').forEach((btn) => {
   btn.addEventListener('click', () => btn.parentElement.classList.toggle('open'));
-});
-
-document.getElementById('open-app-link').addEventListener('click', () => {
-  grantBetaAccess();
 });
 
 const aiFab = document.getElementById('ai-fab');
