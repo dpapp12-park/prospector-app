@@ -3,12 +3,13 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>My Dashboard — Prospector</title>
+<title>My Dashboard — Unworked Gold</title>
 <script>
-window.PROSPECTOR_CONFIG = {
+window.UNWORKED_GOLD_CONFIG = {
   supabase_url: 'https://condhfwpzlxrzuadgopc.supabase.co',
   supabase_anon_key: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImNvbmRoZndwemx4cnp1YWRnb3BjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQxOTE4OTcsImV4cCI6MjA4OTc2Nzg5N30.bJBQJuRVyWsO0Xw6CaWcZ9gTzr1b4qcFfhCXi1Au3Fw',
 };
+window.PROSPECTOR_CONFIG = window.UNWORKED_GOLD_CONFIG;
 </script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Mono:wght@400;500&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
@@ -704,7 +705,7 @@ body {
       <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
       Back to map
     </a>
-    <div class="logo">Prospector <span>/ My Dashboard</span></div>
+    <div class="logo">Unworked Gold <span>/ My Dashboard</span></div>
     <div style="font-family:'DM Mono',monospace;font-size:10px;color:var(--text-3);letter-spacing:0.06em">v0.4.0</div>
   </div>
   <div id="topbar-right">
@@ -851,7 +852,7 @@ body {
             <div id="editpanel-identity" style="display:flex;flex-direction:column;gap:10px;">
               <div>
                 <label style="display:block;font-size:12px;color:var(--text-2);margin-bottom:5px;">Display Name</label>
-                <input id="profile-display-name" type="text" placeholder="Your prospector name"
+                <input id="profile-display-name" type="text" placeholder="Your display name"
                   style="width:100%;background:var(--bg-2);border:1px solid var(--border);border-radius:8px;padding:9px 12px;color:var(--text);font-family:'DM Sans',sans-serif;font-size:14px;outline:none;box-sizing:border-box;">
               </div>
               <div>
@@ -1051,8 +1052,8 @@ body {
 
 <script>
 // ── CONFIG ──────────────────────────────────────────────
-const SUPABASE_URL = window.PROSPECTOR_CONFIG.supabase_url;
-const ANON_KEY = window.PROSPECTOR_CONFIG.supabase_anon_key;
+const SUPABASE_URL = window.UNWORKED_GOLD_CONFIG?.supabase_url || window.PROSPECTOR_CONFIG.supabase_url;
+const ANON_KEY = window.UNWORKED_GOLD_CONFIG?.supabase_anon_key || window.PROSPECTOR_CONFIG.supabase_anon_key;
 
 let sbClient = null;
 let currentUser = null;
@@ -1096,7 +1097,7 @@ function setGreeting() {
     const emailUser = currentUser.email.split('@')[0].replace(/[0-9._-]/g, '');
     name = emailUser.charAt(0).toUpperCase() + emailUser.slice(1).toLowerCase();
   }
-  if (!name) name = 'Prospector';
+  if (!name) name = 'Unworked Gold';
   document.getElementById('greeting-text').textContent = part + ', ' + name;
 }
 
@@ -1104,8 +1105,8 @@ function setGreeting() {
 async function fetchGoldPrice() {
   const el = document.getElementById('dash-gold-price');
   // Read cache set by main app
-  const cached = localStorage.getItem('prospector_gold_price');
-  const cachedTs = parseInt(localStorage.getItem('prospector_gold_price_ts') || '0');
+  const cached = localStorage.getItem('unworked_gold_gold_price') || localStorage.getItem('prospector_gold_price');
+  const cachedTs = parseInt(localStorage.getItem('unworked_gold_gold_price_ts') || localStorage.getItem('prospector_gold_price_ts') || '0');
   if (cached && (Date.now() - cachedTs) < 3600000) {
     el.textContent = '$' + cached + ' / oz';
     return;
@@ -1119,8 +1120,8 @@ async function fetchGoldPrice() {
     if (price) {
       const fmt = Number(price).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
       el.textContent = '$' + fmt + ' / oz';
-      localStorage.setItem('prospector_gold_price', fmt);
-      localStorage.setItem('prospector_gold_price_ts', Date.now().toString());
+      localStorage.setItem('unworked_gold_gold_price', fmt);
+      localStorage.setItem('unworked_gold_gold_price_ts', Date.now().toString());
       return;
     }
   } catch(e) {}
@@ -1133,8 +1134,8 @@ async function fetchGoldPrice() {
     if (price2) {
       const fmt2 = Number(price2).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
       el.textContent = '$' + fmt2 + ' / oz';
-      localStorage.setItem('prospector_gold_price', fmt2);
-      localStorage.setItem('prospector_gold_price_ts', Date.now().toString());
+      localStorage.setItem('unworked_gold_gold_price', fmt2);
+      localStorage.setItem('unworked_gold_gold_price_ts', Date.now().toString());
       return;
     }
   } catch(e) {}
@@ -1350,7 +1351,7 @@ async function loadProfile() {
     snapGold.textContent = totalGrams > 0 ? totalGrams.toFixed(2) + ' g' : '0 g';
   }
   if (snapPrice) {
-    const cached = localStorage.getItem('prospector_gold_price');
+    const cached = localStorage.getItem('unworked_gold_gold_price') || localStorage.getItem('prospector_gold_price');
     snapPrice.textContent = cached ? '$' + cached : '—';
   }
 }
@@ -1669,7 +1670,7 @@ async function fetchMapboxToken() {
     const rows = await res.json();
     const config = {};
     if (Array.isArray(rows)) rows.forEach(r => config[r.key] = r.value);
-    mapboxToken = config.mapbox_token || localStorage.getItem('prospector_mapbox_token');
+    mapboxToken = config.mapbox_token || localStorage.getItem('unworked_gold_mapbox_token') || localStorage.getItem('prospector_mapbox_token');
     if (mapboxToken && mapboxToken.startsWith('pk.')) initMiniMap();
   } catch(e) {
     document.getElementById('mini-map-placeholder').innerHTML = '<div style="font-size:12px;color:var(--text-3);text-align:center;padding:16px">Map unavailable</div>';
@@ -2203,7 +2204,7 @@ function renderConditions(el, d) {
 
 // ── NAVIGATE TO MAP ──────────────────────────────────────
 function goToMap(lng, lat) {
-  localStorage.setItem('prospector_fly_to', JSON.stringify({ lng, lat, zoom: 14 }));
+  localStorage.setItem('unworked_gold_fly_to', JSON.stringify({ lng, lat, zoom: 14 }));
   window.location.href = 'index.html';
 }
 

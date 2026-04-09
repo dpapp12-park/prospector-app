@@ -4,14 +4,25 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
-<title>Prospector — Gold Mapping App</title>
+<title>Unworked Gold — Gold Mapping App</title>
 <!-- Mapbox loaded dynamically on token submit -->
 <script>
 const APP_ENTRY_PATH = '/index.html';
 const BETA_LANDING_PATH = '/beta.html';
+const INDEX_GATE_BYPASS_KEYS = [
+  'unworked_gold_beta_access_granted',
+  'unworked_gold_beta_access_code_ok',
+  'prospector_beta_access_granted',
+  'prospector_beta_access_code_ok'
+];
 
 function shouldBypassLandingGate() {
   try {
+    const params = new URLSearchParams(window.location.search || '');
+    if (params.get('beta_access') === '1') {
+      localStorage.setItem('unworked_gold_beta_access_granted', 'true');
+      return true;
+    }
     if (window.location.pathname.endsWith(BETA_LANDING_PATH)) return true;
     if (window.location.pathname.endsWith('/dashboard.html')) return true;
     if (window.location.pathname.includes('/api/')) return true;
@@ -26,10 +37,11 @@ function redirectToBetaLanding() {
   window.location.replace(target);
 }
 
-window.PROSPECTOR_CONFIG = {
+window.UNWORKED_GOLD_CONFIG = {
   supabase_url: 'https://condhfwpzlxrzuadgopc.supabase.co',
   supabase_anon_key: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImNvbmRoZndwemx4cnp1YWRnb3BjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQxOTE4OTcsImV4cCI6MjA4OTc2Nzg5N30.bJBQJuRVyWsO0Xw6CaWcZ9gTzr1b4qcFfhCXi1Au3Fw',
 };
+window.PROSPECTOR_CONFIG = window.UNWORKED_GOLD_CONFIG;
 </script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Mono:wght@400;500&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
@@ -220,24 +232,24 @@ window.PROSPECTOR_CONFIG = {
   <div id="logo">
     <div class="icon">⛏️</div>
     <div>
-      <div class="wordmark">Prospector</div>
+      <div class="wordmark">Unworked Gold</div>
       <div class="tagline">Gold Mapping · v0.4.0</div>
     </div>
   </div>
   <div id="top-actions">
-    <button class="icon-btn" onclick="toggleLayers()" id="layer-btn" title="Layers" style="padding:0"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 2 7 12 12 22 7 12 2"/><polyline points="2 17 12 22 22 17"/><polyline points="2 12 12 17 22 12"/></svg></button>
-    <button class="icon-btn" onclick="toggleStyles()" id="style-btn" title="Map Style">🗺</button>
-    <button class="icon-btn" onclick="locateUser()" id="gps-btn" title="My Location"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><line x1="12" y1="2" x2="12" y2="6"/><line x1="12" y1="18" x2="12" y2="22"/><line x1="2" y1="12" x2="6" y2="12"/><line x1="18" y1="12" x2="22" y2="12"/></svg></button>
-    <button class="icon-btn" onclick="toggleAIMenu()" id="ai-btn" title="AI Field Tools"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M9 3H5a2 2 0 0 0-2 2v4m6-6h10a2 2 0 0 1 2 2v4M9 3v18m0 0h10a2 2 0 0 0 2-2V9M9 21H5a2 2 0 0 1-2-2V9m0 0h18"/></svg></button>
+    <button class="icon-btn" onclick="toggleLayers()" id="layer-btn" title="Layers">▤</button>
+    <button class="icon-btn" onclick="toggleStyles()" id="style-btn" title="Map Style">🧭</button>
+    <button class="icon-btn" onclick="locateUser()" id="gps-btn" title="My Location">📍</button>
+    <button class="icon-btn" onclick="toggleAIMenu()" id="ai-btn" title="AI Field Tools">🛰️</button>
   </div>
 </div>
 
 <!-- Search -->
 <div id="searchbar">
   <div id="search-input-wrap">
-    <span class="search-icon">⌕</span>
+    <span class="search-icon">🔍</span>
     <input id="search-input" type="text" placeholder="Search area, claim, or coords...">
-    <button id="search-filter-btn">⊞</button>
+    <button id="search-filter-btn">▤</button>
   </div>
   <div id="search-results"></div>
 </div>
@@ -591,12 +603,12 @@ window.PROSPECTOR_CONFIG = {
 <div id="ai-tools-menu">
   <button class="ai-menu-btn" onclick="openRockIdentifier()">
     <span>Rock Identifier</span>
-    <span>🔬</span>
+    <span>⚒️</span>
   </button>
   <button class="ai-menu-btn" onclick="openOutcropMapper()">
     <span>Outcrop Mapper</span>
     <span class="ai-pro-pill">PRO</span>
-    <span>🗺</span>
+    <span>🧭</span>
   </button>
 </div>
 
@@ -607,11 +619,11 @@ window.PROSPECTOR_CONFIG = {
 <!-- Bottom Nav -->
 <div id="bottom-nav">
   <div class="nav-item active" onclick="setNav(this)">
-    <div class="nav-icon">🗺️</div>
+    <div class="nav-icon">🧭</div>
     <div class="nav-label">Map</div>
   </div>
   <div class="nav-item" onclick="setNav(this)">
-    <div class="nav-icon">⛏️</div>
+    <div class="nav-icon">⚒️</div>
     <div class="nav-label">Claims</div>
   </div>
   <div class="nav-item" onclick="setNav(this); openAccountPanel()">
@@ -619,11 +631,11 @@ window.PROSPECTOR_CONFIG = {
     <div class="nav-label">Finds</div>
   </div>
   <div class="nav-item" onclick="setNav(this)">
-    <div class="nav-icon">📥</div>
+    <div class="nav-icon">☁️</div>
     <div class="nav-label">Offline</div>
   </div>
   <div class="nav-item" onclick="setNav(this); openAuthPanel()">
-    <div class="nav-icon">👷</div>
+    <div class="nav-icon">🧔</div>
     <div class="nav-label">Sign In</div>
   </div>
 </div>
@@ -656,9 +668,9 @@ window.PROSPECTOR_CONFIG = {
     <span id="gold-price-ts"></span>
   </div>
   <div class="account-tabs">
-    <div class="account-tab active" onclick="switchAccountTab(this,'finds')">🥇 Finds</div>
-    <div class="account-tab" onclick="switchAccountTab(this,'spots')">📍 Spots</div>
-    <div class="account-tab" onclick="switchAccountTab(this,'claims')">⛏️ Saved Claims</div>
+    <div class="account-tab active" onclick="switchAccountTab(this,'finds')">🪙 Finds</div>
+    <div class="account-tab" onclick="switchAccountTab(this,'spots')">🧭 Spots</div>
+    <div class="account-tab" onclick="switchAccountTab(this,'claims')">⚒️ Saved Claims</div>
     <div class="account-tab" onclick="switchAccountTab(this,'watches')">🔔 Watching</div>
   </div>
   <div style="padding:8px 20px 4px;font-family:'DM Mono',monospace;font-size:9px;color:var(--stone);letter-spacing:0.08em;border-bottom:1px solid rgba(255,255,255,0.05)">
@@ -1082,7 +1094,7 @@ const styles = {
 function initMap() {
   const token = document.getElementById('token-input').value.trim();
   if (!token || !token.startsWith('pk.')) return;
-  localStorage.setItem('prospector_mapbox_token', token);
+  localStorage.setItem('unworked_gold_mapbox_token', token);
   if (typeof mapboxgl === 'undefined') {
     const link = document.createElement('link');
     link.rel = 'stylesheet';
@@ -1136,10 +1148,11 @@ function startMap(token) {
     initFABDrag();
 
     // Fly to location requested from dashboard
-    const flyReq = localStorage.getItem('prospector_fly_to');
+    const flyReq = localStorage.getItem('unworked_gold_fly_to') || localStorage.getItem('prospector_fly_to');
     if (flyReq) {
       try {
         const { lng, lat, zoom } = JSON.parse(flyReq);
+        localStorage.removeItem('unworked_gold_fly_to');
         localStorage.removeItem('prospector_fly_to');
         setTimeout(() => map.flyTo({ center: [lng, lat], zoom: zoom || 14, pitch: 45 }), 800);
       } catch(e) {}
@@ -3035,8 +3048,8 @@ async function fetchGoldPrice() {
     if (price) {
       const fmt = Number(price).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
       valEl.textContent = '$' + fmt;
-      localStorage.setItem('prospector_gold_price', fmt);
-      localStorage.setItem('prospector_gold_price_ts', Date.now().toString());
+      localStorage.setItem('unworked_gold_gold_price', fmt);
+      localStorage.setItem('unworked_gold_gold_price_ts', Date.now().toString());
       changeEl.textContent = '';
       changeEl.className = '';
       const now = new Date();
@@ -4167,7 +4180,7 @@ let currentUser = null;
 let authMode = 'signin';
 
 function initSupabase() {
-  const key = localStorage.getItem('prospector_supabase_key');
+  const key = localStorage.getItem('unworked_gold_supabase_key') || localStorage.getItem('prospector_supabase_key');
   if (!key) {
     promptSupabaseKey();
     return;
@@ -4189,7 +4202,7 @@ function promptSupabaseKey() {
   // Anon key is safe to be public - use boot key directly
   const key = BOOT_ANON_KEY;
   if (key && key.startsWith('eyJ')) {
-    localStorage.setItem('prospector_supabase_key', key);
+    localStorage.setItem('unworked_gold_supabase_key', key);
     initSupabase();
   }
 }
@@ -4197,6 +4210,9 @@ function promptSupabaseKey() {
 function updateAuthUI() {
   const profileLabel = document.querySelector('.nav-item:last-child .nav-label');
   if (currentUser) {
+    try {
+      localStorage.setItem('unworked_gold_beta_access_granted', 'true');
+    } catch (e) {}
     if (profileLabel) profileLabel.textContent = 'Account';
     document.getElementById('user-email').textContent = currentUser.email;
     if (map) loadUserSpots();
@@ -4801,8 +4817,8 @@ document.addEventListener('click', function(e) {
 });
 
 // ── BOOT: fetch config from Supabase then init map ──
-const BOOT_SUPABASE_URL = window.PROSPECTOR_CONFIG?.supabase_url || 'https://condhfwpzlxrzuadgopc.supabase.co';
-const BOOT_ANON_KEY = window.PROSPECTOR_CONFIG?.supabase_anon_key || '';
+const BOOT_SUPABASE_URL = window.UNWORKED_GOLD_CONFIG?.supabase_url || window.PROSPECTOR_CONFIG?.supabase_url || 'https://condhfwpzlxrzuadgopc.supabase.co';
+const BOOT_ANON_KEY = window.UNWORKED_GOLD_CONFIG?.supabase_anon_key || window.PROSPECTOR_CONFIG?.supabase_anon_key || '';
 
 window.addEventListener('load', async () => {
   try {
@@ -4821,24 +4837,24 @@ window.addEventListener('load', async () => {
 
     // Store in localStorage as cache
     if (config.mapbox_token) {
-      localStorage.setItem('prospector_mapbox_token', config.mapbox_token);
+      localStorage.setItem('unworked_gold_mapbox_token', config.mapbox_token);
     }
     if (config.supabase_anon_key) {
-      localStorage.setItem('prospector_supabase_key', config.supabase_anon_key);
+      localStorage.setItem('unworked_gold_supabase_key', config.supabase_anon_key);
     }
     if (config.anthropic_key) {
       anthropicKey = config.anthropic_key;
     }
 
     // Init map with token from config
-    const token = config.mapbox_token || localStorage.getItem('prospector_mapbox_token');
+    const token = config.mapbox_token || localStorage.getItem('unworked_gold_mapbox_token') || localStorage.getItem('prospector_mapbox_token');
     if (token && token.startsWith('pk.')) {
       document.getElementById('token-input').value = token;
       initMap();
     }
   } catch(e) {
     console.error('Config fetch failed, falling back to localStorage', e);
-    const saved = localStorage.getItem('prospector_mapbox_token');
+    const saved = localStorage.getItem('unworked_gold_mapbox_token') || localStorage.getItem('prospector_mapbox_token');
     if (saved && saved.startsWith('pk.')) {
       document.getElementById('token-input').value = saved;
       initMap();
