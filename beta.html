@@ -5,10 +5,11 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Unworked Gold Beta — Private Tester Signup</title>
 <script>
-window.PROSPECTOR_CONFIG = {
+window.UNWORKED_GOLD_CONFIG = {
   supabase_url: 'https://condhfwpzlxrzuadgopc.supabase.co',
   supabase_anon_key: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImNvbmRoZndwemx4cnp1YWRnb3BjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQxOTE4OTcsImV4cCI6MjA4OTc2Nzg5N30.bJBQJuRVyWsO0Xw6CaWcZ9gTzr1b4qcFfhCXi1Au3Fw',
 };
+window.PROSPECTOR_CONFIG = window.UNWORKED_GOLD_CONFIG;
 </script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <style>
@@ -225,8 +226,8 @@ window.PROSPECTOR_CONFIG = {
 </div>
 
 <script>
-const SUPABASE_URL = window.PROSPECTOR_CONFIG?.supabase_url || '';
-const SUPABASE_KEY = window.PROSPECTOR_CONFIG?.supabase_anon_key || '';
+const SUPABASE_URL = window.UNWORKED_GOLD_CONFIG?.supabase_url || window.PROSPECTOR_CONFIG?.supabase_url || '';
+const SUPABASE_KEY = window.UNWORKED_GOLD_CONFIG?.supabase_anon_key || window.PROSPECTOR_CONFIG?.supabase_anon_key || '';
 let sbClient = null;
 
 function setSignupStatus(msg, ok) {
