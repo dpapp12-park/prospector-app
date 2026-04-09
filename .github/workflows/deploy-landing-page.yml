@@ -32,6 +32,7 @@ jobs:
       - name: Build static site artifact
         run: |
           mkdir -p _site
+          cp beta.html _site/
           cp index.html _site/
           cp dashboard.html _site/
           cp style.css _site/
