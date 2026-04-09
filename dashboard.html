@@ -1104,8 +1104,8 @@ function setGreeting() {
 async function fetchGoldPrice() {
   const el = document.getElementById('dash-gold-price');
   // Read cache set by main app
-  const cached = localStorage.getItem('prospector_gold_price');
-  const cachedTs = parseInt(localStorage.getItem('prospector_gold_price_ts') || '0');
+  const cached = localStorage.getItem('unworked_gold_gold_price') || localStorage.getItem('prospector_gold_price');
+  const cachedTs = parseInt(localStorage.getItem('unworked_gold_gold_price_ts') || localStorage.getItem('prospector_gold_price_ts') || '0');
   if (cached && (Date.now() - cachedTs) < 3600000) {
     el.textContent = '$' + cached + ' / oz';
     return;
@@ -1119,8 +1119,8 @@ async function fetchGoldPrice() {
     if (price) {
       const fmt = Number(price).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
       el.textContent = '$' + fmt + ' / oz';
-      localStorage.setItem('prospector_gold_price', fmt);
-      localStorage.setItem('prospector_gold_price_ts', Date.now().toString());
+      localStorage.setItem('unworked_gold_gold_price', fmt);
+      localStorage.setItem('unworked_gold_gold_price_ts', Date.now().toString());
       return;
     }
   } catch(e) {}
@@ -1133,8 +1133,8 @@ async function fetchGoldPrice() {
     if (price2) {
       const fmt2 = Number(price2).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
       el.textContent = '$' + fmt2 + ' / oz';
-      localStorage.setItem('prospector_gold_price', fmt2);
-      localStorage.setItem('prospector_gold_price_ts', Date.now().toString());
+      localStorage.setItem('unworked_gold_gold_price', fmt2);
+      localStorage.setItem('unworked_gold_gold_price_ts', Date.now().toString());
       return;
     }
   } catch(e) {}
@@ -1350,7 +1350,7 @@ async function loadProfile() {
     snapGold.textContent = totalGrams > 0 ? totalGrams.toFixed(2) + ' g' : '0 g';
   }
   if (snapPrice) {
-    const cached = localStorage.getItem('prospector_gold_price');
+    const cached = localStorage.getItem('unworked_gold_gold_price') || localStorage.getItem('prospector_gold_price');
     snapPrice.textContent = cached ? '$' + cached : '—';
   }
 }
@@ -1669,7 +1669,7 @@ async function fetchMapboxToken() {
     const rows = await res.json();
     const config = {};
     if (Array.isArray(rows)) rows.forEach(r => config[r.key] = r.value);
-    mapboxToken = config.mapbox_token || localStorage.getItem('prospector_mapbox_token');
+    mapboxToken = config.mapbox_token || localStorage.getItem('unworked_gold_mapbox_token') || localStorage.getItem('prospector_mapbox_token');
     if (mapboxToken && mapboxToken.startsWith('pk.')) initMiniMap();
   } catch(e) {
     document.getElementById('mini-map-placeholder').innerHTML = '<div style="font-size:12px;color:var(--text-3);text-align:center;padding:16px">Map unavailable</div>';
@@ -2203,7 +2203,7 @@ function renderConditions(el, d) {
 
 // ── NAVIGATE TO MAP ──────────────────────────────────────
 function goToMap(lng, lat) {
-  localStorage.setItem('prospector_fly_to', JSON.stringify({ lng, lat, zoom: 14 }));
+  localStorage.setItem('unworked_gold_fly_to', JSON.stringify({ lng, lat, zoom: 14 }));
   window.location.href = 'index.html';
 }
 
