@@ -126,6 +126,44 @@ window.PROSPECTOR_CONFIG = {
     background: rgba(201,168,76,0.2);
     border-color: rgba(201,168,76,0.5);
   }
+  .lidar-style-menu {
+    position: relative;
+    display: flex;
+    align-items: center;
+    flex-shrink: 0;
+  }
+  .lidar-style-list {
+    position: absolute;
+    top: calc(100% + 6px);
+    right: 0;
+    min-width: 172px;
+    max-height: 210px;
+    overflow-y: auto;
+    display: none;
+    background: rgba(13,12,9,0.96);
+    border: 1px solid rgba(201,168,76,0.35);
+    border-radius: 8px;
+    box-shadow: 0 8px 24px rgba(0,0,0,0.45);
+    z-index: 25;
+    padding: 7px 8px;
+  }
+  .lidar-style-list.open { display: block; }
+  .lidar-style-option {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 4px 2px;
+    color: #D8C58B;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 11px;
+    cursor: pointer;
+    user-select: none;
+    white-space: nowrap;
+  }
+  .lidar-style-option input {
+    margin: 0;
+    accent-color: #C9A84C;
+  }
 
   /* ── COORDINATE DISPLAY ── */
   #coord-display {
@@ -470,19 +508,22 @@ window.PROSPECTOR_CONFIG = {
         </div>
         <div class="layer-row" onclick="toggleLayer('lidar')">
           <div class="layer-bullet" id="bullet-lidar">●</div>
-          <span class="layer-name" id="name-lidar">LiDAR Hillshade</span>
-          <select id="lidar-style-select" class="lidar-style-select" onclick="event.stopPropagation()" onchange="setLidarStyle(this.value)">
-            <option value="hillshade">Hillshade</option>
-            <option value="svf">Sky View</option>
-            <option value="slope">Slope</option>
-            <option value="lrm">Relief Model</option>
-            <option value="rrim">Red Relief</option>
-            <option value="north">N-lit</option>
-            <option value="northeast">NE-lit</option>
-            <option value="east">E-lit</option>
-            <option value="southeast">SE-lit</option>
-            <option value="lowangle">Low Angle</option>
-          </select>
+          <span class="layer-name" id="name-lidar">LiDAR (1/10)</span>
+          <div class="lidar-style-menu" onclick="event.stopPropagation()">
+            <button id="lidar-style-btn" class="lidar-style-select" onclick="toggleLidarStyleMenu(event)">Styles 1/10</button>
+            <div id="lidar-style-list" class="lidar-style-list">
+              <label class="lidar-style-option"><input type="checkbox" value="hillshade" checked onchange="setLidarStyle('hillshade', this.checked)">Hillshade</label>
+              <label class="lidar-style-option"><input type="checkbox" value="svf" onchange="setLidarStyle('svf', this.checked)">Sky View</label>
+              <label class="lidar-style-option"><input type="checkbox" value="slope" onchange="setLidarStyle('slope', this.checked)">Slope</label>
+              <label class="lidar-style-option"><input type="checkbox" value="lrm" onchange="setLidarStyle('lrm', this.checked)">Relief Model</label>
+              <label class="lidar-style-option"><input type="checkbox" value="rrim" onchange="setLidarStyle('rrim', this.checked)">Red Relief</label>
+              <label class="lidar-style-option"><input type="checkbox" value="north" onchange="setLidarStyle('north', this.checked)">N-lit</label>
+              <label class="lidar-style-option"><input type="checkbox" value="northeast" onchange="setLidarStyle('northeast', this.checked)">NE-lit</label>
+              <label class="lidar-style-option"><input type="checkbox" value="east" onchange="setLidarStyle('east', this.checked)">E-lit</label>
+              <label class="lidar-style-option"><input type="checkbox" value="southeast" onchange="setLidarStyle('southeast', this.checked)">SE-lit</label>
+              <label class="lidar-style-option"><input type="checkbox" value="lowangle" onchange="setLidarStyle('lowangle', this.checked)">Low Angle</label>
+            </div>
+          </div>
           <button class="info-btn" onclick="showLayerInfo(event,'lidar')">i</button>
         </div>
         <div class="layer-row" onclick="toggleLayer('contours')">
@@ -940,7 +981,8 @@ function distanceMiles(lat1, lng1, lat2, lng2) {
   return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
 }
 // LiDAR style picker state
-let currentLidarStyle = 'hillshade';
+const LIDAR_STYLES_LIST = ['hillshade','svf','slope','lrm','rrim','north','northeast','east','southeast','lowangle'];
+const activeLidarStyles = new Set(['hillshade']);
 const LIDAR_STYLE_LABELS = {
   hillshade: 'LiDAR Hillshade',
   svf:       'LiDAR Sky View',
@@ -2218,7 +2260,6 @@ function addDemoLayers() {
   // ── LIDAR HILLSHADE (USGS 3DEP via Cloudflare R2) ──
   // Pendleton: 10 style sources. Legacy regions: single hillshade source.
   const R2 = 'https://tiles.unworkedgold.com';
-  const LIDAR_STYLES_LIST = ['hillshade','svf','slope','lrm','rrim','north','northeast','east','southeast','lowangle'];
 
   // Pendleton — one source + layer per style
   LIDAR_STYLES_LIST.forEach(function(style) {
@@ -2433,7 +2474,7 @@ function toggleLayer(id) {
     'open-to-claim':  ['open-to-claim-fill', 'open-to-claim-line'],
     'plss':           'plss-layer',
     'blm-roads':      'blm-roads-layer',
-    'lidar':          ['lidar-pendleton-' + currentLidarStyle,'lidar-nevada-battle-mountain','lidar-nevada-elko','lidar-california-west','lidar-california-east','lidar-idaho-boise','lidar-montana','lidar-colorado','lidar-wyoming','lidar-arizona','lidar-new-mexico','lidar-utah','lidar-nevada-central','lidar-oregon','lidar-washington'],
+    'lidar':          getLidarLayerIds(),
     'contours':       ['topo-layer', 'topo-labels'],
     'hist-mines':     'hist-mines-layer',
     'gold-occurrences': 'gold-occurrences-layer',
@@ -2547,22 +2588,62 @@ function toggleLayer(id) {
   updateActiveLayerBar();
 }
 
-function setLidarStyle(style) {
-  if (style === currentLidarStyle) return;
-  // If lidar is on, swap visibility
-  if (layerState['lidar'] && map) {
-    const oldLayer = 'lidar-pendleton-' + currentLidarStyle;
-    const newLayer = 'lidar-pendleton-' + style;
-    if (map.getLayer(oldLayer)) map.setLayoutProperty(oldLayer, 'visibility', 'none');
-    if (map.getLayer(newLayer)) map.setLayoutProperty(newLayer, 'visibility', 'visible');
-  }
-  currentLidarStyle = style;
-  // Update label
+function getLidarLayerIds() {
+  const pendletonLayers = LIDAR_STYLES_LIST
+    .filter(style => activeLidarStyles.has(style))
+    .map(style => 'lidar-pendleton-' + style);
+  return [
+    ...pendletonLayers,
+    'lidar-nevada-battle-mountain','lidar-nevada-elko','lidar-california-west','lidar-california-east',
+    'lidar-idaho-boise','lidar-montana','lidar-colorado','lidar-wyoming','lidar-arizona','lidar-new-mexico',
+    'lidar-utah','lidar-nevada-central','lidar-oregon','lidar-washington'
+  ];
+}
+
+function updateLidarSummaryLabel() {
+  const count = activeLidarStyles.size;
+  const total = LIDAR_STYLES_LIST.length;
   const nameEl = document.getElementById('name-lidar');
-  if (nameEl) nameEl.textContent = LIDAR_STYLE_LABELS[style] || 'LiDAR';
-  // Sync select in case called programmatically
-  const sel = document.getElementById('lidar-style-select');
-  if (sel) sel.value = style;
+  const btnEl = document.getElementById('lidar-style-btn');
+  if (nameEl) nameEl.textContent = `LiDAR (${count}/${total})`;
+  if (btnEl) btnEl.textContent = `Styles ${count}/${total}`;
+}
+
+function toggleLidarStyleMenu(e) {
+  e.stopPropagation();
+  const list = document.getElementById('lidar-style-list');
+  if (list) list.classList.toggle('open');
+}
+
+function closeLidarStyleMenu() {
+  const list = document.getElementById('lidar-style-list');
+  if (list) list.classList.remove('open');
+}
+
+function setLidarStyle(style, enabled) {
+  if (!LIDAR_STYLES_LIST.includes(style)) return;
+
+  if (enabled) {
+    activeLidarStyles.add(style);
+  } else {
+    if (activeLidarStyles.size === 1 && activeLidarStyles.has(style)) {
+      const cb = document.querySelector(`#lidar-style-list input[value="${style}"]`);
+      if (cb) cb.checked = true;
+      showStatus('At least one LiDAR style must stay on');
+      return;
+    }
+    activeLidarStyles.delete(style);
+  }
+
+  updateLidarSummaryLabel();
+
+  if (layerState['lidar'] && map) {
+    const layerId = 'lidar-pendleton-' + style;
+    if (map.getLayer(layerId)) {
+      map.setLayoutProperty(layerId, 'visibility', activeLidarStyles.has(style) ? 'visible' : 'none');
+    }
+  }
+  updateActiveLayerBar();
 }
 
 function toggleLayers() {
@@ -2943,8 +3024,11 @@ function hideTooltip() {
 }
 
 document.addEventListener('click', (e) => {
+  if (!e.target.closest('.lidar-style-menu')) closeLidarStyleMenu();
   if (activeInfoBtn && !e.target.classList.contains('info-btn')) hideTooltip();
 });
+
+updateLidarSummaryLabel();
 
 // ── SAVE CLAIMS ─────────────────────────────────────────
 async function saveClaim(serial, name, type, acres) {
