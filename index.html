@@ -4105,9 +4105,10 @@ async function submitAuth() {
 
 async function signInWithGoogle() {
   if (!sbClient) return;
+  const redirectTo = window.location.origin;
   await sbClient.auth.signInWithOAuth({
     provider: 'google',
-    options: { redirectTo: 'https://prospector-app.pages.dev' }
+    options: { redirectTo }
   });
 }
 
