@@ -65,6 +65,34 @@ window.PROSPECTOR_CONFIG = {
   }
   input:focus,select:focus,textarea:focus{border-color:var(--gold-soft)}
   #signup-status{margin-top:8px;font-size:12px;color:var(--text-dim);min-height:18px}
+  .auth-divider{
+    margin:12px 0;
+    display:flex;
+    align-items:center;
+    gap:8px;
+    color:var(--text-dim);
+    font-size:11px;
+    text-transform:uppercase;
+    letter-spacing:.08em;
+  }
+  .auth-divider::before,
+  .auth-divider::after{
+    content:"";
+    flex:1;
+    height:1px;
+    background:rgba(255,255,255,.12);
+  }
+  .login-row{
+    display:grid;
+    grid-template-columns:1fr 1fr;
+    gap:8px;
+  }
+  .auth-status{
+    margin-top:8px;
+    min-height:18px;
+    font-size:12px;
+    color:var(--text-dim);
+  }
   .grid{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-top:14px}
   .section-title{font-size:12px;letter-spacing:.12em;text-transform:uppercase;color:var(--text-dim);margin-bottom:8px}
   .chips{display:grid;grid-template-columns:1fr 1fr;gap:8px}
@@ -150,6 +178,23 @@ window.PROSPECTOR_CONFIG = {
         <button class="btn" type="submit" style="width:100%">Request beta access</button>
       </form>
       <div id="signup-status">Not yet wired to database. Captured locally for now.</div>
+      <div class="auth-divider">already approved?</div>
+      <button class="btn" type="button" id="google-login-btn" style="width:100%">Continue with Google</button>
+      <form id="login-form" style="margin-top:10px">
+        <div class="form-row">
+          <label for="login-email">Email</label>
+          <input id="login-email" type="email" autocomplete="email" required>
+        </div>
+        <div class="form-row">
+          <label for="login-password">Password</label>
+          <input id="login-password" type="password" autocomplete="current-password" required>
+        </div>
+        <div class="login-row">
+          <button class="btn" type="submit">Sign In</button>
+          <button class="btn" type="button" id="create-account-btn">Create Account</button>
+        </div>
+      </form>
+      <div id="auth-status" class="auth-status"></div>
     </div>
   </section>
 
@@ -235,15 +280,16 @@ function setSignupStatus(msg, ok) {
   el.style.color = ok ? '#50c878' : 'var(--text-dim)';
 }
 
+function setAuthStatus(msg, ok) {
+  const el = document.getElementById('auth-status');
+  if (!el) return;
+  el.textContent = msg;
+  el.style.color = ok ? '#50c878' : 'var(--text-dim)';
+}
+
 function initSupabaseClient() {
   if (!SUPABASE_URL || !SUPABASE_KEY || !window.supabase) return;
   sbClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
-}
-
-function grantBetaAccess() {
-  try {
-    localStorage.setItem('prospector_beta_access_granted', 'true');
-  } catch (e) {}
 }
 
 async function gateToAppIfLoggedIn() {
@@ -251,11 +297,55 @@ async function gateToAppIfLoggedIn() {
   try {
     const { data } = await sbClient.auth.getSession();
     if (data?.session?.user) {
-      grantBetaAccess();
       window.location.replace('index.html');
     }
   } catch (e) {
     console.warn('Session check failed', e);
+  }
+}
+
+async function submitLogin(email, password, mode) {
+  if (!sbClient) {
+    setAuthStatus('Auth service is not ready. Refresh and try again.', false);
+    return;
+  }
+  if (!email || !password) {
+    setAuthStatus('Enter both email and password.', false);
+    return;
+  }
+
+  const payload = { email: String(email).trim(), password };
+  try {
+    const { error } = mode === 'signup'
+      ? await sbClient.auth.signUp(payload)
+      : await sbClient.auth.signInWithPassword(payload);
+    if (error) throw error;
+
+    if (mode === 'signup') {
+      setAuthStatus('Account created. Check email verification, then sign in.', true);
+      return;
+    }
+
+    setAuthStatus('Signed in. Opening app...', true);
+    window.location.replace('index.html');
+  } catch (e) {
+    setAuthStatus(e?.message || 'Could not complete auth.', false);
+  }
+}
+
+async function signInWithGoogle() {
+  if (!sbClient) {
+    setAuthStatus('Auth service is not ready. Refresh and try again.', false);
+    return;
+  }
+  try {
+    const { error } = await sbClient.auth.signInWithOAuth({
+      provider: 'google',
+      options: { redirectTo: `${window.location.origin}/index.html` }
+    });
+    if (error) throw error;
+  } catch (e) {
+    setAuthStatus(e?.message || 'Google sign-in failed.', false);
   }
 }
 
@@ -295,12 +385,25 @@ document.getElementById('signup-form').addEventListener('submit', async (e) => {
   }
 });
 
-document.querySelectorAll('.faq-q').forEach((btn) => {
-  btn.addEventListener('click', () => btn.parentElement.classList.toggle('open'));
+document.getElementById('google-login-btn').addEventListener('click', async () => {
+  await signInWithGoogle();
 });
 
-document.getElementById('open-app-link').addEventListener('click', () => {
-  grantBetaAccess();
+document.getElementById('login-form').addEventListener('submit', async (e) => {
+  e.preventDefault();
+  const email = document.getElementById('login-email').value;
+  const password = document.getElementById('login-password').value;
+  await submitLogin(email, password, 'signin');
+});
+
+document.getElementById('create-account-btn').addEventListener('click', async () => {
+  const email = document.getElementById('login-email').value;
+  const password = document.getElementById('login-password').value;
+  await submitLogin(email, password, 'signup');
+});
+
+document.querySelectorAll('.faq-q').forEach((btn) => {
+  btn.addEventListener('click', () => btn.parentElement.classList.toggle('open'));
 });
 
 const aiFab = document.getElementById('ai-fab');
