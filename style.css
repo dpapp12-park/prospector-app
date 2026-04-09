@@ -1385,6 +1385,115 @@
   .draw-result-item:hover { color: var(--gold); }
   .draw-result-item:last-child { border-bottom: none; }
 
+  /* ── FEEDBACK ── */
+  #feedback-fab {
+    position: absolute;
+    right: 84px;
+    bottom: 88px;
+    z-index: 101;
+    border: 1px solid var(--panel-border);
+    background: var(--panel-bg);
+    color: var(--gold-bright);
+    border-radius: 999px;
+    font-family: 'DM Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    padding: 10px 12px;
+    backdrop-filter: blur(10px);
+    cursor: pointer;
+  }
+
+  #feedback-panel {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    z-index: 151;
+    background: var(--panel-bg);
+    border-top: 1px solid var(--panel-border);
+    border-radius: 20px 20px 0 0;
+    padding: 16px 20px 96px;
+    backdrop-filter: blur(20px);
+    transform: translateY(100%);
+    transition: transform 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+    max-height: 78vh;
+    overflow-y: auto;
+  }
+  #feedback-panel.open { transform: translateY(0); }
+  #feedback-panel h3 {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 24px;
+    letter-spacing: 0.08em;
+    color: var(--gold);
+    margin-bottom: 6px;
+  }
+  #feedback-panel .panel-handle {
+    width: 40px;
+    height: 4px;
+    background: var(--stone);
+    border-radius: 2px;
+    margin: 0 auto 14px;
+  }
+  .feedback-sub {
+    font-size: 12px;
+    color: var(--dust);
+    margin-bottom: 10px;
+  }
+  .feedback-types {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 8px;
+    margin-bottom: 10px;
+  }
+  .feedback-type-btn {
+    border: 1px solid var(--panel-border);
+    background: var(--stone);
+    color: var(--cream);
+    border-radius: 8px;
+    padding: 8px 9px;
+    font-size: 12px;
+    cursor: pointer;
+  }
+  .feedback-type-btn.active {
+    border-color: var(--gold);
+    color: var(--gold-bright);
+    background: rgba(201, 168, 76, 0.13);
+  }
+  #feedback-message {
+    width: 100%;
+    background: var(--stone);
+    border: 1px solid var(--panel-border);
+    border-radius: 8px;
+    padding: 11px 13px;
+    color: var(--cream);
+    font-family: 'DM Sans', sans-serif;
+    font-size: 14px;
+    min-height: 104px;
+    resize: vertical;
+    outline: none;
+    margin-bottom: 10px;
+  }
+  #feedback-message:focus { border-color: var(--gold); }
+  .feedback-error {
+    display: none;
+    margin-bottom: 10px;
+    padding: 8px 10px;
+    border: 1px solid rgba(244, 67, 54, 0.4);
+    border-radius: 7px;
+    background: rgba(244, 67, 54, 0.12);
+    color: #FF8A80;
+    font-size: 12px;
+  }
+  .feedback-footnote {
+    text-align: center;
+    font-size: 10px;
+    color: var(--dust);
+    margin-top: 8px;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+  }
+
   /* ── AUTH PANEL ── */
   #auth-panel {
     position: absolute;

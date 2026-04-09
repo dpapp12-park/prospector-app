@@ -7,6 +7,31 @@
 <title>Prospector — Gold Mapping App</title>
 <!-- Mapbox loaded dynamically on token submit -->
 <script>
+const APP_ENTRY_PATH = '/index.html';
+const BETA_LANDING_PATH = '/beta.html';
+const INDEX_GATE_BYPASS_KEYS = ['prospector_beta_access_granted', 'prospector_beta_access_code_ok'];
+
+function shouldBypassLandingGate() {
+  try {
+    const params = new URLSearchParams(window.location.search || '');
+    if (params.get('beta_access') === '1') {
+      localStorage.setItem('prospector_beta_access_granted', 'true');
+      return true;
+    }
+    if (window.location.pathname.endsWith(BETA_LANDING_PATH)) return true;
+    if (window.location.pathname.endsWith('/dashboard.html')) return true;
+    if (window.location.pathname.includes('/api/')) return true;
+    return INDEX_GATE_BYPASS_KEYS.some((k) => localStorage.getItem(k) === 'true');
+  } catch (e) {
+    return false;
+  }
+}
+
+function redirectToBetaLanding() {
+  const target = `${window.location.origin}${BETA_LANDING_PATH}`;
+  window.location.replace(target);
+}
+
 window.PROSPECTOR_CONFIG = {
   supabase_url: 'https://condhfwpzlxrzuadgopc.supabase.co',
   supabase_anon_key: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImNvbmRoZndwemx4cnp1YWRnb3BjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQxOTE4OTcsImV4cCI6MjA4OTc2Nzg5N30.bJBQJuRVyWsO0Xw6CaWcZ9gTzr1b4qcFfhCXi1Au3Fw',
@@ -607,6 +632,24 @@ window.PROSPECTOR_CONFIG = {
     <div class="nav-icon">👷</div>
     <div class="nav-label">Sign In</div>
   </div>
+</div>
+
+<!-- Beta Feedback -->
+<button id="feedback-fab" onclick="openFeedbackPanel()" title="Send beta feedback">💬 Feedback</button>
+<div id="feedback-panel">
+  <div class="panel-handle"></div>
+  <h3>Beta Feedback</h3>
+  <p class="feedback-sub">Report bugs, suggestions, notes, and wins while testing.</p>
+  <div id="feedback-error" class="feedback-error"></div>
+  <div class="feedback-types">
+    <button class="feedback-type-btn active" data-type="bug" onclick="selectFeedbackType(this, 'bug')">🐛 Bug</button>
+    <button class="feedback-type-btn" data-type="suggestion" onclick="selectFeedbackType(this, 'suggestion')">💡 Suggestion</button>
+    <button class="feedback-type-btn" data-type="love" onclick="selectFeedbackType(this, 'love')">👍 Love This</button>
+    <button class="feedback-type-btn" data-type="note" onclick="selectFeedbackType(this, 'note')">📝 Note</button>
+  </div>
+  <textarea id="feedback-message" placeholder="What happened, what were you trying to do, and what should we improve?"></textarea>
+  <button id="feedback-submit-btn" class="find-submit" onclick="submitFeedback()">Send Feedback</button>
+  <p class="feedback-footnote">Includes map center and zoom automatically.</p>
 </div>
 
 <!-- Account Panel -->
@@ -2809,11 +2852,79 @@ function closeAllPanels() {
   document.getElementById('spot-panel').classList.remove('open');
   document.getElementById('auth-panel').classList.remove('open');
   document.getElementById('account-panel').classList.remove('open');
+  document.getElementById('feedback-panel').classList.remove('open');
   document.getElementById('rock-id-panel').classList.remove('open');
   document.getElementById('outcrop-panel').classList.remove('open');
   document.getElementById('overlay').classList.remove('show');
   if (styleSwitcherOpen) toggleStyles();
   if (aiMenuOpen) closeAIMenu();
+}
+
+let feedbackType = 'bug';
+function selectFeedbackType(el, type) {
+  feedbackType = type;
+  document.querySelectorAll('.feedback-type-btn').forEach((b) => b.classList.remove('active'));
+  if (el) el.classList.add('active');
+}
+
+function openFeedbackPanel() {
+  document.getElementById('feedback-error').style.display = 'none';
+  document.getElementById('feedback-panel').classList.add('open');
+  document.getElementById('overlay').classList.add('show');
+}
+
+function closeFeedbackPanel() {
+  document.getElementById('feedback-panel').classList.remove('open');
+}
+
+async function submitFeedback() {
+  const msgEl = document.getElementById('feedback-message');
+  const errEl = document.getElementById('feedback-error');
+  const submitBtn = document.getElementById('feedback-submit-btn');
+  const message = (msgEl?.value || '').trim();
+
+  errEl.style.display = 'none';
+  if (!message) {
+    errEl.textContent = 'Please add a note before sending.';
+    errEl.style.display = 'block';
+    return;
+  }
+  if (!sbClient) {
+    errEl.textContent = 'Feedback service is not ready yet. Please refresh and try again.';
+    errEl.style.display = 'block';
+    return;
+  }
+
+  submitBtn.disabled = true;
+  submitBtn.style.opacity = '0.7';
+
+  try {
+    const center = map ? map.getCenter() : null;
+    const zoom = map ? Number(map.getZoom().toFixed(2)) : null;
+    const payload = {
+      type: feedbackType,
+      message,
+      map_zoom: zoom,
+      map_lat: center ? Number(center.lat.toFixed(6)) : null,
+      map_lng: center ? Number(center.lng.toFixed(6)) : null,
+      user_agent: navigator.userAgent
+    };
+    if (currentUser?.id) payload.user_id = currentUser.id;
+
+    const { error } = await sbClient.from('beta_feedback').insert(payload);
+    if (error) throw error;
+
+    msgEl.value = '';
+    closeAllPanels();
+    showStatus('Feedback received — thank you.');
+  } catch (e) {
+    console.error('feedback submit failed', e);
+    errEl.textContent = 'Could not send feedback. Please try again.';
+    errEl.style.display = 'block';
+  } finally {
+    submitBtn.disabled = false;
+    submitBtn.style.opacity = '1';
+  }
 }
 
 function resetBearing() {
@@ -4009,10 +4120,12 @@ function initSupabase() {
   sbClient = window.supabase.createClient(SUPABASE_URL, key);
   sbClient.auth.onAuthStateChange((event, session) => {
     currentUser = session?.user || null;
+    maybeGateToBetaLanding();
     updateAuthUI();
   });
   sbClient.auth.getSession().then(({ data: { session } }) => {
     currentUser = session?.user || null;
+    maybeGateToBetaLanding();
     updateAuthUI();
   });
 }
@@ -4029,11 +4142,17 @@ function promptSupabaseKey() {
 function updateAuthUI() {
   const profileLabel = document.querySelector('.nav-item:last-child .nav-label');
   if (currentUser) {
+    try {
+      localStorage.setItem('prospector_beta_access_granted', 'true');
+    } catch (e) {}
     if (profileLabel) profileLabel.textContent = 'Account';
     document.getElementById('user-email').textContent = currentUser.email;
     if (map) loadUserSpots();
   } else {
     if (profileLabel) profileLabel.textContent = 'Sign In';
+    if (window.location.pathname.endsWith('/index.html') || window.location.pathname === '/') {
+      window.location.replace('beta.html');
+    }
   }
 }
 
@@ -4105,9 +4224,10 @@ async function submitAuth() {
 
 async function signInWithGoogle() {
   if (!sbClient) return;
+  const redirectTo = window.location.origin;
   await sbClient.auth.signInWithOAuth({
     provider: 'google',
-    options: { redirectTo: 'https://prospector-app.pages.dev' }
+    options: { redirectTo }
   });
 }
 

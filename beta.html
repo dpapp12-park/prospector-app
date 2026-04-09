@@ -1,0 +1,391 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Prospector Beta — Private Tester Signup</title>
+<script>
+window.PROSPECTOR_CONFIG = {
+  supabase_url: 'https://condhfwpzlxrzuadgopc.supabase.co',
+  supabase_anon_key: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImNvbmRoZndwemx4cnp1YWRnb3BjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQxOTE4OTcsImV4cCI6MjA4OTc2Nzg5N30.bJBQJuRVyWsO0Xw6CaWcZ9gTzr1b4qcFfhCXi1Au3Fw',
+};
+</script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+  :root{
+    --bg:#0f0d08;
+    --panel:#1b1710;
+    --panel-2:#241f14;
+    --line:rgba(240,192,64,.24);
+    --gold:#f0c040;
+    --gold-soft:#c9a84c;
+    --text:#f3ead2;
+    --text-dim:#aa9a73;
+    --ok:#50c878;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{
+    font-family:Inter,system-ui,-apple-system,Segoe UI,Roboto,sans-serif;
+    background:radial-gradient(circle at 20% -10%, #2b220d 0%, var(--bg) 45%);
+    color:var(--text);
+    line-height:1.45;
+  }
+  .shell{max-width:1100px;margin:0 auto;padding:18px 18px 42px}
+  .top{
+    display:flex;justify-content:space-between;align-items:center;gap:12px;
+    margin-bottom:18px;
+  }
+  .brand h1{font-size:24px;letter-spacing:.04em;color:var(--gold);font-weight:700}
+  .brand p{font-size:12px;color:var(--text-dim)}
+  .btn{
+    border:1px solid var(--line);background:rgba(240,192,64,.12);color:var(--gold);
+    border-radius:10px;padding:10px 14px;text-decoration:none;font-weight:600;
+    cursor:pointer;
+  }
+  .hero{
+    display:grid;grid-template-columns:1.3fr .9fr;gap:14px;margin-bottom:14px;
+  }
+  .card{
+    background:linear-gradient(180deg,var(--panel),var(--panel-2));
+    border:1px solid var(--line);border-radius:14px;padding:16px;
+  }
+  .hero h2{font-size:26px;line-height:1.2;margin-bottom:10px}
+  .hero p{color:var(--text-dim)}
+  .stats{
+    margin-top:14px;display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px;
+  }
+  .stat{background:rgba(0,0,0,.22);border:1px solid rgba(255,255,255,.07);border-radius:10px;padding:10px}
+  .stat .n{font-size:24px;color:var(--gold);font-weight:700}
+  .stat .l{font-size:11px;color:var(--text-dim);text-transform:uppercase;letter-spacing:.08em}
+  .form-row{margin-bottom:10px}
+  label{display:block;font-size:12px;margin-bottom:4px;color:var(--text-dim)}
+  input,select,textarea{
+    width:100%;background:#12100b;color:var(--text);border:1px solid rgba(255,255,255,.14);
+    border-radius:10px;padding:10px 11px;font-size:14px;outline:none;
+  }
+  input:focus,select:focus,textarea:focus{border-color:var(--gold-soft)}
+  #signup-status{margin-top:8px;font-size:12px;color:var(--text-dim);min-height:18px}
+  .grid{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-top:14px}
+  .section-title{font-size:12px;letter-spacing:.12em;text-transform:uppercase;color:var(--text-dim);margin-bottom:8px}
+  .chips{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+  .chip{border:1px solid rgba(255,255,255,.09);border-radius:10px;padding:10px;background:rgba(0,0,0,.18);font-size:13px}
+  .chip.live{border-color:rgba(80,200,120,.35)}
+  .chip.live::before{content:"● Live ";color:var(--ok);font-size:11px;display:block;margin-bottom:3px}
+  .chip.soon::before{content:"◌ Soon ";color:var(--gold);font-size:11px;display:block;margin-bottom:3px}
+  .faq-item{border-top:1px solid rgba(255,255,255,.09)}
+  .faq-q{width:100%;text-align:left;background:none;border:none;color:var(--text);padding:11px 0;cursor:pointer;font-weight:600}
+  .faq-a{display:none;color:var(--text-dim);padding:0 0 10px 0;font-size:14px}
+  .faq-item.open .faq-a{display:block}
+  #ai-fab{
+    position:fixed;right:18px;bottom:18px;width:54px;height:54px;border-radius:50%;
+    border:1px solid var(--line);background:linear-gradient(180deg,#34270d,#1f1708);color:var(--gold);
+    font-size:22px;cursor:pointer;z-index:30;
+  }
+  #ai-box{
+    position:fixed;right:18px;bottom:84px;width:min(420px,calc(100vw - 24px));height:420px;
+    border:1px solid var(--line);border-radius:14px;background:#13100a;display:none;z-index:31;
+    overflow:hidden;
+  }
+  #ai-box.open{display:flex;flex-direction:column}
+  #ai-head{padding:10px 12px;border-bottom:1px solid rgba(255,255,255,.09);display:flex;justify-content:space-between;align-items:center}
+  #ai-log{flex:1;overflow-y:auto;padding:10px;font-size:13px}
+  .msg{margin-bottom:8px;padding:8px 9px;border-radius:8px}
+  .msg.u{background:#2a220f}
+  .msg.a{background:#1c1a16}
+  #ai-form{display:flex;gap:8px;padding:10px;border-top:1px solid rgba(255,255,255,.09)}
+  #ai-input{flex:1}
+  @media (max-width:920px){
+    .hero{grid-template-columns:1fr}
+    .stats{grid-template-columns:repeat(2,minmax(0,1fr))}
+    .grid{grid-template-columns:1fr}
+  }
+</style>
+</head>
+<body>
+<div class="shell">
+  <div class="top">
+    <div class="brand">
+      <h1>Prospector Beta</h1>
+      <p>Private tester preview · map intelligence for modern prospectors</p>
+    </div>
+    <a class="btn" href="index.html" id="open-app-link">Open App</a>
+  </div>
+
+  <section class="hero">
+    <div class="card">
+      <h2>Help shape the next release</h2>
+      <p>Join the beta to test live features, report issues, and influence what ships next.</p>
+      <div class="stats">
+        <div class="stat"><div class="n">317K</div><div class="l">Active claims</div></div>
+        <div class="stat"><div class="n">11</div><div class="l">States</div></div>
+        <div class="stat"><div class="n">16K</div><div class="l">MRDS sites</div></div>
+        <div class="stat"><div class="n">7</div><div class="l">LiDAR regions</div></div>
+      </div>
+    </div>
+    <div class="card">
+      <div class="section-title">Beta signup</div>
+      <form id="signup-form">
+        <div class="form-row">
+          <label for="first-name">First name</label>
+          <input id="first-name" name="first_name" required>
+        </div>
+        <div class="form-row">
+          <label for="last-name">Last name</label>
+          <input id="last-name" name="last_name" required>
+        </div>
+        <div class="form-row">
+          <label for="email">Email</label>
+          <input id="email" name="email" type="email" required>
+        </div>
+        <div class="form-row">
+          <label for="role">Role</label>
+          <select id="role" name="role" required>
+            <option value="">Choose one</option>
+            <option>Prospector</option>
+            <option>Claim owner</option>
+            <option>Geologist</option>
+            <option>Other explorer</option>
+          </select>
+        </div>
+        <button class="btn" type="submit" style="width:100%">Request beta access</button>
+      </form>
+      <div id="signup-status">Not yet wired to database. Captured locally for now.</div>
+    </div>
+  </section>
+
+  <section class="grid">
+    <div class="card">
+      <div class="section-title">Active now</div>
+      <div class="chips">
+        <div class="chip live">Interactive map with claim overlays</div>
+        <div class="chip live">Saved claims and personal watchlists</div>
+        <div class="chip live">Private finds and spot logging</div>
+        <div class="chip live">Draw-to-search claim scanner</div>
+        <div class="chip live">LiDAR style stack + terrain controls</div>
+        <div class="chip live">Gold, mercury, silver, chromium layers</div>
+        <div class="chip live">Rock identifier AI tool</div>
+        <div class="chip live">Outcrop mapper AI tool</div>
+      </div>
+    </div>
+    <div class="card">
+      <div class="section-title">Coming soon</div>
+      <div class="chips">
+        <div class="chip soon">Multi-user team workspaces</div>
+        <div class="chip soon">Offline map tile packs</div>
+        <div class="chip soon">Advanced claim risk scoring</div>
+        <div class="chip soon">Field-route optimization</div>
+        <div class="chip soon">Mobile push alerts for watched claims</div>
+        <div class="chip soon">Beta feedback dashboard</div>
+      </div>
+    </div>
+  </section>
+
+  <section class="card" style="margin-top:14px">
+    <div class="section-title">FAQ for testers</div>
+    <div class="faq-item">
+      <button class="faq-q">How do I report bugs?</button>
+      <div class="faq-a">Use the in-app feedback button in the lower-right corner of the app and choose “Bug”.</div>
+    </div>
+    <div class="faq-item">
+      <button class="faq-q">How current is claims data?</button>
+      <div class="faq-a">Data freshness is displayed in-app. Beta data quality checks run continuously as testers report issues.</div>
+    </div>
+    <div class="faq-item">
+      <button class="faq-q">Can I save private spots?</button>
+      <div class="faq-a">Yes. Saved spots and finds are tied to your account and are not shared publicly.</div>
+    </div>
+    <div class="faq-item">
+      <button class="faq-q">Which devices are best?</button>
+      <div class="faq-a">Desktop is currently best for deep analysis. Mobile is supported for field checks and quick notes.</div>
+    </div>
+    <div class="faq-item">
+      <button class="faq-q">What should I test first?</button>
+      <div class="faq-a">Search an area, open claims, save one claim, log one find, then submit a note via feedback.</div>
+    </div>
+    <div class="faq-item">
+      <button class="faq-q">Can I invite someone else?</button>
+      <div class="faq-a">For now, access is controlled manually. Send names/emails to the project owner for approval.</div>
+    </div>
+  </section>
+</div>
+
+<button id="ai-fab" title="Ask Prospector AI">⛏</button>
+<div id="ai-box">
+  <div id="ai-head">
+    <strong style="font-size:13px;color:var(--gold)">Prospector AI Helper</strong>
+    <button id="ai-close" style="background:none;border:none;color:var(--text-dim);cursor:pointer">✕</button>
+  </div>
+  <div id="ai-log">
+    <div class="msg a">Ask about features, onboarding, claim layers, or beta testing tips.</div>
+  </div>
+  <form id="ai-form">
+    <input id="ai-input" placeholder="Ask a question..." autocomplete="off">
+    <button class="btn" type="submit" style="padding:8px 10px">Send</button>
+  </form>
+</div>
+
+<script>
+const SUPABASE_URL = window.PROSPECTOR_CONFIG?.supabase_url || '';
+const SUPABASE_KEY = window.PROSPECTOR_CONFIG?.supabase_anon_key || '';
+let sbClient = null;
+
+function setSignupStatus(msg, ok) {
+  const el = document.getElementById('signup-status');
+  el.textContent = msg;
+  el.style.color = ok ? '#50c878' : 'var(--text-dim)';
+}
+
+function initSupabaseClient() {
+  if (!SUPABASE_URL || !SUPABASE_KEY || !window.supabase) return;
+  sbClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+}
+
+function grantBetaAccess() {
+  try {
+    localStorage.setItem('prospector_beta_access_granted', 'true');
+  } catch (e) {}
+}
+
+async function gateToAppIfLoggedIn() {
+  if (!sbClient) return;
+  try {
+    const { data } = await sbClient.auth.getSession();
+    if (data?.session?.user) {
+      grantBetaAccess();
+      window.location.replace('index.html');
+    }
+  } catch (e) {
+    console.warn('Session check failed', e);
+  }
+}
+
+document.getElementById('signup-form').addEventListener('submit', async (e) => {
+  e.preventDefault();
+  const form = new FormData(e.currentTarget);
+  const payload = {
+    first_name: String(form.get('first_name') || '').trim(),
+    last_name: String(form.get('last_name') || '').trim(),
+    email: String(form.get('email') || '').trim().toLowerCase(),
+    role: String(form.get('role') || '').trim(),
+    source: 'beta_landing',
+    created_at: new Date().toISOString(),
+    user_agent: navigator.userAgent
+  };
+
+  if (!payload.first_name || !payload.last_name || !payload.email || !payload.role) {
+    setSignupStatus('Please complete all fields.', false);
+    return;
+  }
+
+  if (!sbClient) {
+    console.log('beta signup', payload);
+    setSignupStatus('Signup captured locally. Supabase not initialized yet.', false);
+    e.currentTarget.reset();
+    return;
+  }
+
+  try {
+    const { error } = await sbClient.from('beta_signups').insert(payload);
+    if (error) throw error;
+    setSignupStatus('Thanks — you are on the beta list.', true);
+    e.currentTarget.reset();
+  } catch (err) {
+    console.log('beta signup fallback', payload, err);
+    setSignupStatus('Signup captured locally. DB table not ready yet.', false);
+  }
+});
+
+document.querySelectorAll('.faq-q').forEach((btn) => {
+  btn.addEventListener('click', () => btn.parentElement.classList.toggle('open'));
+});
+
+document.getElementById('open-app-link').addEventListener('click', () => {
+  grantBetaAccess();
+});
+
+const aiFab = document.getElementById('ai-fab');
+const aiBox = document.getElementById('ai-box');
+const aiClose = document.getElementById('ai-close');
+const aiLog = document.getElementById('ai-log');
+const aiForm = document.getElementById('ai-form');
+const aiInput = document.getElementById('ai-input');
+
+aiFab.addEventListener('click', () => aiBox.classList.toggle('open'));
+aiClose.addEventListener('click', () => aiBox.classList.remove('open'));
+
+function addChat(text, who) {
+  const el = document.createElement('div');
+  el.className = `msg ${who}`;
+  el.textContent = text;
+  aiLog.appendChild(el);
+  aiLog.scrollTop = aiLog.scrollHeight;
+}
+
+const cannedAnswers = [
+  {
+    when: /bug|issue|broken|error/i,
+    say: 'Use the in-app feedback button and choose Bug. Include what you clicked and what you expected.'
+  },
+  {
+    when: /coming|soon|roadmap|next/i,
+    say: 'Near-term priorities are offline packs, risk scoring, and better notifications for watched claims.'
+  },
+  {
+    when: /sign|login|account|access/i,
+    say: 'Use Sign In inside the app. If your account is approved, your saved claims and finds will appear.'
+  },
+  {
+    when: /lidar|layer|map/i,
+    say: 'Start with Satellite + terrain, then enable LiDAR styles and claim overlays for quick ground reading.'
+  }
+];
+
+async function askAnthropic(text) {
+  try {
+    const res = await fetch('/api/claude', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        model: 'claude-sonnet-4-20250514',
+        max_tokens: 450,
+        system: 'You are Prospector beta assistant. Keep answers concise, practical, and plain language for gold prospectors.',
+        messages: [{ role: 'user', content: text }]
+      })
+    });
+    if (!res.ok) throw new Error('ai unavailable');
+    const data = await res.json();
+    const response = data?.content?.[0]?.text;
+    if (response) return response.trim();
+  } catch (e) {
+    return null;
+  }
+  return null;
+}
+
+aiForm.addEventListener('submit', async (e) => {
+  e.preventDefault();
+  const text = aiInput.value.trim();
+  if (!text) return;
+  aiInput.value = '';
+  addChat(text, 'u');
+
+  const canned = cannedAnswers.find((c) => c.when.test(text));
+  if (canned) {
+    addChat(canned.say, 'a');
+    return;
+  }
+
+  addChat('Thinking…', 'a');
+  const live = await askAnthropic(text);
+  const last = aiLog.querySelector('.msg.a:last-child');
+  if (last && last.textContent === 'Thinking…') {
+    last.remove();
+  }
+  addChat(live || 'AI helper is in fallback mode right now. Try asking about signup, login, or reporting feedback.', 'a');
+});
+
+initSupabaseClient();
+gateToAppIfLoggedIn();
+</script>
+</body>
+</html>
