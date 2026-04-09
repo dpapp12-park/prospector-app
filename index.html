@@ -643,7 +643,7 @@ window.PROSPECTOR_CONFIG = {
   </div>
   <textarea id="feedback-message" placeholder="What happened, what were you trying to do, and what should we improve?"></textarea>
   <button id="feedback-submit-btn" class="find-submit" onclick="submitFeedback()">Send Feedback</button>
-  <p class="feedback-footnote">Includes map center and zoom automatically.</p>
+  <p class="feedback-footnote">Includes map, layer, and device context automatically.</p>
 </div>
 
 <!-- Account Panel -->
@@ -2895,18 +2895,79 @@ async function submitFeedback() {
   try {
     const center = map ? map.getCenter() : null;
     const zoom = map ? Number(map.getZoom().toFixed(2)) : null;
+    const camera = map ? { bearing: map.getBearing(), pitch: map.getPitch() } : null;
+    const bounds = map ? map.getBounds() : null;
+    const activeLayerIds = Object.entries(layerState || {})
+      .filter(([, isOn]) => !!isOn)
+      .map(([layerId]) => layerId);
+    const lidarStyles = Array.from(activeLidarStyles || []);
+    const session = sbClient?.auth ? await sbClient.auth.getSession() : { data: { session: null } };
+    const sessionUser = session?.data?.session?.user || null;
+    const pagePath = window.location.pathname || '/index.html';
+
+    const sessionMeta = {
+      session_status: currentUser ? 'authenticated' : 'anonymous',
+      gps_state: userLocation ? 'enabled' : 'disabled',
+      viewport_width: window.innerWidth || null,
+      viewport_height: window.innerHeight || null,
+      device_pixel_ratio: window.devicePixelRatio || null,
+      language: navigator.language || null,
+      timezone: (Intl.DateTimeFormat().resolvedOptions().timeZone || null),
+      release_channel: 'beta',
+      auth_user_id: sessionUser?.id || null
+    };
+
     const payload = {
       type: feedbackType,
       message,
       map_zoom: zoom,
       map_lat: center ? Number(center.lat.toFixed(6)) : null,
       map_lng: center ? Number(center.lng.toFixed(6)) : null,
+      page_path: pagePath,
+      app_section: 'map',
+      map_style: currentStyle || null,
+      current_url: window.location.href,
+      referrer: document.referrer || null,
+      has_gps_fix: !!userLocation,
+      camera_pitch: camera ? Number(camera.pitch.toFixed(3)) : null,
+      camera_bearing: camera ? Number(camera.bearing.toFixed(3)) : null,
+      map_bounds_sw_lat: bounds ? Number(bounds.getSouth().toFixed(6)) : null,
+      map_bounds_sw_lng: bounds ? Number(bounds.getWest().toFixed(6)) : null,
+      map_bounds_ne_lat: bounds ? Number(bounds.getNorth().toFixed(6)) : null,
+      map_bounds_ne_lng: bounds ? Number(bounds.getEast().toFixed(6)) : null,
+      map_bearing: camera ? Number(camera.bearing.toFixed(3)) : null,
+      map_pitch: camera ? Number(camera.pitch.toFixed(3)) : null,
+      active_layers: activeLayerIds,
+      lidar_styles: lidarStyles,
+      viewport_width: window.innerWidth || null,
+      viewport_height: window.innerHeight || null,
+      device_pixel_ratio: window.devicePixelRatio || null,
+      language: navigator.language || null,
+      timezone: (Intl.DateTimeFormat().resolvedOptions().timeZone || null),
+      release_channel: 'beta',
+      session_id: session?.data?.session?.access_token
+        ? session.data.session.access_token.slice(0, 16)
+        : null,
+      session_meta: sessionMeta,
       user_agent: navigator.userAgent
     };
     if (currentUser?.id) payload.user_id = currentUser.id;
 
-    const { error } = await sbClient.from('beta_feedback').insert(payload);
-    if (error) throw error;
+    let insertResult = await sbClient.from('beta_feedback').insert(payload);
+    if (insertResult.error) {
+      // Backward-compatible fallback for environments with older beta_feedback schema.
+      const fallbackPayload = {
+        type: feedbackType,
+        message,
+        map_zoom: zoom,
+        map_lat: center ? Number(center.lat.toFixed(6)) : null,
+        map_lng: center ? Number(center.lng.toFixed(6)) : null,
+        user_agent: navigator.userAgent
+      };
+      if (currentUser?.id) fallbackPayload.user_id = currentUser.id;
+      insertResult = await sbClient.from('beta_feedback').insert(fallbackPayload);
+      if (insertResult.error) throw insertResult.error;
+    }
 
     msgEl.value = '';
     closeAllPanels();
