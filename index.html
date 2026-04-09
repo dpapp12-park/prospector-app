@@ -108,6 +108,25 @@ window.PROSPECTOR_CONFIG = {
     line-height: 1;
   }
 
+  /* ── LIDAR STYLE PICKER ── */
+  .lidar-style-select {
+    background: rgba(201,168,76,0.12);
+    border: 1px solid rgba(201,168,76,0.3);
+    border-radius: 6px;
+    color: #C9A84C;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 11px;
+    padding: 3px 5px;
+    cursor: pointer;
+    outline: none;
+    flex-shrink: 0;
+    max-width: 82px;
+  }
+  .lidar-style-select:hover {
+    background: rgba(201,168,76,0.2);
+    border-color: rgba(201,168,76,0.5);
+  }
+
   /* ── COORDINATE DISPLAY ── */
   #coord-display {
     position: fixed;
@@ -452,6 +471,18 @@ window.PROSPECTOR_CONFIG = {
         <div class="layer-row" onclick="toggleLayer('lidar')">
           <div class="layer-bullet" id="bullet-lidar">●</div>
           <span class="layer-name" id="name-lidar">LiDAR Hillshade</span>
+          <select id="lidar-style-select" class="lidar-style-select" onclick="event.stopPropagation()" onchange="setLidarStyle(this.value)">
+            <option value="hillshade">Hillshade</option>
+            <option value="svf">Sky View</option>
+            <option value="slope">Slope</option>
+            <option value="lrm">Relief Model</option>
+            <option value="rrim">Red Relief</option>
+            <option value="north">N-lit</option>
+            <option value="northeast">NE-lit</option>
+            <option value="east">E-lit</option>
+            <option value="southeast">SE-lit</option>
+            <option value="lowangle">Low Angle</option>
+          </select>
           <button class="info-btn" onclick="showLayerInfo(event,'lidar')">i</button>
         </div>
         <div class="layer-row" onclick="toggleLayer('contours')">
@@ -908,6 +939,21 @@ function distanceMiles(lat1, lng1, lat2, lng2) {
   const a = Math.sin(dLat/2) ** 2 + Math.cos(lat1 * Math.PI/180) * Math.cos(lat2 * Math.PI/180) * Math.sin(dLng/2) ** 2;
   return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
 }
+// LiDAR style picker state
+let currentLidarStyle = 'hillshade';
+const LIDAR_STYLE_LABELS = {
+  hillshade: 'LiDAR Hillshade',
+  svf:       'LiDAR Sky View',
+  slope:     'LiDAR Slope',
+  lrm:       'LiDAR Relief Model',
+  rrim:      'LiDAR Red Relief',
+  north:     'LiDAR N-lit',
+  northeast: 'LiDAR NE-lit',
+  east:      'LiDAR E-lit',
+  southeast: 'LiDAR SE-lit',
+  lowangle:  'LiDAR Low Angle'
+};
+
 let layerState = {
   'active-claims': true,
   'placer-claims': false,
@@ -2170,26 +2216,47 @@ function addDemoLayers() {
   // fetchBLMBoundaries defined globally below
 
   // ── LIDAR HILLSHADE (USGS 3DEP via Cloudflare R2) ──
-  // 14 regional tile sets — all toggled together under the 'lidar' layer key
+  // Pendleton: 10 style sources. Legacy regions: single hillshade source.
   const R2 = 'https://tiles.unworkedgold.com';
-  const lidarRegions = [
-    { id: 'lidar-indiana-pendleton',      path: 'indiana/pendleton',          fmt: 'webp' },
-    { id: 'lidar-nevada-battle-mountain', path: 'nevada/battle-mountain',     fmt: 'png' },
-    { id: 'lidar-nevada-elko',            path: 'nevada/elko',                fmt: 'png' },
-    { id: 'lidar-california-west',        path: 'california/mother-lode-west',fmt: 'png' },
-    { id: 'lidar-california-east',        path: 'california/mother-lode-east',fmt: 'png' },
-    { id: 'lidar-idaho-boise',            path: 'idaho/boise-basin',          fmt: 'png' },
-    { id: 'lidar-montana',                path: 'montana/sw-gold-belt',       fmt: 'png' },
-    { id: 'lidar-colorado',               path: 'colorado/central',           fmt: 'png' },
-    { id: 'lidar-wyoming',                path: 'wyoming/south-pass',         fmt: 'png' },
-    { id: 'lidar-arizona',                path: 'arizona/gold-belt',          fmt: 'png' },
-    { id: 'lidar-new-mexico',             path: 'new-mexico/gold-belt',       fmt: 'png' },
-    { id: 'lidar-utah',                   path: 'utah/gold-belt',             fmt: 'png' },
-    { id: 'lidar-nevada-central',         path: 'nevada/central',             fmt: 'png' },
-    { id: 'lidar-oregon',                 path: 'oregon/sw-gold-belt',        fmt: 'png' },
-    { id: 'lidar-washington',             path: 'washington/okanogan',        fmt: 'png' }
+  const LIDAR_STYLES_LIST = ['hillshade','svf','slope','lrm','rrim','north','northeast','east','southeast','lowangle'];
+
+  // Pendleton — one source + layer per style
+  LIDAR_STYLES_LIST.forEach(function(style) {
+    map.addSource('lidar-pendleton-' + style + '-src', {
+      type: 'raster',
+      tiles: [ R2 + '/indiana/pendleton/' + style + '/{z}/{x}/{y}.webp' ],
+      tileSize: 256,
+      minzoom: 8,
+      maxzoom: 15,
+      attribution: 'USGS 3DEP 1m LiDAR'
+    });
+    map.addLayer({
+      id: 'lidar-pendleton-' + style,
+      type: 'raster',
+      source: 'lidar-pendleton-' + style + '-src',
+      layout: { visibility: 'none' },
+      paint: { 'raster-opacity': 0.75, 'raster-contrast': 0.1, 'raster-brightness-min': 0.05 }
+    }, 'active-claims-fill');
+  });
+
+  // Legacy regions — single hillshade only
+  const lidarLegacyRegions = [
+    { id: 'lidar-nevada-battle-mountain', path: 'nevada/battle-mountain',      fmt: 'png' },
+    { id: 'lidar-nevada-elko',            path: 'nevada/elko',                 fmt: 'png' },
+    { id: 'lidar-california-west',        path: 'california/mother-lode-west', fmt: 'png' },
+    { id: 'lidar-california-east',        path: 'california/mother-lode-east', fmt: 'png' },
+    { id: 'lidar-idaho-boise',            path: 'idaho/boise-basin',           fmt: 'png' },
+    { id: 'lidar-montana',                path: 'montana/sw-gold-belt',        fmt: 'png' },
+    { id: 'lidar-colorado',               path: 'colorado/central',            fmt: 'png' },
+    { id: 'lidar-wyoming',                path: 'wyoming/south-pass',          fmt: 'png' },
+    { id: 'lidar-arizona',                path: 'arizona/gold-belt',           fmt: 'png' },
+    { id: 'lidar-new-mexico',             path: 'new-mexico/gold-belt',        fmt: 'png' },
+    { id: 'lidar-utah',                   path: 'utah/gold-belt',              fmt: 'png' },
+    { id: 'lidar-nevada-central',         path: 'nevada/central',              fmt: 'png' },
+    { id: 'lidar-oregon',                 path: 'oregon/sw-gold-belt',         fmt: 'png' },
+    { id: 'lidar-washington',             path: 'washington/okanogan',         fmt: 'png' }
   ];
-  lidarRegions.forEach(function(r) {
+  lidarLegacyRegions.forEach(function(r) {
     map.addSource(r.id + '-src', {
       type: 'raster',
       tiles: [ R2 + '/' + r.path + '/{z}/{x}/{y}.' + r.fmt ],
@@ -2203,11 +2270,7 @@ function addDemoLayers() {
       type: 'raster',
       source: r.id + '-src',
       layout: { visibility: 'none' },
-      paint: {
-        'raster-opacity': 0.7,
-        'raster-contrast': 0.2,
-        'raster-brightness-min': 0.05
-      }
+      paint: { 'raster-opacity': 0.7, 'raster-contrast': 0.2, 'raster-brightness-min': 0.05 }
     }, 'active-claims-fill');
   });
 
@@ -2370,7 +2433,7 @@ function toggleLayer(id) {
     'open-to-claim':  ['open-to-claim-fill', 'open-to-claim-line'],
     'plss':           'plss-layer',
     'blm-roads':      'blm-roads-layer',
-    'lidar':          ['lidar-indiana-pendleton','lidar-nevada-battle-mountain','lidar-nevada-elko','lidar-california-west','lidar-california-east','lidar-idaho-boise','lidar-montana','lidar-colorado','lidar-wyoming','lidar-arizona','lidar-new-mexico','lidar-utah','lidar-nevada-central','lidar-oregon','lidar-washington'],
+    'lidar':          ['lidar-pendleton-' + currentLidarStyle,'lidar-nevada-battle-mountain','lidar-nevada-elko','lidar-california-west','lidar-california-east','lidar-idaho-boise','lidar-montana','lidar-colorado','lidar-wyoming','lidar-arizona','lidar-new-mexico','lidar-utah','lidar-nevada-central','lidar-oregon','lidar-washington'],
     'contours':       ['topo-layer', 'topo-labels'],
     'hist-mines':     'hist-mines-layer',
     'gold-occurrences': 'gold-occurrences-layer',
@@ -2482,6 +2545,24 @@ function toggleLayer(id) {
     if (map.getLayer(l)) map.setLayoutProperty(l, 'visibility', vis);
   });
   updateActiveLayerBar();
+}
+
+function setLidarStyle(style) {
+  if (style === currentLidarStyle) return;
+  // If lidar is on, swap visibility
+  if (layerState['lidar'] && map) {
+    const oldLayer = 'lidar-pendleton-' + currentLidarStyle;
+    const newLayer = 'lidar-pendleton-' + style;
+    if (map.getLayer(oldLayer)) map.setLayoutProperty(oldLayer, 'visibility', 'none');
+    if (map.getLayer(newLayer)) map.setLayoutProperty(newLayer, 'visibility', 'visible');
+  }
+  currentLidarStyle = style;
+  // Update label
+  const nameEl = document.getElementById('name-lidar');
+  if (nameEl) nameEl.textContent = LIDAR_STYLE_LABELS[style] || 'LiDAR';
+  // Sync select in case called programmatically
+  const sel = document.getElementById('lidar-style-select');
+  if (sel) sel.value = style;
 }
 
 function toggleLayers() {
