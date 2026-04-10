@@ -28,6 +28,67 @@ need_cmd awk
 need_cmd sed
 need_cmd rg
 
+normalize_state_code() {
+  local raw="${1:-}"
+  local s
+  s="$(echo "$raw" | tr '[:upper:]' '[:lower:]' | tr '-' '_' | xargs)"
+  case "$s" in
+    alabama) echo "AL" ;;
+    alaska) echo "AK" ;;
+    arizona) echo "AZ" ;;
+    arkansas) echo "AR" ;;
+    california) echo "CA" ;;
+    colorado) echo "CO" ;;
+    connecticut) echo "CT" ;;
+    delaware) echo "DE" ;;
+    district_of_columbia|dc) echo "DC" ;;
+    florida) echo "FL" ;;
+    georgia) echo "GA" ;;
+    hawaii) echo "HI" ;;
+    idaho) echo "ID" ;;
+    illinois) echo "IL" ;;
+    indiana) echo "IN" ;;
+    iowa) echo "IA" ;;
+    kansas) echo "KS" ;;
+    kentucky) echo "KY" ;;
+    louisiana) echo "LA" ;;
+    maine) echo "ME" ;;
+    maryland) echo "MD" ;;
+    massachusetts) echo "MA" ;;
+    michigan) echo "MI" ;;
+    minnesota) echo "MN" ;;
+    mississippi) echo "MS" ;;
+    missouri) echo "MO" ;;
+    montana) echo "MT" ;;
+    nebraska) echo "NE" ;;
+    nevada) echo "NV" ;;
+    new_hampshire) echo "NH" ;;
+    new_jersey) echo "NJ" ;;
+    new_mexico) echo "NM" ;;
+    new_york) echo "NY" ;;
+    north_carolina) echo "NC" ;;
+    north_dakota) echo "ND" ;;
+    ohio) echo "OH" ;;
+    oklahoma) echo "OK" ;;
+    oregon) echo "OR" ;;
+    pennsylvania) echo "PA" ;;
+    rhode_island) echo "RI" ;;
+    south_carolina) echo "SC" ;;
+    south_dakota) echo "SD" ;;
+    tennessee) echo "TN" ;;
+    texas) echo "TX" ;;
+    utah) echo "UT" ;;
+    vermont) echo "VT" ;;
+    virginia) echo "VA" ;;
+    washington) echo "WA" ;;
+    west_virginia) echo "WV" ;;
+    wisconsin) echo "WI" ;;
+    wyoming) echo "WY" ;;
+    [a-z][a-z]) echo "$(echo "$s" | tr '[:lower:]' '[:upper:]')" ;;
+    *) return 1 ;;
+  esac
+}
+
 # Placeholder hooks for your real conversion stack.
 # Keep names stable so we can replace implementations without changing orchestrator flow.
 process_project() {
@@ -151,9 +212,28 @@ run_state() {
 
 main() {
   build_manifest_if_missing
+
+  # Orchestrator mode: process exactly one requested state (name or code).
+  if [ -n "${STATE:-}" ]; then
+    local single_state
+    if ! single_state="$(normalize_state_code "$STATE")"; then
+      log "ERROR invalid STATE value: $STATE"
+      exit 1
+    fi
+    run_state "$single_state"
+    log "WORKER_DONE"
+    return 0
+  fi
+
+  # Standalone mode: process configured sequence.
   IFS=',' read -r -a states <<< "$STATE_ORDER"
   for st in "${states[@]}"; do
-    run_state "$st"
+    local st_norm
+    if ! st_norm="$(normalize_state_code "$st")"; then
+      log "WARN skipping invalid state token in STATE_ORDER: $st"
+      continue
+    fi
+    run_state "$st_norm"
   done
   log "WORKER_DONE"
 }
