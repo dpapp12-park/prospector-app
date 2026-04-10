@@ -58,6 +58,17 @@ Fast-capture rule: capture thoughts quickly first, then organize them into this 
 - Source context: Session brainstorm question about cost limits and extra credits.
 - Next discussion trigger: Decide baseline allowance and whether top-ups are enabled at launch.
 
+### 4) Cache dashboard spot AI summary with optional re-run
+- Idea: When a user clicks the dashboard spot "Generate Area Analysis" button, save and reuse the previous summary by default, while still allowing a deliberate "Run again" action.
+- Goal: Reduce repeated Anthropic calls, avoid paying for duplicate summaries, and keep user experience consistent.
+- Method: Store the generated narrative keyed by spot (and optionally by radius/input fingerprint), return cached result on repeat opens, and expose a manual refresh/regenerate control.
+- Output: Fewer AI API calls, lower cost, and predictable summary behavior; users can still regenerate when they want a fresh pass.
+- Status: ToDo
+- Reason: Decided yes because current repeated calls can return slightly different text for similar inputs and create unnecessary cost.
+- Date logged: 2026-04-10T05:23:50Z
+- Source context: User bedtime note to continue from dashboard AI summary flow.
+- Next discussion trigger: Define cache key rules (spot id + radius + prompt version) and refresh policy (manual only vs TTL).
+
 ## Nixed (Decided NO)
 
 _None yet._
