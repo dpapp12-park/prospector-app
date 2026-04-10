@@ -27,6 +27,7 @@ MAX_RETRIES="${MAX_RETRIES:-4}"
 RETRY_BASE_SECONDS="${RETRY_BASE_SECONDS:-5}"
 PROJECT_FILTER_REGEX="${PROJECT_FILTER_REGEX:-}"
 KEEP_RAW_ON_FAILURE="${KEEP_RAW_ON_FAILURE:-1}"
+DOWNLOAD_ONLY_MODE="${DOWNLOAD_ONLY_MODE:-0}"
 
 mkdir -p "$WORK_ROOT" "$STATE_ROOT" "$OUTPUT_ROOT" "$LOG_ROOT"
 
@@ -87,12 +88,15 @@ slugify() {
 }
 
 need_cmd python3
-
-need_cmd pdal
-need_cmd gdaldem
-need_cmd gdalwarp
-need_cmd gdal_calc.py
-need_cmd gdal2tiles.py
+if [ "$DOWNLOAD_ONLY_MODE" != "1" ]; then
+  need_cmd pdal
+  need_cmd gdaldem
+  need_cmd gdalwarp
+  need_cmd gdal_calc.py
+  need_cmd gdal2tiles.py
+else
+  log "WARN DOWNLOAD_ONLY_MODE=1 -> processing/upload tools are not required"
+fi
 
 normalize_state_code() {
   local raw="${1:-}"
@@ -172,6 +176,11 @@ process_project() {
   local slope_deg="$style_tmp_dir/slope_degrees.tif"
 
   mkdir -p "$out_dir" "$style_tmp_dir"
+
+  if [ "$DOWNLOAD_ONLY_MODE" = "1" ]; then
+    echo "{\"state\":\"$state\",\"project\":\"$project\",\"mode\":\"download_only\",\"processed_at\":\"$(date -u +'%Y-%m-%dT%H:%M:%SZ')\"}" > "$out_dir/PROCESS_METADATA.json"
+    return 0
+  fi
 
   # Prefer EPT project roots from usgs-lidar-public, fallback to local LAS/LAZ sets.
   ept_json="$(rg --files -g 'ept.json' "$local_dir" | head -n 1 || true)"
@@ -263,6 +272,10 @@ upload_project() {
   local state_slug project_slug
   local style_dest
   [ -d "$out_dir" ] || { log "ERROR missing output directory: $out_dir"; return 1; }
+  if [ "$DOWNLOAD_ONLY_MODE" = "1" ]; then
+    log "WARN upload skipped for $project (DOWNLOAD_ONLY_MODE=1)"
+    return 0
+  fi
 
   state_slug="$(slugify "$state")"
   project_slug="$(slugify "$project")"
@@ -357,12 +370,12 @@ run_project() {
   fi
 
   cleanup_project "$out_dir"
-  if [ "$KEEP_RAW_ON_FAILURE" = "0" ]; then
+  if [ "$DOWNLOAD_ONLY_MODE" != "1" ]; then
     cleanup_project "$local_dir"
+    set_status "$state" "$project" "done" ""
   else
-    cleanup_project "$local_dir"
+    set_status "$state" "$project" "done" "download_only"
   fi
-  set_status "$state" "$project" "done" ""
   log "DONE $state :: $project"
   return 0
 }
