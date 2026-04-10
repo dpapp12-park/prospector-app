@@ -1,6 +1,7 @@
 # Brainstorm Status Tracker
 
 Use this tracker for brainstorm decisions. Each idea should include enough detail to still make sense months later.
+Fast-capture rule: capture thoughts quickly first, then organize them into this file afterward.
 
 ## Entry Template (use for each idea)
 
@@ -13,6 +14,12 @@ Use this tracker for brainstorm decisions. Each idea should include enough detai
 - Date logged:
 - Source context:
 - Next discussion trigger:
+
+## Fast Capture Rule
+
+- If an idea is incomplete or messy, log it immediately as a draft in `brainstorm_log.md`.
+- Then convert it into a structured entry here with Status + Reason.
+- Nothing gets dropped, even if wording is rough.
 
 ---
 
