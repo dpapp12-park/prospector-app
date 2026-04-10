@@ -14,6 +14,19 @@ OUTPUT_ROOT="${OUTPUT_ROOT:-/data/lidar/output}"
 LOG_ROOT="${LOG_ROOT:-/data/lidar/logs}"
 MANIFEST_CSV="${MANIFEST_CSV:-/data/lidar/state_manifest.csv}"
 AWS_BIN="${AWS_BIN:-/usr/local/bin/aws}"
+DEST_BUCKET="${DEST_BUCKET:-s3://tiles.unworkedgold.com}"
+PUBLISH_ROOT="${PUBLISH_ROOT:-3dep}"
+STYLE_LIST="${STYLE_LIST:-hillshade,svf,slope,lrm,rrim,north,northeast,east,southeast,lowangle}"
+TILE_MIN_Z="${TILE_MIN_Z:-8}"
+TILE_MAX_Z="${TILE_MAX_Z:-15}"
+TILE_PROCESSES="${TILE_PROCESSES:-4}"
+DEM_RESOLUTION="${DEM_RESOLUTION:-1.0}"
+DISK_WARN_FREE_PCT="${DISK_WARN_FREE_PCT:-25}"
+DISK_STOP_FREE_PCT="${DISK_STOP_FREE_PCT:-15}"
+MAX_RETRIES="${MAX_RETRIES:-4}"
+RETRY_BASE_SECONDS="${RETRY_BASE_SECONDS:-5}"
+PROJECT_FILTER_REGEX="${PROJECT_FILTER_REGEX:-}"
+KEEP_RAW_ON_FAILURE="${KEEP_RAW_ON_FAILURE:-1}"
 
 mkdir -p "$WORK_ROOT" "$STATE_ROOT" "$OUTPUT_ROOT" "$LOG_ROOT"
 
@@ -27,6 +40,59 @@ need_cmd "$AWS_BIN"
 need_cmd awk
 need_cmd sed
 need_cmd rg
+
+disk_free_pct() {
+  local probe_path="${1:-$STATE_ROOT}"
+  df -P "$probe_path" | awk 'NR==2 {gsub("%","",$5); print 100-$5}'
+}
+
+check_disk_guardrails() {
+  local free_pct
+  free_pct="$(disk_free_pct "$STATE_ROOT")"
+  if [ "$free_pct" -lt "$DISK_STOP_FREE_PCT" ]; then
+    log "ERROR disk free ${free_pct}% below stop threshold ${DISK_STOP_FREE_PCT}%"
+    return 1
+  fi
+  if [ "$free_pct" -lt "$DISK_WARN_FREE_PCT" ]; then
+    log "WARN disk free ${free_pct}% below warn threshold ${DISK_WARN_FREE_PCT}%"
+  fi
+  return 0
+}
+
+run_with_retry() {
+  local label="$1"
+  shift
+  local attempt=1
+  local delay="$RETRY_BASE_SECONDS"
+  while true; do
+    if "$@"; then
+      return 0
+    fi
+    if [ "$attempt" -ge "$MAX_RETRIES" ]; then
+      log "ERROR ${label} failed after ${attempt} attempts"
+      return 1
+    fi
+    log "WARN ${label} failed (attempt ${attempt}/${MAX_RETRIES}), retrying in ${delay}s"
+    sleep "$delay"
+    attempt=$((attempt + 1))
+    delay=$((delay * 2))
+  done
+}
+
+slugify() {
+  local v
+  v="$(echo "${1:-}" | tr '[:upper:]' '[:lower:]')"
+  v="$(echo "$v" | sed -E 's/[^a-z0-9]+/-/g; s/^-+//; s/-+$//')"
+  echo "$v"
+}
+
+need_cmd python3
+
+need_cmd pdal
+need_cmd gdaldem
+need_cmd gdalwarp
+need_cmd gdal_calc.py
+need_cmd gdal2tiles.py
 
 normalize_state_code() {
   local raw="${1:-}"
@@ -96,11 +162,96 @@ process_project() {
   local project="$2"
   local local_dir="$3"
   local out_dir="$4"
+  local dem_tif="$out_dir/dem.tif"
+  local ept_json
+  local laz_glob
+  local style
+  local style_tmp_dir="$WORK_ROOT/style_tmp/$state/$project"
+  local lrm_trend="$style_tmp_dir/lrm_trend.tif"
+  local lrm_tif="$style_tmp_dir/lrm.tif"
+  local slope_deg="$style_tmp_dir/slope_degrees.tif"
 
-  # TODO: replace this with your real PDAL/GDAL/tiler pipeline.
-  # Returning 0 keeps flow moving while wiring in full processor.
-  mkdir -p "$out_dir"
-  echo "{\"state\":\"$state\",\"project\":\"$project\",\"processed_at\":\"$(date -u +'%Y-%m-%dT%H:%M:%SZ')\"}" > "$out_dir/PROCESS_PLACEHOLDER.json"
+  mkdir -p "$out_dir" "$style_tmp_dir"
+
+  # Prefer EPT project roots from usgs-lidar-public, fallback to local LAS/LAZ sets.
+  ept_json="$(rg --files -g 'ept.json' "$local_dir" | head -n 1 || true)"
+  if [ -n "$ept_json" ]; then
+    cat > "$style_tmp_dir/pdal_dem_pipeline.json" <<EOF
+[
+  { "type":"readers.ept", "filename":"$ept_json" },
+  { "type":"filters.range", "limits":"Classification[2:2]" },
+  { "type":"writers.gdal", "filename":"$dem_tif", "resolution":$DEM_RESOLUTION, "output_type":"min", "window_size":6, "nodata":-9999 }
+]
+EOF
+    if ! pdal pipeline "$style_tmp_dir/pdal_dem_pipeline.json"; then
+      log "WARN EPT to DEM failed for $project, attempting LAS/LAZ fallback"
+      ept_json=""
+    fi
+  fi
+
+  if [ ! -f "$dem_tif" ]; then
+    laz_glob="$(rg --files -g '*.laz' -g '*.las' "$local_dir" | head -n 1 || true)"
+    if [ -z "$laz_glob" ]; then
+      log "ERROR no ept.json or LAS/LAZ inputs found under $local_dir"
+      return 1
+    fi
+    pdal translate "$laz_glob" "$dem_tif" \
+      --filters.range.limits="Classification[2:2]" \
+      --writers.gdal.resolution="$DEM_RESOLUTION" \
+      --writers.gdal.output_type=min \
+      --writers.gdal.nodata=-9999 \
+      --writers.gdal.window_size=6
+  fi
+
+  if [ ! -f "$dem_tif" ]; then
+    log "ERROR DEM build failed for $project"
+    return 1
+  fi
+
+  # Shared derivatives for LRM/RRIM styles.
+  gdalwarp -overwrite -r cubic -tr 10 10 "$dem_tif" "$lrm_trend"
+  gdalwarp -overwrite -r cubic -tr "$DEM_RESOLUTION" "$DEM_RESOLUTION" "$lrm_trend" "${lrm_trend%.tif}_hires.tif"
+  gdal_calc.py -A "$dem_tif" -B "${lrm_trend%.tif}_hires.tif" \
+    --outfile="$lrm_tif" \
+    --calc="A-B" \
+    --NoDataValue=-9999 \
+    --type=Float32
+  gdaldem slope "$dem_tif" "$slope_deg" -compute_edges
+
+  IFS=',' read -r -a styles <<< "$STYLE_LIST"
+  for style in "${styles[@]}"; do
+    local style_src="$style_tmp_dir/${style}.tif"
+    local style_3857="$style_tmp_dir/${style}_3857.tif"
+    local style_tiles="$out_dir/$style"
+    case "$style" in
+      hillshade) gdaldem hillshade "$dem_tif" "$style_src" -az 315 -alt 45 -compute_edges ;;
+      north) gdaldem hillshade "$dem_tif" "$style_src" -az 0 -alt 45 -compute_edges ;;
+      northeast) gdaldem hillshade "$dem_tif" "$style_src" -az 45 -alt 45 -compute_edges ;;
+      east) gdaldem hillshade "$dem_tif" "$style_src" -az 90 -alt 45 -compute_edges ;;
+      southeast) gdaldem hillshade "$dem_tif" "$style_src" -az 135 -alt 45 -compute_edges ;;
+      lowangle) gdaldem hillshade "$dem_tif" "$style_src" -az 315 -alt 20 -compute_edges ;;
+      slope) gdaldem slope "$dem_tif" "$style_src" -compute_edges ;;
+      svf) gdaldem hillshade "$dem_tif" "$style_src" -multidirectional -compute_edges ;;
+      lrm) cp "$lrm_tif" "$style_src" ;;
+      rrim)
+        gdal_calc.py -A "$lrm_tif" -B "$slope_deg" \
+          --outfile="$style_src" \
+          --calc="(A*2)+(B/45.0)" \
+          --NoDataValue=-9999 \
+          --type=Float32
+        ;;
+      *)
+        log "WARN unknown style '$style' skipped"
+        continue
+        ;;
+    esac
+
+    gdalwarp -overwrite -t_srs EPSG:3857 -r bilinear -dstnodata 0 "$style_src" "$style_3857"
+    rm -rf "$style_tiles"
+    gdal2tiles.py --xyz --processes="$TILE_PROCESSES" --zoom="${TILE_MIN_Z}-${TILE_MAX_Z}" --tiledriver=WEBP "$style_3857" "$style_tiles"
+  done
+
+  echo "{\"state\":\"$state\",\"project\":\"$project\",\"processed_at\":\"$(date -u +'%Y-%m-%dT%H:%M:%SZ')\",\"style_list\":\"$STYLE_LIST\"}" > "$out_dir/PROCESS_METADATA.json"
   return 0
 }
 
@@ -108,11 +259,20 @@ upload_project() {
   local state="$1"
   local project="$2"
   local out_dir="$3"
+  local style
+  local state_slug project_slug
+  local style_dest
+  [ -d "$out_dir" ] || { log "ERROR missing output directory: $out_dir"; return 1; }
 
-  # TODO: set real destination bucket/path for live tiles.
-  # Example: s3://tiles.unworkedgold.com/<state>/<project>/
-  # Current placeholder is dry-write to local output root only.
-  [ -d "$out_dir" ] || return 1
+  state_slug="$(slugify "$state")"
+  project_slug="$(slugify "$project")"
+
+  IFS=',' read -r -a styles <<< "$STYLE_LIST"
+  for style in "${styles[@]}"; do
+    [ -d "$out_dir/$style" ] || continue
+    style_dest="$DEST_BUCKET/$PUBLISH_ROOT/$state_slug/$project_slug/$style/"
+    run_with_retry "upload_${project}_${style}" "$AWS_BIN" s3 sync --delete "$out_dir/$style/" "$style_dest"
+  done
   return 0
 }
 
@@ -161,12 +321,24 @@ run_project() {
   local sync_log="$LOG_ROOT/${project}.sync.log"
 
   mkdir -p "$(dirname "$local_dir")" "$(dirname "$out_dir")"
+  if ! check_disk_guardrails; then
+    set_status "$state" "$project" "failed" "disk_low_pre_download"
+    log "FAIL $state :: $project (disk_low_pre_download)"
+    return 1
+  fi
+
   set_status "$state" "$project" "downloading" ""
   log "START $state :: $project"
 
-  if ! "$AWS_BIN" s3 sync --no-sign-request "$SOURCE_BUCKET/$project/" "$local_dir/" 2>&1 | tee -a "$sync_log"; then
+  if ! run_with_retry "download_${project}" "$AWS_BIN" s3 sync --no-sign-request "$SOURCE_BUCKET/$project/" "$local_dir/" >> "$sync_log" 2>&1; then
     set_status "$state" "$project" "failed" "download_failed"
     log "FAIL $state :: $project (download_failed)"
+    return 1
+  fi
+
+  if ! check_disk_guardrails; then
+    set_status "$state" "$project" "failed" "disk_low_pre_process"
+    log "FAIL $state :: $project (disk_low_pre_process)"
     return 1
   fi
 
@@ -184,7 +356,12 @@ run_project() {
     return 1
   fi
 
-  cleanup_project "$local_dir"
+  cleanup_project "$out_dir"
+  if [ "$KEEP_RAW_ON_FAILURE" = "0" ]; then
+    cleanup_project "$local_dir"
+  else
+    cleanup_project "$local_dir"
+  fi
   set_status "$state" "$project" "done" ""
   log "DONE $state :: $project"
   return 0
@@ -195,6 +372,9 @@ run_state() {
   log "STATE_START $state"
 
   mapfile -t projects < <(awk -F, -v s="$state" 'NR>1 && $1==s && $3!="done" {print $2}' "$MANIFEST_CSV")
+  if [ -n "$PROJECT_FILTER_REGEX" ]; then
+    mapfile -t projects < <(printf "%s\n" "${projects[@]}" | rg "$PROJECT_FILTER_REGEX" || true)
+  fi
   if [ "${#projects[@]}" -eq 0 ]; then
     log "STATE_SKIP $state (no pending projects)"
     return 0
