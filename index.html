@@ -37,6 +37,11 @@ function redirectToBetaLanding() {
   window.location.replace(target);
 }
 
+function maybeGateToBetaLanding() {
+  if (currentUser || shouldBypassLandingGate()) return;
+  redirectToBetaLanding();
+}
+
 window.UNWORKED_GOLD_CONFIG = {
   supabase_url: 'https://condhfwpzlxrzuadgopc.supabase.co',
   supabase_anon_key: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImNvbmRoZndwemx4cnp1YWRnb3BjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQxOTE4OTcsImV4cCI6MjA4OTc2Nzg5N30.bJBQJuRVyWsO0Xw6CaWcZ9gTzr1b4qcFfhCXi1Au3Fw',
