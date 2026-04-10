@@ -47,6 +47,17 @@ Fast-capture rule: capture thoughts quickly first, then organize them into this 
 - Source context: Brainstorm log entry.
 - Next discussion trigger: Prioritize which sub-feature becomes v1.
 
+### 3) AI cost limits and monetization model
+- Idea: Define AI usage limits, included value by plan, and whether users can buy extra credits after limits are hit.
+- Goal: Protect margins while keeping AI features usable and predictable for customers.
+- Method: Plan-based monthly allowances plus optional add-on credit packs; enforce soft/hard caps and clear in-app usage meters.
+- Output: Pricing/usage policy with upgrade paths, overage/top-up rules, and UX messaging.
+- Status: Undecided/Deferred
+- Reason: Newly raised; needs product and margin decision before implementation.
+- Date logged: 2026-04-10T05:12:12Z
+- Source context: Session brainstorm question about cost limits and extra credits.
+- Next discussion trigger: Decide baseline allowance and whether top-ups are enabled at launch.
+
 ## Nixed (Decided NO)
 
 _None yet._
