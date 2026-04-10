@@ -58,16 +58,16 @@ Fast-capture rule: capture thoughts quickly first, then organize them into this 
 - Source context: Session brainstorm question about cost limits and extra credits.
 - Next discussion trigger: Decide baseline allowance and whether top-ups are enabled at launch.
 
-### 4) Cache dashboard spot AI summary with optional re-run
-- Idea: When a user clicks the dashboard spot "Generate Area Analysis" button, save and reuse the previous summary by default, while still allowing a deliberate "Run again" action.
-- Goal: Reduce repeated Anthropic calls, avoid paying for duplicate summaries, and keep user experience consistent.
-- Method: Store the generated narrative keyed by spot (and optionally by radius/input fingerprint), return cached result on repeat opens, and expose a manual refresh/regenerate control.
-- Output: Fewer AI API calls, lower cost, and predictable summary behavior; users can still regenerate when they want a fresh pass.
+### 4) Single-run AI generation for summaries and images (no reruns)
+- Idea: Allow each AI summary/image analysis to run once, persist the result, and disable repeat generation for the same item.
+- Goal: Eliminate duplicate Anthropic calls and avoid paying for repeated outputs that are usually similar but can vary slightly.
+- Method: Save first generated result as canonical output keyed to the item, show saved result on future opens, and remove/disable rerun actions.
+- Output: Lower AI costs, consistent user-visible results, and simpler entitlement behavior.
 - Status: ToDo
-- Reason: Decided yes because current repeated calls can return slightly different text for similar inputs and create unnecessary cost.
-- Date logged: 2026-04-10T05:23:50Z
-- Source context: User bedtime note to continue from dashboard AI summary flow.
-- Next discussion trigger: Define cache key rules (spot id + radius + prompt version) and refresh policy (manual only vs TTL).
+- Reason: Corrected decision: user explicitly requested no second runs because reruns are wasteful and often duplicate information.
+- Date logged: 2026-04-10T05:25:09Z
+- Source context: User correction to previous rerun idea.
+- Next discussion trigger: Define exactly which objects are "single-run" (spot summaries, rock ID, outcrop) and what edit/reset path exists if data changes.
 
 ## Nixed (Decided NO)
 
