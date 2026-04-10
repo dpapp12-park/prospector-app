@@ -242,10 +242,10 @@ window.PROSPECTOR_CONFIG = window.UNWORKED_GOLD_CONFIG;
     </div>
   </div>
   <div id="top-actions">
-    <button class="icon-btn" onclick="toggleLayers()" id="layer-btn" title="Layers">▤</button>
-    <button class="icon-btn" onclick="toggleStyles()" id="style-btn" title="Map Style">🧭</button>
-    <button class="icon-btn" onclick="locateUser()" id="gps-btn" title="My Location">📍</button>
-    <button class="icon-btn" onclick="toggleAIMenu()" id="ai-btn" title="AI Field Tools">🛰️</button>
+    <button class="icon-btn" onclick="toggleLayers()" id="layer-btn" title="Layers"><img class="ui-icon top-icon" src="assets/icons/icon_layers_idle.png" alt="Layers"></button>
+    <button class="icon-btn" onclick="toggleStyles()" id="style-btn" title="Map Style"><img class="ui-icon top-icon" src="assets/icons/icon_map_idle.png" alt="Map style"></button>
+    <button class="icon-btn" onclick="locateUser()" id="gps-btn" title="My Location"><img class="ui-icon top-icon" src="assets/icons/icon_gps_idle.png" alt="My location"></button>
+    <button class="icon-btn" onclick="toggleAIMenu()" id="ai-btn" title="AI Field Tools"><img class="ui-icon top-icon" src="assets/icons/icon_ai_idle.png" alt="AI tools"></button>
   </div>
 </div>
 
@@ -624,23 +624,23 @@ window.PROSPECTOR_CONFIG = window.UNWORKED_GOLD_CONFIG;
 <!-- Bottom Nav -->
 <div id="bottom-nav">
   <div class="nav-item active" onclick="setNav(this)">
-    <div class="nav-icon">🧭</div>
+    <div class="nav-icon"><img class="ui-icon nav-icon-img" src="assets/icons/icon_nav_map_idle.png" alt="Map"></div>
     <div class="nav-label">Map</div>
   </div>
   <div class="nav-item" onclick="setNav(this)">
-    <div class="nav-icon">⚒️</div>
+    <div class="nav-icon"><img class="ui-icon nav-icon-img" src="assets/icons/icon_nav_claims_idle.png" alt="Claims"></div>
     <div class="nav-label">Claims</div>
   </div>
   <div class="nav-item" onclick="setNav(this); openAccountPanel()">
-    <div class="nav-icon">🪙</div>
+    <div class="nav-icon"><img class="ui-icon nav-icon-img" src="assets/icons/icon_nav_finds_idle.png" alt="Finds"></div>
     <div class="nav-label">Finds</div>
   </div>
   <div class="nav-item" onclick="setNav(this)">
-    <div class="nav-icon">☁️</div>
+    <div class="nav-icon"><img class="ui-icon nav-icon-img" src="assets/icons/icon_nav_offline_idle.png" alt="Offline"></div>
     <div class="nav-label">Offline</div>
   </div>
   <div class="nav-item" onclick="setNav(this); openAuthPanel()">
-    <div class="nav-icon">🧔</div>
+    <div class="nav-icon"><img class="ui-icon nav-icon-img" src="assets/icons/icon_nav_signin_idle.png" alt="Sign in"></div>
     <div class="nav-label">Sign In</div>
   </div>
 </div>
@@ -673,9 +673,9 @@ window.PROSPECTOR_CONFIG = window.UNWORKED_GOLD_CONFIG;
     <span id="gold-price-ts"></span>
   </div>
   <div class="account-tabs">
-    <div class="account-tab active" onclick="switchAccountTab(this,'finds')">🪙 Finds</div>
-    <div class="account-tab" onclick="switchAccountTab(this,'spots')">🧭 Spots</div>
-    <div class="account-tab" onclick="switchAccountTab(this,'claims')">⚒️ Saved Claims</div>
+    <div class="account-tab active" onclick="switchAccountTab(this,'finds')"><img class="ui-icon account-tab-icon" src="assets/icons/icon_nav_finds_idle.png" alt="Finds"> Finds</div>
+    <div class="account-tab" onclick="switchAccountTab(this,'spots')"><img class="ui-icon account-tab-icon" src="assets/icons/icon_nav_map_idle.png" alt="Spots"> Spots</div>
+    <div class="account-tab" onclick="switchAccountTab(this,'claims')"><img class="ui-icon account-tab-icon" src="assets/icons/icon_nav_claims_idle.png" alt="Saved claims"> Saved Claims</div>
     <div class="account-tab" onclick="switchAccountTab(this,'watches')">🔔 Watching</div>
   </div>
   <div style="padding:8px 20px 4px;font-family:'DM Mono',monospace;font-size:9px;color:var(--stone);letter-spacing:0.08em;border-bottom:1px solid rgba(255,255,255,0.05)">
