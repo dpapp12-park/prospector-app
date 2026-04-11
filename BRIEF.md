@@ -20,3 +20,22 @@ Open TODOs
 
 Exact next step for the next agent
 - Wait for user to commit final icon PNGs into `assets/icons/`, then pull `main`, map any missing filenames, verify rendering on `index.html`, and push live.
+
+## Chat Closeout - 2026-04-11 01:08 UTC.
+Objective
+- Ship beta-first auth flow, beta-page login entry, and richer tester feedback tracking; ensure Pages deployment is live.
+
+What was changed
+- Merged strict beta auth gate, beta login entry, and expanded feedback telemetry updates into `main`, then deployed successfully to GitHub Pages.
+- Updated feedback persistence path and schema docs (`beta_tables.sql`) to support additive telemetry columns with backward-compatible insert fallback.
+
+Decisions made
+- Keep no-video default per `AGENTS.md`.
+- Use GitHub Pages `github.io` URL as the live endpoint for now; custom domain mapping is not configured in Pages (`cname: null`).
+
+Open TODOs
+- Run `beta_tables.sql` in Supabase SQL editor to apply all telemetry columns.
+- Configure GitHub Pages custom domain if `unworkedgold.com` should serve this deployment.
+
+Exact next step for the next agent
+- Execute `beta_tables.sql` in Supabase, then verify a new `beta_feedback` row stores telemetry fields (camera, bounds, active layers, GPS state, and session metadata).
