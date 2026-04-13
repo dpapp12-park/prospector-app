@@ -2312,6 +2312,24 @@ function addDemoLayers() {
 
   // fetchBLMBoundaries defined globally below
 
+  // ── BRIDGE HILLSHADE (Mapbox terrain-dem-v1 — US-wide fallback) ──
+  // Renders below all custom R2 LiDAR layers. Provides terrain relief
+  // everywhere outside our Oregon/Indiana tile coverage zones.
+  // Source 'mapbox-dem' is added in map.on('load') above.
+  map.addLayer({
+    id: 'bridge-hillshade',
+    type: 'hillshade',
+    source: 'mapbox-dem',
+    layout: { visibility: 'visible' },
+    paint: {
+      'hillshade-shadow-color': '#2C1810',
+      'hillshade-highlight-color': '#F5E6C8',
+      'hillshade-accent-color': '#5C4A2A',
+      'hillshade-illumination-direction': 315,
+      'hillshade-exaggeration': 0.5
+    }
+  }, 'active-claims-fill');
+
   // ── LIDAR HILLSHADE (USGS 3DEP via Cloudflare R2) ──
   // Pendleton: 10 style sources. Legacy regions: single hillshade source.
   const R2 = 'https://tiles.unworkedgold.com';
@@ -2745,6 +2763,20 @@ function setStyle(name) {
       url: 'mapbox://mapbox.mapbox-terrain-dem-v1',
       tileSize: 512,
       maxzoom: 14
+    });
+    // Re-register bridge hillshade after style swap
+    map.addLayer({
+      id: 'bridge-hillshade',
+      type: 'hillshade',
+      source: 'mapbox-dem',
+      layout: { visibility: 'visible' },
+      paint: {
+        'hillshade-shadow-color': '#2C1810',
+        'hillshade-highlight-color': '#F5E6C8',
+        'hillshade-accent-color': '#5C4A2A',
+        'hillshade-illumination-direction': 315,
+        'hillshade-exaggeration': 0.5
+      }
     });
     if (layerState['terrain-3d']) {
       map.setTerrain({ source: 'mapbox-dem', exaggeration: 1.6 });
@@ -4530,6 +4562,9 @@ function closeAIMenu() {
 
 function checkProStatus() {
   // TEMP: Pro unlocked for testing — flip to false before launch
+  // TODO: Wire to Supabase subscription table for v0.5.0 launch.
+  // Query: supabase.from('subscriptions').select('status').eq('user_id', currentUser.id).single()
+  // Return true only if data.status === 'active' || data.status === 'trialing'
   return true;
 }
 
