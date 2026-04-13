@@ -552,7 +552,7 @@ window.PROSPECTOR_CONFIG = window.UNWORKED_GOLD_CONFIG;
               <label class="lidar-style-option"><input type="checkbox" value="svf" onchange="setLidarStyle('svf', this.checked)">Sky View</label>
               <label class="lidar-style-option"><input type="checkbox" value="slope" onchange="setLidarStyle('slope', this.checked)">Slope</label>
               <label class="lidar-style-option"><input type="checkbox" value="lrm" onchange="setLidarStyle('lrm', this.checked)">Relief Model</label>
-              <label class="lidar-style-option"><input type="checkbox" value="rrim" onchange="setLidarStyle('rrim', this.checked)">Red Relief</label>
+              <label class="lidar-style-option" title="Cyan = Benches/Pits | Copper = Ridges — Unworked Gold Standard"><input type="checkbox" value="rrim" onchange="setLidarStyle('rrim', this.checked)">Copper/Cyan (RRIM) <span style="font-size:10px;opacity:0.6;display:block;margin-top:1px;font-family:'DM Mono',monospace">Cyan=Pits · Copper=Ridges</span></label>
               <label class="lidar-style-option"><input type="checkbox" value="north" onchange="setLidarStyle('north', this.checked)">N-lit</label>
               <label class="lidar-style-option"><input type="checkbox" value="northeast" onchange="setLidarStyle('northeast', this.checked)">NE-lit</label>
               <label class="lidar-style-option"><input type="checkbox" value="east" onchange="setLidarStyle('east', this.checked)">E-lit</label>
@@ -1042,7 +1042,7 @@ const LIDAR_STYLE_LABELS = {
   svf:       'LiDAR Sky View',
   slope:     'LiDAR Slope',
   lrm:       'LiDAR Relief Model',
-  rrim:      'LiDAR Red Relief',
+  rrim:      'LiDAR Copper/Cyan (RRIM)',
   north:     'LiDAR N-lit',
   northeast: 'LiDAR NE-lit',
   east:      'LiDAR E-lit',
@@ -2344,12 +2344,31 @@ function addDemoLayers() {
       maxzoom: 15,
       attribution: 'USGS 3DEP 1m LiDAR'
     });
+    // RRIM gets the Copper/Cyan palette — all other styles use neutral raster paint
+    const rrimPaint = {
+      'raster-opacity': 0.88,
+      'raster-color-range': [0, 255],
+      'raster-color': [
+        'interpolate', ['linear'], ['raster-value'],
+        0,   '#003B4A',   // deep pit — dark cyan
+        0.2, '#00BCD4',   // bench/terrace — signature cyan ribbon
+        0.42, '#4A6B5A',  // neutral valley floor
+        0.58, '#7B5A1A',  // warm transition
+        0.78, '#C9A84C',  // copper hillside — bench terrace top
+        1.0,  '#F0C040'   // ridge crest — bright gold
+      ]
+    };
+    const defaultPaint = {
+      'raster-opacity': 0.75,
+      'raster-contrast': 0.1,
+      'raster-brightness-min': 0.05
+    };
     map.addLayer({
       id: 'lidar-pendleton-' + style,
       type: 'raster',
       source: 'lidar-pendleton-' + style + '-src',
       layout: { visibility: 'none' },
-      paint: { 'raster-opacity': 0.75, 'raster-contrast': 0.1, 'raster-brightness-min': 0.05 }
+      paint: style === 'rrim' ? rrimPaint : defaultPaint
     }, 'active-claims-fill');
   });
 
@@ -2714,6 +2733,12 @@ function setLidarStyle(style, enabled) {
     const layerId = 'lidar-pendleton-' + style;
     if (map.getLayer(layerId)) {
       map.setLayoutProperty(layerId, 'visibility', activeLidarStyles.has(style) ? 'visible' : 'none');
+    }
+    // Bridge hierarchy: RRIM is the hero — suppress bridge-hillshade when RRIM is active
+    if (style === 'rrim' && map.getLayer('bridge-hillshade')) {
+      map.setPaintProperty('bridge-hillshade', 'hillshade-exaggeration',
+        activeLidarStyles.has('rrim') ? 0 : 0.5
+      );
     }
   }
   updateActiveLayerBar();
