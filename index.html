@@ -172,33 +172,36 @@ window.PROSPECTOR_CONFIG = window.UNWORKED_GOLD_CONFIG;
     position: absolute;
     top: calc(100% + 6px);
     right: 0;
-    min-width: 172px;
-    max-height: 210px;
-    overflow-y: auto;
+    min-width: 190px;
     display: none;
-    background: rgba(13,12,9,0.96);
+    background: rgba(13,12,9,0.97);
     border: 1px solid rgba(201,168,76,0.35);
     border-radius: 8px;
-    box-shadow: 0 8px 24px rgba(0,0,0,0.45);
-    z-index: 25;
-    padding: 7px 8px;
+    box-shadow: 0 8px 24px rgba(0,0,0,0.55);
+    z-index: 200;
+    padding: 8px 10px;
   }
   .lidar-style-list.open { display: block; }
   .lidar-style-option {
     display: flex;
     align-items: center;
-    gap: 6px;
-    padding: 4px 2px;
+    gap: 8px;
+    padding: 6px 4px;
     color: #D8C58B;
     font-family: 'DM Sans', sans-serif;
-    font-size: 11px;
+    font-size: 12px;
     cursor: pointer;
     user-select: none;
     white-space: nowrap;
+    border-bottom: 1px solid rgba(201,168,76,0.08);
   }
+  .lidar-style-option:last-child { border-bottom: none; }
   .lidar-style-option input {
     margin: 0;
+    flex-shrink: 0;
     accent-color: #C9A84C;
+    width: 14px;
+    height: 14px;
   }
 
   /* ── COORDINATE DISPLAY ── */
@@ -544,20 +547,15 @@ window.PROSPECTOR_CONFIG = window.UNWORKED_GOLD_CONFIG;
         </div>
         <div class="layer-row" onclick="toggleLayer('lidar')">
           <div class="layer-bullet" id="bullet-lidar">●</div>
-          <span class="layer-name" id="name-lidar">LiDAR (1/10)</span>
+          <span class="layer-name" id="name-lidar">LiDAR (1/5)</span>
           <div class="lidar-style-menu" onclick="event.stopPropagation()">
-            <button id="lidar-style-btn" class="lidar-style-select" onclick="toggleLidarStyleMenu(event)">Styles 1/10</button>
+            <button id="lidar-style-btn" class="lidar-style-select" onclick="toggleLidarStyleMenu(event)">Styles 1/5</button>
             <div id="lidar-style-list" class="lidar-style-list">
               <label class="lidar-style-option"><input type="checkbox" value="hillshade" checked onchange="setLidarStyle('hillshade', this.checked)">Hillshade</label>
-              <label class="lidar-style-option"><input type="checkbox" value="svf" onchange="setLidarStyle('svf', this.checked)">Sky View</label>
+              <label class="lidar-style-option" title="Cyan = Benches/Pits | Copper = Ridges — Unworked Gold Standard"><input type="checkbox" value="rrim" onchange="setLidarStyle('rrim', this.checked)">Copper/Cyan (RRIM)</label>
               <label class="lidar-style-option"><input type="checkbox" value="slope" onchange="setLidarStyle('slope', this.checked)">Slope</label>
-              <label class="lidar-style-option"><input type="checkbox" value="lrm" onchange="setLidarStyle('lrm', this.checked)">Relief Model</label>
-              <label class="lidar-style-option" title="Cyan = Benches/Pits | Copper = Ridges — Unworked Gold Standard"><input type="checkbox" value="rrim" onchange="setLidarStyle('rrim', this.checked)">Copper/Cyan (RRIM) <span style="font-size:10px;opacity:0.6;display:block;margin-top:1px;font-family:'DM Mono',monospace">Cyan=Pits · Copper=Ridges</span></label>
-              <label class="lidar-style-option"><input type="checkbox" value="north" onchange="setLidarStyle('north', this.checked)">N-lit</label>
-              <label class="lidar-style-option"><input type="checkbox" value="northeast" onchange="setLidarStyle('northeast', this.checked)">NE-lit</label>
-              <label class="lidar-style-option"><input type="checkbox" value="east" onchange="setLidarStyle('east', this.checked)">E-lit</label>
-              <label class="lidar-style-option"><input type="checkbox" value="southeast" onchange="setLidarStyle('southeast', this.checked)">SE-lit</label>
-              <label class="lidar-style-option"><input type="checkbox" value="lowangle" onchange="setLidarStyle('lowangle', this.checked)">Low Angle</label>
+              <label class="lidar-style-option"><input type="checkbox" value="svf" onchange="setLidarStyle('svf', this.checked)">Sky View (SVF)</label>
+              <label class="lidar-style-option"><input type="checkbox" value="lrm" onchange="setLidarStyle('lrm', this.checked)">Relief Model (LRM)</label>
             </div>
           </div>
           <button class="info-btn" onclick="showLayerInfo(event,'lidar')">i</button>
@@ -1035,7 +1033,7 @@ function distanceMiles(lat1, lng1, lat2, lng2) {
   return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
 }
 // LiDAR style picker state
-const LIDAR_STYLES_LIST = ['hillshade','svf','slope','lrm','rrim','north','northeast','east','southeast','lowangle'];
+const LIDAR_STYLES_LIST = ['hillshade','rrim','slope','svf','lrm'];
 const activeLidarStyles = new Set(['hillshade']);
 const LIDAR_STYLE_LABELS = {
   hillshade: 'LiDAR Hillshade',
