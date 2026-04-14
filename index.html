@@ -2334,7 +2334,7 @@ function addDemoLayers() {
   LIDAR_STYLES_LIST.forEach(function(style) {
     map.addSource('lidar-pendleton-' + style + '-src', {
       type: 'raster',
-      tiles: [ R2 + '/indiana/pendleton/' + style + '/{z}/{x}/{y}.webp' ],
+      tiles: [ R2 + '/indiana/full/' + style + '/{z}/{x}/{y}.webp' ],
       tileSize: 256,
       minzoom: 8,
       maxzoom: 15,
