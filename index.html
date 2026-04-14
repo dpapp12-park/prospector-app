@@ -2703,19 +2703,23 @@ function toggleLidarStyleMenu(e) {
   if (!list) return;
   const isOpen = list.classList.contains('open');
   if (isOpen) { list.classList.remove('open'); return; }
-  // Position fixed relative to the button — escapes all overflow containers
+  // position: fixed — escapes all overflow/clip contexts
   const btn = document.getElementById('lidar-style-btn');
   const r = btn.getBoundingClientRect();
-  const dropH = 5 * 38; // approx height for 5 items
+  const dropH = 5 * 40;
   const spaceBelow = window.innerHeight - r.bottom;
+  // Vertical: open downward if room, otherwise upward
   if (spaceBelow >= dropH) {
-    list.style.top  = (r.bottom + 6) + 'px';
+    list.style.top    = (r.bottom + 6) + 'px';
     list.style.bottom = 'auto';
   } else {
-    list.style.bottom = (window.innerHeight - r.top + 6) + 'px';
-    list.style.top = 'auto';
+    list.style.top    = Math.max(8, r.top - dropH - 6) + 'px';
+    list.style.bottom = 'auto';
   }
-  list.style.right = (window.innerWidth - r.right) + 'px';
+  // Horizontal: align left edge with button, clamp to viewport
+  const leftPos = Math.min(r.left, window.innerWidth - 200);
+  list.style.left  = leftPos + 'px';
+  list.style.right = 'auto';
   list.classList.add('open');
 }
 
