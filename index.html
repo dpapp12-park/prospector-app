@@ -2330,11 +2330,17 @@ function addDemoLayers() {
   // Pendleton: 10 style sources. Legacy regions: single hillshade source.
   const R2 = 'https://tiles.unworkedgold.com';
 
-  // Pendleton — one source + layer per style
+  // Indiana + Oregon — one source + layer per style
+  const lidarStates = [
+    { prefix: 'lidar-indiana', path: 'indiana/full' },
+    { prefix: 'lidar-oregon',  path: 'oregon/full'  },
+  ];
+
+  lidarStates.forEach(function(st) {
   LIDAR_STYLES_LIST.forEach(function(style) {
-    map.addSource('lidar-pendleton-' + style + '-src', {
+    map.addSource(st.prefix + '-' + style + '-src', {
       type: 'raster',
-      tiles: [ R2 + '/indiana/full/' + style + '/{z}/{x}/{y}.webp' ],
+      tiles: [ R2 + '/' + st.path + '/' + style + '/{z}/{x}/{y}.webp' ],
       tileSize: 256,
       minzoom: 8,
       maxzoom: 13,
@@ -2360,13 +2366,14 @@ function addDemoLayers() {
       'raster-brightness-min': 0.05
     };
     map.addLayer({
-      id: 'lidar-pendleton-' + style,
+      id: st.prefix + '-' + style,
       type: 'raster',
-      source: 'lidar-pendleton-' + style + '-src',
+      source: st.prefix + '-' + style + '-src',
       layout: { visibility: 'none' },
       paint: style === 'rrim' ? rrimPaint : defaultPaint
     }, 'active-claims-fill');
-  });
+  }); // end LIDAR_STYLES_LIST
+  }); // end lidarStates
 
   // Legacy regions — single hillshade only
   const lidarLegacyRegions = [
@@ -2677,14 +2684,16 @@ function toggleLayer(id) {
 }
 
 function getLidarLayerIds() {
-  const pendletonLayers = LIDAR_STYLES_LIST
-    .filter(style => activeLidarStyles.has(style))
-    .map(style => 'lidar-pendleton-' + style);
+  const stateLayers = ['lidar-indiana','lidar-oregon'].flatMap(prefix =>
+    LIDAR_STYLES_LIST
+      .filter(style => activeLidarStyles.has(style))
+      .map(style => prefix + '-' + style)
+  );
   return [
-    ...pendletonLayers,
+    ...stateLayers,
     'lidar-nevada-battle-mountain','lidar-nevada-elko','lidar-california-west','lidar-california-east',
     'lidar-idaho-boise','lidar-montana','lidar-colorado','lidar-wyoming','lidar-arizona','lidar-new-mexico',
-    'lidar-utah','lidar-nevada-central','lidar-oregon','lidar-washington'
+    'lidar-utah','lidar-nevada-central','lidar-washington'
   ];
 }
 
@@ -2746,10 +2755,12 @@ function setLidarStyle(style, enabled) {
   updateLidarSummaryLabel();
 
   if (layerState['lidar'] && map) {
-    const layerId = 'lidar-pendleton-' + style;
-    if (map.getLayer(layerId)) {
-      map.setLayoutProperty(layerId, 'visibility', activeLidarStyles.has(style) ? 'visible' : 'none');
-    }
+    ['lidar-indiana', 'lidar-oregon'].forEach(prefix => {
+      const layerId = prefix + '-' + style;
+      if (map.getLayer(layerId)) {
+        map.setLayoutProperty(layerId, 'visibility', activeLidarStyles.has(style) ? 'visible' : 'none');
+      }
+    });
     // Bridge hierarchy: RRIM is the hero — suppress bridge-hillshade when RRIM is active
     if (style === 'rrim' && map.getLayer('bridge-hillshade')) {
       map.setPaintProperty('bridge-hillshade', 'hillshade-exaggeration',
