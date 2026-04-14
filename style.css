@@ -214,8 +214,9 @@
     transform: translateY(100%);
     transition: transform 0.35s cubic-bezier(0.16, 1, 0.3, 1);
     max-height: 88vh;
-    overflow-y: auto;
-    -webkit-overflow-scrolling: touch;
+    overflow: visible;
+    display: flex;
+    flex-direction: column;
   }
 
   #layer-panel.open { transform: translateY(0); }
@@ -261,6 +262,11 @@
 
   #layer-panel-scroll {
     padding: 8px 0 110px;
+    overflow-y: auto;
+    overflow-x: visible;
+    -webkit-overflow-scrolling: touch;
+    flex: 1;
+    min-height: 0;
   }
 
   /* Region banner inside panel */
@@ -2185,7 +2191,13 @@
       transform: translateX(-100%);
       transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1);
       max-height: 100vh;
+      overflow: visible;
+      display: flex;
+      flex-direction: column;
     }
     #layer-panel.open { transform: translateX(0); }
     #layer-panel-handle { display: none; }
+    #layer-panel-scroll {
+      max-height: calc(100vh - 62px);
+    }
   }
