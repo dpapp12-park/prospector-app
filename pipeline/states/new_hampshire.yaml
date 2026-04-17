@@ -1,0 +1,45 @@
+# New Hampshire state configuration for Pipeline B
+# Phase 1: hillshade only
+
+state_name: new_hampshire
+state_code: NH
+
+workdir: /mnt/scratch/new_hampshire
+raw_dir: /mnt/scratch/new_hampshire/raw
+reprojected_dir: /mnt/scratch/new_hampshire/reprojected_5070
+vrt_path: /mnt/scratch/new_hampshire/nh_master.vrt
+stats_path: /mnt/scratch/new_hampshire/stats.json
+tiles_dir: /mnt/scratch/new_hampshire/tiles/hillshade
+tmp_dir: /mnt/scratch/new_hampshire/tmp
+log_path: /mnt/scratch/new_hampshire/progress.log
+
+# TODO-RESOLVE-BEFORE-RUN
+projects:
+  - NH_PLACEHOLDER_RESOLVE_BEFORE_RUN
+
+layers:
+  - hillshade
+
+crs_processing: EPSG:5070
+crs_delivery: EPSG:3857
+
+zoom_min: 8
+zoom_max: 15
+buffer_px: 100
+
+hillshade_algorithm: multidirectional
+hillshade_z_factor: 2
+
+webp_quality: 90
+
+r2_dest: r2:lidar-tiles/new_hampshire/tiles/hillshade
+
+# Proof tile: White Mountains / Mount Washington area
+# Mt Washington: 44.2705 N, 71.3033 W -> z=15 x=9905 y=11972
+proof_tile:
+  z: 15
+  x: 9905
+  y: 11972
+  description: White Mountains / Mt Washington area (engineer-selected, architect to approve)
+
+prune_after_upload: true

@@ -1,0 +1,47 @@
+# Massachusetts state configuration for Pipeline B
+# Phase 1: hillshade only
+
+state_name: massachusetts
+state_code: MA
+
+workdir: /mnt/scratch/massachusetts
+raw_dir: /mnt/scratch/massachusetts/raw
+reprojected_dir: /mnt/scratch/massachusetts/reprojected_5070
+vrt_path: /mnt/scratch/massachusetts/ma_master.vrt
+stats_path: /mnt/scratch/massachusetts/stats.json
+tiles_dir: /mnt/scratch/massachusetts/tiles/hillshade
+tmp_dir: /mnt/scratch/massachusetts/tmp
+log_path: /mnt/scratch/massachusetts/progress.log
+
+# TODO-RESOLVE-BEFORE-RUN: confirm on EC2 with:
+#   aws s3 ls s3://prd-tnm/StagedProducts/Elevation/1m/Projects/ \
+#     --no-sign-request | grep -iE "MA_|Massachusetts"
+projects:
+  - MA_PLACEHOLDER_RESOLVE_BEFORE_RUN
+
+layers:
+  - hillshade
+
+crs_processing: EPSG:5070
+crs_delivery: EPSG:3857
+
+zoom_min: 8
+zoom_max: 15
+buffer_px: 100
+
+hillshade_algorithm: multidirectional
+hillshade_z_factor: 2
+
+webp_quality: 90
+
+r2_dest: r2:lidar-tiles/massachusetts/tiles/hillshade
+
+# Proof tile: Quabbin Reservoir / central MA hills
+# 42.3326 N, 72.3414 W -> z=15 x=9770 y=12082
+proof_tile:
+  z: 15
+  x: 9770
+  y: 12082
+  description: Quabbin Reservoir / central MA (engineer-selected, architect to approve)
+
+prune_after_upload: true

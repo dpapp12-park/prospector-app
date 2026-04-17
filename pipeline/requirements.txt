@@ -1,5 +1,5 @@
 # Pipeline B Python dependencies
-# Install: pip install -r pipeline/requirements.txt
+# Install: pip3 install -r pipeline/requirements.txt --break-system-packages
 #
 # System dependencies (apt install):
 #   gdal-bin python3-gdal rclone awscli screen
@@ -8,3 +8,7 @@ numpy>=1.24
 Pillow>=10.0
 PyYAML>=6.0
 pyproj>=3.5
+
+# RVT-py for SVF + openness (RRIM dependency)
+# Per architect directive April 17, 2026 - Pipeline B standard
+rvt-py>=2.2.3

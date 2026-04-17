@@ -1,0 +1,48 @@
+# Maine state configuration for Pipeline B
+# Phase 1: hillshade only
+
+state_name: maine
+state_code: ME
+
+workdir: /mnt/scratch/maine
+raw_dir: /mnt/scratch/maine/raw
+reprojected_dir: /mnt/scratch/maine/reprojected_5070
+vrt_path: /mnt/scratch/maine/me_master.vrt
+stats_path: /mnt/scratch/maine/stats.json
+tiles_dir: /mnt/scratch/maine/tiles/hillshade
+tmp_dir: /mnt/scratch/maine/tmp
+log_path: /mnt/scratch/maine/progress.log
+
+# TODO-RESOLVE-BEFORE-RUN: Maine has multiple projects, may need more than one.
+# Check on EC2: aws s3 ls s3://prd-tnm/StagedProducts/Elevation/1m/Projects/ \
+#   --no-sign-request | grep -iE "ME_|Maine"
+# Maine is the largest NE state by area - expect multiple projects.
+projects:
+  - ME_PLACEHOLDER_RESOLVE_BEFORE_RUN
+
+layers:
+  - hillshade
+
+crs_processing: EPSG:5070
+crs_delivery: EPSG:3857
+
+zoom_min: 8
+zoom_max: 15
+buffer_px: 100
+
+hillshade_algorithm: multidirectional
+hillshade_z_factor: 2
+
+webp_quality: 90
+
+r2_dest: r2:lidar-tiles/maine/tiles/hillshade
+
+# Proof tile: Baxter State Park / Mt Katahdin area
+# Mt Katahdin: 45.9043 N, 68.9213 W -> z=15 x=10122 y=11843
+proof_tile:
+  z: 15
+  x: 10122
+  y: 11843
+  description: Baxter State Park / Mt Katahdin (engineer-selected, architect to approve)
+
+prune_after_upload: true

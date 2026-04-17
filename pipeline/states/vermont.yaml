@@ -1,0 +1,45 @@
+# Vermont state configuration for Pipeline B
+# Phase 1: hillshade only
+
+state_name: vermont
+state_code: VT
+
+workdir: /mnt/scratch/vermont
+raw_dir: /mnt/scratch/vermont/raw
+reprojected_dir: /mnt/scratch/vermont/reprojected_5070
+vrt_path: /mnt/scratch/vermont/vt_master.vrt
+stats_path: /mnt/scratch/vermont/stats.json
+tiles_dir: /mnt/scratch/vermont/tiles/hillshade
+tmp_dir: /mnt/scratch/vermont/tmp
+log_path: /mnt/scratch/vermont/progress.log
+
+# TODO-RESOLVE-BEFORE-RUN
+projects:
+  - VT_PLACEHOLDER_RESOLVE_BEFORE_RUN
+
+layers:
+  - hillshade
+
+crs_processing: EPSG:5070
+crs_delivery: EPSG:3857
+
+zoom_min: 8
+zoom_max: 15
+buffer_px: 100
+
+hillshade_algorithm: multidirectional
+hillshade_z_factor: 2
+
+webp_quality: 90
+
+r2_dest: r2:lidar-tiles/vermont/tiles/hillshade
+
+# Proof tile: Green Mountains / Mount Mansfield area
+# Mt Mansfield: 44.5437 N, 72.8145 W -> z=15 x=9766 y=11948
+proof_tile:
+  z: 15
+  x: 9766
+  y: 11948
+  description: Green Mountains / Mt Mansfield area (engineer-selected, architect to approve)
+
+prune_after_upload: true

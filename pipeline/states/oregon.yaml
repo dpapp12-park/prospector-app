@@ -1,0 +1,75 @@
+# Oregon state configuration for Pipeline B
+# FLAGSHIP STATE: first 3-layer (hillshade + SVF + RRIM) deployment
+# Per architect directive April 17, 2026
+
+state_name: oregon
+state_code: OR
+
+workdir: /mnt/nvme1/oregon
+raw_dir: /mnt/nvme1/oregon/raw
+reprojected_dir: /mnt/nvme1/oregon/reprojected_5070
+vrt_path: /mnt/nvme1/oregon/oregon_5070.vrt
+stats_path: /mnt/nvme1/oregon/stats.json
+# Base tiles_dir ends in /hillshade; orchestrator infers sibling dirs for svf/rrim
+tiles_dir: /mnt/nvme1/oregon/tiles/hillshade
+tmp_dir: /mnt/nvme1/oregon/tmp
+log_path: /mnt/nvme1/oregon/progress.log
+
+# All 19 projects (17 batch-downloaded + 2 original)
+# Plus OR_SouthEast_D22 added when downloaded (work order step 7)
+projects:
+  - OR_NRCSUSGS_2019_D19
+  - OR_RogueSiskiyouNF_2019_B19
+  - OR_DOGAMI_2017
+  - OR_HarneyCounty_2018
+  - OR_HarneyCounty_TL_2018
+  - OR_HarneySilver_2020_A20
+  - OR_Malheur_2016
+  - OR_Malheur_A22
+  - OR_McKenzieRiver_2021_B21
+  - OR_OLCMetro_2019_A19
+  - OR_PoleCreek_2013
+  - OR_PortlandMetro_B24
+  - OR_SouthCoast_2019_A19
+  - OR_SouthwestCentralSycan_2021_B21
+  - OR_UmatillaUnionMorrow_2021_D21
+  - OR_UmatillaWallowaWhitman_B22
+  - OR_UpperJohnDay_2020_A20
+  - OR_Wallowa_2015
+  - OR_WesternWildfires_A22
+  # OR_SouthEast_D22 - add after work order step 7 (SE download complete)
+
+# Multi-layer output - architect-approved 3 layers
+layers:
+  - hillshade
+  - svf
+  - rrim
+
+# CRS - EPSG:5070 internal (national standard)
+crs_processing: EPSG:5070
+crs_delivery: EPSG:3857
+
+# Tiling
+zoom_min: 8
+zoom_max: 15
+buffer_px: 100
+
+# Hillshade params (matches Oregon west original)
+hillshade_algorithm: multidirectional
+hillshade_z_factor: 2
+
+# WebP
+webp_quality: 90
+
+# R2 - base path for hillshade; orchestrator infers svf/rrim siblings
+r2_dest: r2:lidar-tiles/oregon/tiles/hillshade
+
+# Proof tile: Mt. Hood South Face (architect-curated, diagnostic terrain)
+proof_tile:
+  z: 15
+  x: 5243
+  y: 11320
+  description: Mt. Hood South Face (architect-curated diagnostic terrain)
+
+# Prune raw+reprojected after successful upload (saves ~500 GB)
+prune_after_upload: true

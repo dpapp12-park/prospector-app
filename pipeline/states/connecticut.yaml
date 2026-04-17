@@ -1,0 +1,69 @@
+# Connecticut state configuration for Pipeline B
+# Phase 1: hillshade only (per architect directive, multi-layer is Oregon-first)
+
+state_name: connecticut
+state_code: CT
+
+# Working paths on EC2 NVMe scratch
+workdir: /mnt/scratch/connecticut
+raw_dir: /mnt/scratch/connecticut/raw
+reprojected_dir: /mnt/scratch/connecticut/reprojected_5070
+vrt_path: /mnt/scratch/connecticut/ct_master.vrt
+stats_path: /mnt/scratch/connecticut/stats.json
+tiles_dir: /mnt/scratch/connecticut/tiles/hillshade
+tmp_dir: /mnt/scratch/connecticut/tmp
+log_path: /mnt/scratch/connecticut/progress.log
+
+# USGS 3DEP source projects
+# ===========================================================================
+# TODO-RESOLVE-BEFORE-RUN: project names must be confirmed on EC2 before first run.
+# Connecticut has statewide 2016 CRCOG QL2 and 2023 CT GIS QL1 coverage.
+# Run this command on EC2 to list actual directory names in prd-tnm:
+#
+#   aws s3 ls s3://prd-tnm/StagedProducts/Elevation/1m/Projects/ \
+#     --no-sign-request | grep -iE "CT_|Connecticut"
+#
+# Then replace the placeholder below with the actual directory name(s).
+# Use the most recent project available (typically ends in _D22, _D23, or _D24).
+# ===========================================================================
+projects:
+  - CT_PLACEHOLDER_RESOLVE_BEFORE_RUN
+
+# Single-layer Phase 1
+layers:
+  - hillshade
+
+# CRS
+crs_processing: EPSG:5070
+crs_delivery: EPSG:3857
+
+# Tiling
+zoom_min: 8
+zoom_max: 15
+buffer_px: 100
+
+# Hillshade
+hillshade_algorithm: multidirectional
+hillshade_z_factor: 2
+
+# WebP
+webp_quality: 90
+
+# R2
+r2_dest: r2:lidar-tiles/connecticut/tiles/hillshade
+
+# Proof tile
+# Architect will approve coordinates at proof time; engineer auto-selects
+# a representative land-based center tile. Starting point: Hartford area
+# (central CT, Connecticut River valley, mixed terrain).
+# Hartford: 41.7637 N, 72.6851 W
+# At z=15: x = int((-72.6851+180)/360 * 32768) = 9767
+#          y ~ 12105 (computed from lat)
+proof_tile:
+  z: 15
+  x: 9767
+  y: 12105
+  description: Hartford / Connecticut River valley (engineer-selected, architect to approve)
+
+# Prune raw+reprojected after successful upload
+prune_after_upload: true
