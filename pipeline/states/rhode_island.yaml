@@ -1,0 +1,50 @@
+# Rhode Island state configuration for Pipeline B
+# Architect-approved: April 17, 2026
+# Source data: USGS 3DEP 1m DEM, project RI_Statewide_D22
+# CRS: EPSG:5070 internal processing, EPSG:3857 output delivery
+
+state_name: rhode_island
+state_code: RI
+
+# Working paths on EC2 NVMe scratch
+workdir: /mnt/scratch/rhode_island
+raw_dir: /mnt/scratch/ri_ingest
+reprojected_dir: /mnt/scratch/ri_ingest_5070
+vrt_path: /mnt/scratch/ri_master.vrt
+stats_path: /mnt/scratch/rhode_island/stats.json
+tiles_dir: /mnt/scratch/rhode_island/tiles/hillshade
+tmp_dir: /mnt/scratch/rhode_island/tmp
+log_path: /mnt/scratch/rhode_island/progress.log
+
+# USGS 3DEP source projects to download
+projects:
+  - RI_Statewide_D22
+
+# CRS standard (per architect directive)
+crs_processing: EPSG:5070    # NAD83 / Conus Albers -- internal
+crs_delivery: EPSG:3857      # Web Mercator -- Mapbox output
+
+# Tiling parameters
+zoom_min: 8
+zoom_max: 15
+buffer_px: 100               # Global normalization buffer
+
+# Hillshade algorithm (Oregon-proven)
+hillshade_algorithm: multidirectional
+hillshade_z_factor: 2
+
+# WebP output (Pillow only -- GDAL WEBP driver broken)
+webp_quality: 90
+
+# R2 delivery destination
+r2_dest: r2:lidar-tiles/rhode_island/tiles/hillshade
+
+# Proof tile -- Blackstone River corridor (architect-curated)
+# Validates: hillshade clarity, global normalization, CRS reprojection,
+# and consistent copper coloring across Blackstone River corridor
+# (per Production Work Order validation checklist)
+proof_tile:
+  z: 15
+  x: 9885
+  y: 12170
+  description: Blackstone River corridor

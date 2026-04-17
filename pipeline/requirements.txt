@@ -1,0 +1,10 @@
+# Pipeline B Python dependencies
+# Install: pip install -r pipeline/requirements.txt
+#
+# System dependencies (apt install):
+#   gdal-bin python3-gdal rclone awscli screen
+
+numpy>=1.24
+Pillow>=10.0
+PyYAML>=6.0
+pyproj>=3.5
