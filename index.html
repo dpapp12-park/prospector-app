@@ -2246,14 +2246,14 @@ function addDemoLayers() {
 
   // fetchBLMBoundaries defined globally below
 
-  // ── USGS 3DEP HILLSHADE (nationwide, dynamic REST exportImage) ──
-  // 3DEPElevation ImageServer — Hillshade Gray raster function.
-  // Single-direction hillshade (sharper contrast than multidirectional).
-  // Matches the endpoint Detector Maps uses — same data, same service.
+  // ── USGS 3DEP HILLSHADE (nationwide, via Cloudflare edge cache) ──
+  // Requests go to hillshade-proxy.dpapp12.workers.dev, which forwards to
+  // USGS 3DEPElevation/exportImage and caches responses at edge for 24h.
+  // First user per tile pays USGS render latency (~2s), rest get ~50ms.
   map.addSource('usgs-hillshade-src', {
     type: 'raster',
     tiles: [
-      'https://elevation.nationalmap.gov/arcgis/rest/services/3DEPElevation/ImageServer/exportImage?bbox={bbox-epsg-3857}&bboxSR=3857&imageSR=3857&size=256,256&format=png32&transparent=true&renderingRule=%7B%22rasterFunction%22%3A%22Hillshade+Gray%22%7D&f=image'
+      'https://hillshade-proxy.dpapp12.workers.dev/arcgis/rest/services/3DEPElevation/ImageServer/exportImage?bbox={bbox-epsg-3857}&bboxSR=3857&imageSR=3857&size=256,256&format=png32&transparent=true&renderingRule=%7B%22rasterFunction%22%3A%22Hillshade+Gray%22%7D&f=image'
     ],
     tileSize: 256,
     attribution: 'USGS The National Map: 3D Elevation Program'
