@@ -162,6 +162,22 @@ window.PROSPECTOR_CONFIG = window.UNWORKED_GOLD_CONFIG;
     pointer-events: none;
     user-select: none;
   }
+  #zoom-readout {
+    position: fixed;
+    top: 12px;
+    right: 12px;
+    z-index: 100;
+    font-family: 'DM Mono', monospace;
+    font-size: 16px;
+    font-weight: 600;
+    color: #F0C040;
+    background: rgba(0,0,0,0.75);
+    padding: 6px 12px;
+    border-radius: 6px;
+    border: 1px solid rgba(240,192,64,0.5);
+    pointer-events: none;
+    user-select: none;
+  }
 </style>
 </head>
 <body>
@@ -171,6 +187,7 @@ window.PROSPECTOR_CONFIG = window.UNWORKED_GOLD_CONFIG;
 
 <!-- Map -->
 <div id="map"></div>
+<div id="zoom-readout">z—</div>
 
 <!-- Overlay -->
 <div id="overlay" onclick="closeAllPanels()"></div>
@@ -1111,6 +1128,8 @@ function startMap(token) {
       const lat = c.lat >= 0 ? c.lat.toFixed(5) + '\u00b0N' : Math.abs(c.lat).toFixed(5) + '\u00b0S';
       const lng = c.lng >= 0 ? c.lng.toFixed(5) + '\u00b0E' : Math.abs(c.lng).toFixed(5) + '\u00b0W';
       coordEl.textContent = lat + '  ' + lng + '  z' + map.getZoom().toFixed(1);
+      const zEl = document.getElementById('zoom-readout');
+      if (zEl) zEl.textContent = 'z' + map.getZoom().toFixed(1);
     };
     map.on('move', updateCoords);
     updateCoords();
