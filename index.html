@@ -144,64 +144,6 @@ window.PROSPECTOR_CONFIG = window.UNWORKED_GOLD_CONFIG;
     line-height: 1;
   }
 
-  /* ── LIDAR STYLE PICKER ── */
-  .lidar-style-select {
-    background: rgba(201,168,76,0.12);
-    border: 1px solid rgba(201,168,76,0.3);
-    border-radius: 6px;
-    color: #C9A84C;
-    font-family: 'DM Sans', sans-serif;
-    font-size: 11px;
-    padding: 3px 5px;
-    cursor: pointer;
-    outline: none;
-    flex-shrink: 0;
-    max-width: 82px;
-  }
-  .lidar-style-select:hover {
-    background: rgba(201,168,76,0.2);
-    border-color: rgba(201,168,76,0.5);
-  }
-  .lidar-style-menu {
-    position: relative;
-    display: flex;
-    align-items: center;
-    flex-shrink: 0;
-  }
-  .lidar-style-list {
-    position: fixed;
-    min-width: 190px;
-    display: none;
-    background: rgba(13,12,9,0.97);
-    border: 1px solid rgba(201,168,76,0.35);
-    border-radius: 8px;
-    box-shadow: 0 4px 24px rgba(0,0,0,0.7);
-    z-index: 9999;
-    padding: 8px 10px;
-  }
-  .lidar-style-list.open { display: block; }
-  .lidar-style-option {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    padding: 6px 4px;
-    color: #D8C58B;
-    font-family: 'DM Sans', sans-serif;
-    font-size: 12px;
-    cursor: pointer;
-    user-select: none;
-    white-space: nowrap;
-    border-bottom: 1px solid rgba(201,168,76,0.08);
-  }
-  .lidar-style-option:last-child { border-bottom: none; }
-  .lidar-style-option input {
-    margin: 0;
-    flex-shrink: 0;
-    accent-color: #C9A84C;
-    width: 14px;
-    height: 14px;
-  }
-
   /* ── COORDINATE DISPLAY ── */
   #coord-display {
     position: fixed;
@@ -545,17 +487,7 @@ window.PROSPECTOR_CONFIG = window.UNWORKED_GOLD_CONFIG;
         </div>
         <div class="layer-row" onclick="toggleLayer('lidar')">
           <div class="layer-bullet" id="bullet-lidar">●</div>
-          <span class="layer-name" id="name-lidar">LiDAR (1/5)</span>
-          <div class="lidar-style-menu" onclick="event.stopPropagation()">
-            <button id="lidar-style-btn" class="lidar-style-select" onclick="toggleLidarStyleMenu(event)">Styles 1/5</button>
-            <div id="lidar-style-list" class="lidar-style-list">
-              <label class="lidar-style-option"><input type="checkbox" value="hillshade" checked onchange="setLidarStyle('hillshade', this.checked)">Hillshade</label>
-              <label class="lidar-style-option" title="Cyan = Benches/Pits | Copper = Ridges — Unworked Gold Standard"><input type="checkbox" value="rrim" onchange="setLidarStyle('rrim', this.checked)">Copper/Cyan (RRIM)</label>
-              <label class="lidar-style-option"><input type="checkbox" value="slope" onchange="setLidarStyle('slope', this.checked)">Slope</label>
-              <label class="lidar-style-option"><input type="checkbox" value="svf" onchange="setLidarStyle('svf', this.checked)">Sky View (SVF)</label>
-              <label class="lidar-style-option"><input type="checkbox" value="lrm" onchange="setLidarStyle('lrm', this.checked)">Relief Model (LRM)</label>
-            </div>
-          </div>
+          <span class="layer-name" id="name-lidar">LiDAR Hillshade</span>
           <button class="info-btn" onclick="showLayerInfo(event,'lidar')">i</button>
         </div>
         <div class="layer-row" onclick="toggleLayer('contours')">
@@ -1030,21 +962,6 @@ function distanceMiles(lat1, lng1, lat2, lng2) {
   const a = Math.sin(dLat/2) ** 2 + Math.cos(lat1 * Math.PI/180) * Math.cos(lat2 * Math.PI/180) * Math.sin(dLng/2) ** 2;
   return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
 }
-// LiDAR style picker state
-const LIDAR_STYLES_LIST = ['hillshade','rrim','slope','svf','lrm'];
-const activeLidarStyles = new Set(['hillshade']);
-const LIDAR_STYLE_LABELS = {
-  hillshade: 'LiDAR Hillshade',
-  svf:       'LiDAR Sky View',
-  slope:     'LiDAR Slope',
-  lrm:       'LiDAR Relief Model',
-  rrim:      'LiDAR Copper/Cyan (RRIM)',
-  north:     'LiDAR N-lit',
-  northeast: 'LiDAR NE-lit',
-  east:      'LiDAR E-lit',
-  southeast: 'LiDAR SE-lit',
-  lowangle:  'LiDAR Low Angle'
-};
 
 let layerState = {
   'active-claims': true,
@@ -2308,107 +2225,25 @@ function addDemoLayers() {
 
   // fetchBLMBoundaries defined globally below
 
-  // ── BRIDGE HILLSHADE (Mapbox terrain-dem-v1 — US-wide fallback) ──
-  // Renders below all custom R2 LiDAR layers. Provides terrain relief
-  // everywhere outside our Oregon/Indiana tile coverage zones.
-  // Source 'mapbox-dem' is added in map.on('load') above.
-  map.addLayer({
-    id: 'bridge-hillshade',
-    type: 'hillshade',
-    source: 'mapbox-dem',
-    layout: { visibility: 'visible' },
-    paint: {
-      'hillshade-shadow-color': '#2C1810',
-      'hillshade-highlight-color': '#F5E6C8',
-      'hillshade-accent-color': '#5C4A2A',
-      'hillshade-illumination-direction': 315,
-      'hillshade-exaggeration': 0.5
-    }
-  }, 'active-claims-fill');
-
-  // ── LIDAR HILLSHADE (USGS 3DEP via Cloudflare R2) ──
-  // Pendleton: 10 style sources. Legacy regions: single hillshade source.
-  const R2 = 'https://tiles.unworkedgold.com';
-
-  // Indiana + Oregon — one source + layer per style
-  const lidarStates = [
-    { prefix: 'lidar-indiana', path: 'indiana/full' },
-    { prefix: 'lidar-oregon',  path: 'oregon/tiles' },
-  ];
-
-  lidarStates.forEach(function(st) {
-  LIDAR_STYLES_LIST.forEach(function(style) {
-    map.addSource(st.prefix + '-' + style + '-src', {
-      type: 'raster',
-      tiles: [ R2 + '/' + st.path + '/' + style + '/{z}/{x}/{y}.webp' ],
-      tileSize: 256,
-      minzoom: 8,
-      maxzoom: 13,
-      attribution: 'USGS 3DEP 1m LiDAR'
-    });
-    // RRIM gets the Copper/Cyan palette — all other styles use neutral raster paint
-    const rrimPaint = {
-      'raster-opacity': 0.88,
-      'raster-color-range': [0, 255],
-      'raster-color': [
-        'interpolate', ['linear'], ['raster-value'],
-        0,   '#003B4A',   // deep pit — dark cyan
-        0.2, '#00BCD4',   // bench/terrace — signature cyan ribbon
-        0.42, '#4A6B5A',  // neutral valley floor
-        0.58, '#7B5A1A',  // warm transition
-        0.78, '#C9A84C',  // copper hillside — bench terrace top
-        1.0,  '#F0C040'   // ridge crest — bright gold
-      ]
-    };
-    const defaultPaint = {
-      'raster-opacity': 0.75,
-      'raster-contrast': 0.1,
-      'raster-brightness-min': 0.05
-    };
-    map.addLayer({
-      id: st.prefix + '-' + style,
-      type: 'raster',
-      source: st.prefix + '-' + style + '-src',
-      layout: { visibility: 'none' },
-      paint: style === 'rrim' ? rrimPaint : defaultPaint
-    }, 'active-claims-fill');
-  }); // end LIDAR_STYLES_LIST
-  }); // end lidarStates
-
-  // Legacy regions — single hillshade only
-  const lidarLegacyRegions = [
-    { id: 'lidar-nevada-battle-mountain', path: 'nevada/battle-mountain',      fmt: 'png' },
-    { id: 'lidar-nevada-elko',            path: 'nevada/elko',                 fmt: 'png' },
-    { id: 'lidar-california-west',        path: 'california/mother-lode-west', fmt: 'png' },
-    { id: 'lidar-california-east',        path: 'california/mother-lode-east', fmt: 'png' },
-    { id: 'lidar-idaho-boise',            path: 'idaho/boise-basin',           fmt: 'png' },
-    { id: 'lidar-montana',                path: 'montana/sw-gold-belt',        fmt: 'png' },
-    { id: 'lidar-colorado',               path: 'colorado/central',            fmt: 'png' },
-    { id: 'lidar-wyoming',                path: 'wyoming/south-pass',          fmt: 'png' },
-    { id: 'lidar-arizona',                path: 'arizona/gold-belt',           fmt: 'png' },
-    { id: 'lidar-new-mexico',             path: 'new-mexico/gold-belt',        fmt: 'png' },
-    { id: 'lidar-utah',                   path: 'utah/gold-belt',              fmt: 'png' },
-    { id: 'lidar-nevada-central',         path: 'nevada/central',              fmt: 'png' },
-    { id: 'lidar-oregon',                 path: 'oregon/sw-gold-belt',         fmt: 'png' },
-    { id: 'lidar-washington',             path: 'washington/okanogan',         fmt: 'png' }
-  ];
-  lidarLegacyRegions.forEach(function(r) {
-    map.addSource(r.id + '-src', {
-      type: 'raster',
-      tiles: [ R2 + '/' + r.path + '/{z}/{x}/{y}.' + r.fmt ],
-      tileSize: 256,
-      minzoom: 8,
-      maxzoom: 15,
-      attribution: 'USGS 3DEP 1m LiDAR'
-    });
-    map.addLayer({
-      id: r.id,
-      type: 'raster',
-      source: r.id + '-src',
-      layout: { visibility: 'none' },
-      paint: { 'raster-opacity': 0.7, 'raster-contrast': 0.2, 'raster-brightness-min': 0.05 }
-    }, 'active-claims-fill');
+  // ── USGS 3DEP HILLSHADE (nationwide, pre-tiled by USGS) ──
+  // USGS Shaded Relief basemap — multi-directional hillshade derived from
+  // 3DEP data (1m where available, falls back to 3m/10m/30m).
+  // Served as pre-tiled XYZ basemap from The National Map.
+  map.addSource('usgs-hillshade-src', {
+    type: 'raster',
+    tiles: [
+      'https://basemap.nationalmap.gov/arcgis/rest/services/USGSShadedReliefOnly/MapServer/tile/{z}/{y}/{x}'
+    ],
+    tileSize: 256,
+    attribution: 'USGS The National Map: 3D Elevation Program'
   });
+  map.addLayer({
+    id: 'usgs-hillshade-layer',
+    type: 'raster',
+    source: 'usgs-hillshade-src',
+    layout: { visibility: 'none' },
+    paint: { 'raster-opacity': 0.85 }
+  }, 'active-claims-fill');
 
   // Contour lines - vector from Mapbox terrain
   map.addSource('contours-src', {
@@ -2569,7 +2404,7 @@ function toggleLayer(id) {
     'open-to-claim':  ['open-to-claim-fill', 'open-to-claim-line'],
     'plss':           'plss-layer',
     'blm-roads':      'blm-roads-layer',
-    'lidar':          getLidarLayerIds(),
+    'lidar':          'usgs-hillshade-layer',
     'contours':       ['topo-layer', 'topo-labels'],
     'hist-mines':     'hist-mines-layer',
     'gold-occurrences': 'gold-occurrences-layer',
@@ -2683,94 +2518,6 @@ function toggleLayer(id) {
   updateActiveLayerBar();
 }
 
-function getLidarLayerIds() {
-  const stateLayers = ['lidar-indiana','lidar-oregon'].flatMap(prefix =>
-    LIDAR_STYLES_LIST
-      .filter(style => activeLidarStyles.has(style))
-      .map(style => prefix + '-' + style)
-  );
-  return [
-    ...stateLayers,
-    'lidar-nevada-battle-mountain','lidar-nevada-elko','lidar-california-west','lidar-california-east',
-    'lidar-idaho-boise','lidar-montana','lidar-colorado','lidar-wyoming','lidar-arizona','lidar-new-mexico',
-    'lidar-utah','lidar-nevada-central','lidar-washington'
-  ];
-}
-
-function updateLidarSummaryLabel() {
-  const count = activeLidarStyles.size;
-  const total = LIDAR_STYLES_LIST.length;
-  const nameEl = document.getElementById('name-lidar');
-  const btnEl = document.getElementById('lidar-style-btn');
-  if (nameEl) nameEl.textContent = `LiDAR (${count}/${total})`;
-  if (btnEl) btnEl.textContent = `Styles ${count}/${total}`;
-}
-
-function toggleLidarStyleMenu(e) {
-  e.stopPropagation();
-  const list = document.getElementById('lidar-style-list');
-  if (!list) return;
-  const isOpen = list.classList.contains('open');
-  if (isOpen) { list.classList.remove('open'); return; }
-  // position: fixed — escapes all overflow/clip contexts
-  const btn = document.getElementById('lidar-style-btn');
-  const r = btn.getBoundingClientRect();
-  const dropH = 5 * 40;
-  const spaceBelow = window.innerHeight - r.bottom;
-  // Vertical: open downward if room, otherwise upward
-  if (spaceBelow >= dropH) {
-    list.style.top    = (r.bottom + 6) + 'px';
-    list.style.bottom = 'auto';
-  } else {
-    list.style.top    = Math.max(8, r.top - dropH - 6) + 'px';
-    list.style.bottom = 'auto';
-  }
-  // Horizontal: align left edge with button, clamp to viewport
-  const leftPos = Math.min(r.left, window.innerWidth - 200);
-  list.style.left  = leftPos + 'px';
-  list.style.right = 'auto';
-  list.classList.add('open');
-}
-
-function closeLidarStyleMenu() {
-  const list = document.getElementById('lidar-style-list');
-  if (list) list.classList.remove('open');
-}
-
-function setLidarStyle(style, enabled) {
-  if (!LIDAR_STYLES_LIST.includes(style)) return;
-
-  if (enabled) {
-    activeLidarStyles.add(style);
-  } else {
-    if (activeLidarStyles.size === 1 && activeLidarStyles.has(style)) {
-      const cb = document.querySelector(`#lidar-style-list input[value="${style}"]`);
-      if (cb) cb.checked = true;
-      showStatus('At least one LiDAR style must stay on');
-      return;
-    }
-    activeLidarStyles.delete(style);
-  }
-
-  updateLidarSummaryLabel();
-
-  if (layerState['lidar'] && map) {
-    ['lidar-indiana', 'lidar-oregon'].forEach(prefix => {
-      const layerId = prefix + '-' + style;
-      if (map.getLayer(layerId)) {
-        map.setLayoutProperty(layerId, 'visibility', activeLidarStyles.has(style) ? 'visible' : 'none');
-      }
-    });
-    // Bridge hierarchy: RRIM is the hero — suppress bridge-hillshade when RRIM is active
-    if (style === 'rrim' && map.getLayer('bridge-hillshade')) {
-      map.setPaintProperty('bridge-hillshade', 'hillshade-exaggeration',
-        activeLidarStyles.has('rrim') ? 0 : 0.5
-      );
-    }
-  }
-  updateActiveLayerBar();
-}
-
 function toggleLayers() {
   layerPanelOpen = !layerPanelOpen;
   document.getElementById('layer-panel').classList.toggle('open', layerPanelOpen);
@@ -2815,20 +2562,6 @@ function setStyle(name) {
       url: 'mapbox://mapbox.mapbox-terrain-dem-v1',
       tileSize: 512,
       maxzoom: 14
-    });
-    // Re-register bridge hillshade after style swap
-    map.addLayer({
-      id: 'bridge-hillshade',
-      type: 'hillshade',
-      source: 'mapbox-dem',
-      layout: { visibility: 'visible' },
-      paint: {
-        'hillshade-shadow-color': '#2C1810',
-        'hillshade-highlight-color': '#F5E6C8',
-        'hillshade-accent-color': '#5C4A2A',
-        'hillshade-illumination-direction': 315,
-        'hillshade-exaggeration': 0.5
-      }
     });
     if (layerState['terrain-3d']) {
       map.setTerrain({ source: 'mapbox-dem', exaggeration: 1.6 });
@@ -3002,7 +2735,6 @@ async function submitFeedback() {
     const activeLayerIds = Object.entries(layerState || {})
       .filter(([, isOn]) => !!isOn)
       .map(([layerId]) => layerId);
-    const lidarStyles = Array.from(activeLidarStyles || []);
     const session = sbClient?.auth ? await sbClient.auth.getSession() : { data: { session: null } };
     const sessionUser = session?.data?.session?.user || null;
     const pagePath = window.location.pathname || '/index.html';
@@ -3040,7 +2772,6 @@ async function submitFeedback() {
       map_bearing: camera ? Number(camera.bearing.toFixed(3)) : null,
       map_pitch: camera ? Number(camera.pitch.toFixed(3)) : null,
       active_layers: activeLayerIds,
-      lidar_styles: lidarStyles,
       viewport_width: window.innerWidth || null,
       viewport_height: window.innerHeight || null,
       device_pixel_ratio: window.devicePixelRatio || null,
@@ -3292,11 +3023,8 @@ function hideTooltip() {
 }
 
 document.addEventListener('click', (e) => {
-  if (!e.target.closest('.lidar-style-menu')) closeLidarStyleMenu();
   if (activeInfoBtn && !e.target.classList.contains('info-btn')) hideTooltip();
 });
-
-updateLidarSummaryLabel();
 
 // ── SAVE CLAIMS ─────────────────────────────────────────
 async function saveClaim(serial, name, type, acres) {
