@@ -165,18 +165,20 @@ window.PROSPECTOR_CONFIG = window.UNWORKED_GOLD_CONFIG;
   #zoom-readout {
     position: fixed;
     top: 12px;
-    right: 12px;
-    z-index: 100;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 9999;
     font-family: 'DM Mono', monospace;
-    font-size: 16px;
-    font-weight: 600;
+    font-size: 18px;
+    font-weight: 700;
     color: #F0C040;
-    background: rgba(0,0,0,0.75);
-    padding: 6px 12px;
+    background: rgba(0,0,0,0.85);
+    padding: 8px 16px;
     border-radius: 6px;
-    border: 1px solid rgba(240,192,64,0.5);
+    border: 2px solid #F0C040;
     pointer-events: none;
     user-select: none;
+    box-shadow: 0 2px 12px rgba(0,0,0,0.5);
   }
 </style>
 </head>
