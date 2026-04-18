@@ -2266,6 +2266,27 @@ function addDemoLayers() {
     paint: { 'raster-opacity': 1.0 }
   }, 'active-claims-fill');
 
+  // ── HILLSHADE OCEAN/WATER MASK ──
+  // Paints water polygons opaque blue OVER the hillshade so ocean/lakes
+  // don't render as flat gray hillshade noise. Only visible when LiDAR is on.
+  if (!map.getSource('mapbox-streets-src')) {
+    map.addSource('mapbox-streets-src', {
+      type: 'vector',
+      url: 'mapbox://mapbox.mapbox-streets-v8'
+    });
+  }
+  map.addLayer({
+    id: 'hillshade-water-mask',
+    type: 'fill',
+    source: 'mapbox-streets-src',
+    'source-layer': 'water',
+    layout: { visibility: 'none' },
+    paint: {
+      'fill-color': '#7BA5C4',
+      'fill-opacity': 1.0
+    }
+  }, 'active-claims-fill');
+
   // Contour lines - vector from Mapbox terrain
   map.addSource('contours-src', {
     type: 'vector',
@@ -2425,7 +2446,7 @@ function toggleLayer(id) {
     'open-to-claim':  ['open-to-claim-fill', 'open-to-claim-line'],
     'plss':           'plss-layer',
     'blm-roads':      'blm-roads-layer',
-    'lidar':          'usgs-hillshade-layer',
+    'lidar':          ['usgs-hillshade-layer', 'hillshade-water-mask'],
     'contours':       ['topo-layer', 'topo-labels'],
     'hist-mines':     'hist-mines-layer',
     'gold-occurrences': 'gold-occurrences-layer',
