@@ -1110,7 +1110,7 @@ function startMap(token) {
       const c = map.getCenter();
       const lat = c.lat >= 0 ? c.lat.toFixed(5) + '\u00b0N' : Math.abs(c.lat).toFixed(5) + '\u00b0S';
       const lng = c.lng >= 0 ? c.lng.toFixed(5) + '\u00b0E' : Math.abs(c.lng).toFixed(5) + '\u00b0W';
-      coordEl.textContent = lat + '  ' + lng;
+      coordEl.textContent = lat + '  ' + lng + '  z' + map.getZoom().toFixed(1);
     };
     map.on('move', updateCoords);
     updateCoords();
