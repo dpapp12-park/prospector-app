@@ -381,6 +381,32 @@ window.PROSPECTOR_CONFIG = window.UNWORKED_GOLD_CONFIG;
 <div id="map"></div>
 <div id="zoom-readout">z—</div>
 
+<!-- Custom Hillshade test panel (top-center, next to zoom readout) -->
+<!-- Placed here at body-root to avoid the rockid-pro-gate unclosed-div bug (HTML.1). -->
+<div id="custom-hs-panel" style="position:fixed; top:12px; left:calc(50% + 60px); z-index:9999; background:rgba(0,0,0,0.85); border:2px solid #F0C040; border-radius:6px; padding:8px 12px; font-family:'DM Sans',sans-serif; color:#F0C040; box-shadow:0 2px 12px rgba(0,0,0,0.5); min-width:260px;">
+  <div style="display:flex; align-items:center; justify-content:space-between; gap:10px; font-weight:700; font-size:13px;">
+    <span>Custom Hillshade</span>
+    <button id="custom-hs-toggle" onclick="toggleCustomHillshade()" style="background:#333; color:#F0C040; border:1px solid #F0C040; border-radius:4px; padding:3px 10px; font-size:11px; cursor:pointer;">OFF</button>
+  </div>
+  <div style="margin-top:8px; font-size:11px; color:#ccc;">
+    <div style="display:flex; justify-content:space-between; margin-top:6px;">
+      <span>Azimuth</span><span id="lidar-azimuth-value" style="color:#F0C040;">315&deg;</span>
+    </div>
+    <input type="range" id="lidar-azimuth-slider" min="0" max="360" value="315" step="1" oninput="updateCustomParam('azimuth', this.value)" style="width:100%;">
+    <div style="display:flex; justify-content:space-between; margin-top:6px;">
+      <span>Altitude</span><span id="lidar-altitude-value" style="color:#F0C040;">45&deg;</span>
+    </div>
+    <input type="range" id="lidar-altitude-slider" min="1" max="90" value="45" step="1" oninput="updateCustomParam('altitude', this.value)" style="width:100%;">
+    <div style="display:flex; justify-content:space-between; margin-top:6px;">
+      <span>Z-Factor</span><span id="lidar-zfactor-value" style="color:#F0C040;">2&times;</span>
+    </div>
+    <input type="range" id="lidar-zfactor-slider" min="0.5" max="10" value="2" step="0.1" oninput="updateCustomParam('zfactor', this.value)" style="width:100%;">
+    <div style="text-align:right; margin-top:6px;">
+      <button onclick="resetCustomHillshade()" style="background:#333; color:#ccc; border:1px solid #666; border-radius:4px; padding:3px 10px; font-size:11px; cursor:pointer;">Reset</button>
+    </div>
+  </div>
+</div>
+
 <!-- Overlay -->
 <div id="overlay" onclick="closeAllPanels()"></div>
 
@@ -3542,7 +3568,10 @@ function registerCustomHillshadeLayer() {
 function toggleCustomHillshade() {
   customHillshadeActive = !customHillshadeActive;
   const toggleEl = document.getElementById('custom-hs-toggle');
-  if (toggleEl) toggleEl.classList.toggle('on', customHillshadeActive);
+  if (toggleEl) {
+    toggleEl.classList.toggle('on', customHillshadeActive);
+    toggleEl.textContent = customHillshadeActive ? 'ON' : 'OFF';
+  }
   if (map && map.getLayer('custom-hs-layer')) {
     map.setLayoutProperty('custom-hs-layer', 'visibility',
       customHillshadeActive ? 'visible' : 'none');
@@ -5304,42 +5333,6 @@ window.addEventListener('load', async () => {
   }
 });
 </script>
-
-<!-- ========================================================== -->
-<!-- Custom Hillshade Standalone Panel                           -->
-<!-- Always-visible test panel, top-right of map.                -->
-<!-- Independent of the layer picker. Has its own on/off switch  -->
-<!-- that directly toggles its own map source/layer.             -->
-<!-- ========================================================== -->
-<div class="custom-hs-panel" id="custom-hs-panel">
-  <div class="custom-hs-header">
-    <span class="custom-hs-title">Custom Hillshade</span>
-    <div class="custom-hs-toggle" id="custom-hs-toggle" onclick="toggleCustomHillshade()"></div>
-  </div>
-  <div class="custom-hs-body">
-    <div class="custom-hs-reset-row">
-      <button class="lidar-reset-btn" onclick="resetCustomHillshade()">Reset</button>
-    </div>
-    <div class="lidar-slider-row">
-      <span>Azimuth (sun direction)</span>
-      <span class="lidar-slider-value" id="lidar-azimuth-value">315&deg;</span>
-    </div>
-    <input type="range" class="lidar-slider" id="lidar-azimuth-slider" min="0" max="360" value="315" step="1" oninput="updateCustomParam('azimuth', this.value)">
-    <div class="lidar-slider-ticks"><span>N 0&deg;</span><span>E 90&deg;</span><span>S 180&deg;</span><span>W 270&deg;</span><span>N 360&deg;</span></div>
-    <div class="lidar-slider-row">
-      <span>Altitude (sun angle)</span>
-      <span class="lidar-slider-value" id="lidar-altitude-value">45&deg;</span>
-    </div>
-    <input type="range" class="lidar-slider" id="lidar-altitude-slider" min="1" max="90" value="45" step="1" oninput="updateCustomParam('altitude', this.value)">
-    <div class="lidar-slider-ticks"><span>Low 1&deg;</span><span>High 90&deg;</span></div>
-    <div class="lidar-slider-row">
-      <span>Z-Factor (exaggeration)</span>
-      <span class="lidar-slider-value" id="lidar-zfactor-value">2&times;</span>
-    </div>
-    <input type="range" class="lidar-slider" id="lidar-zfactor-slider" min="0.5" max="10" value="2" step="0.1" oninput="updateCustomParam('zfactor', this.value)">
-    <div class="lidar-slider-ticks"><span>0.5&times;</span><span>5&times;</span><span>10&times;</span></div>
-  </div>
-</div>
 
 </body>
 </html>
