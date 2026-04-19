@@ -1244,38 +1244,6 @@ window.PROSPECTOR_CONFIG = window.UNWORKED_GOLD_CONFIG;
   </div>
 </div>
 
-<!-- Custom Hillshade Modal (draggable, opens when 'custom' style is focused) -->
-<div class="lidar-modal-backdrop" id="lidar-modal-backdrop" style="display:none;"></div>
-<div class="lidar-modal" id="lidar-modal" style="display:none;">
-  <div class="lidar-modal-header" id="lidar-modal-header">
-    <span class="lidar-modal-title">Custom Hillshade</span>
-    <button class="lidar-modal-close" onclick="closeCustomHillshadeModal()" aria-label="Close">&times;</button>
-  </div>
-  <div class="lidar-modal-body">
-    <div class="lidar-modal-reset-row">
-      <button class="lidar-reset-btn" onclick="resetCustomHillshade()">Reset</button>
-    </div>
-    <div class="lidar-slider-row">
-      <span>Azimuth (sun direction)</span>
-      <span class="lidar-slider-value" id="lidar-azimuth-value">315&deg;</span>
-    </div>
-    <input type="range" class="lidar-slider" id="lidar-azimuth-slider" min="0" max="360" value="315" step="1" oninput="updateCustomParam('azimuth', this.value)">
-    <div class="lidar-slider-ticks"><span>N 0&deg;</span><span>E 90&deg;</span><span>S 180&deg;</span><span>W 270&deg;</span><span>N 360&deg;</span></div>
-    <div class="lidar-slider-row">
-      <span>Altitude (sun angle)</span>
-      <span class="lidar-slider-value" id="lidar-altitude-value">45&deg;</span>
-    </div>
-    <input type="range" class="lidar-slider" id="lidar-altitude-slider" min="1" max="90" value="45" step="1" oninput="updateCustomParam('altitude', this.value)">
-    <div class="lidar-slider-ticks"><span>Low 1&deg;</span><span>High 90&deg;</span></div>
-    <div class="lidar-slider-row">
-      <span>Z-Factor (exaggeration)</span>
-      <span class="lidar-slider-value" id="lidar-zfactor-value">2&times;</span>
-    </div>
-    <input type="range" class="lidar-slider" id="lidar-zfactor-slider" min="0.5" max="10" value="2" step="0.1" oninput="updateCustomParam('zfactor', this.value)">
-    <div class="lidar-slider-ticks"><span>0.5&times;</span><span>5&times;</span><span>10&times;</span></div>
-  </div>
-</div>
-
 <script>
 let map = null;
 let userLocation = null; // { lng, lat } set when user hits GPS button
@@ -5390,5 +5358,39 @@ window.addEventListener('load', async () => {
   }
 });
 </script>
+
+<!-- Custom Hillshade Modal (draggable, opens when 'custom' style is focused). -->
+<!-- Placed at body-root (not inside any panel) to avoid being hidden by parent display:none. -->
+<div class="lidar-modal-backdrop" id="lidar-modal-backdrop" style="display:none;"></div>
+<div class="lidar-modal" id="lidar-modal" style="display:none;">
+  <div class="lidar-modal-header" id="lidar-modal-header">
+    <span class="lidar-modal-title">Custom Hillshade</span>
+    <button class="lidar-modal-close" onclick="closeCustomHillshadeModal()" aria-label="Close">&times;</button>
+  </div>
+  <div class="lidar-modal-body">
+    <div class="lidar-modal-reset-row">
+      <button class="lidar-reset-btn" onclick="resetCustomHillshade()">Reset</button>
+    </div>
+    <div class="lidar-slider-row">
+      <span>Azimuth (sun direction)</span>
+      <span class="lidar-slider-value" id="lidar-azimuth-value">315&deg;</span>
+    </div>
+    <input type="range" class="lidar-slider" id="lidar-azimuth-slider" min="0" max="360" value="315" step="1" oninput="updateCustomParam('azimuth', this.value)">
+    <div class="lidar-slider-ticks"><span>N 0&deg;</span><span>E 90&deg;</span><span>S 180&deg;</span><span>W 270&deg;</span><span>N 360&deg;</span></div>
+    <div class="lidar-slider-row">
+      <span>Altitude (sun angle)</span>
+      <span class="lidar-slider-value" id="lidar-altitude-value">45&deg;</span>
+    </div>
+    <input type="range" class="lidar-slider" id="lidar-altitude-slider" min="1" max="90" value="45" step="1" oninput="updateCustomParam('altitude', this.value)">
+    <div class="lidar-slider-ticks"><span>Low 1&deg;</span><span>High 90&deg;</span></div>
+    <div class="lidar-slider-row">
+      <span>Z-Factor (exaggeration)</span>
+      <span class="lidar-slider-value" id="lidar-zfactor-value">2&times;</span>
+    </div>
+    <input type="range" class="lidar-slider" id="lidar-zfactor-slider" min="0.5" max="10" value="2" step="0.1" oninput="updateCustomParam('zfactor', this.value)">
+    <div class="lidar-slider-ticks"><span>0.5&times;</span><span>5&times;</span><span>10&times;</span></div>
+  </div>
+</div>
+
 </body>
 </html>
