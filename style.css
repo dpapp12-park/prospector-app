@@ -2530,3 +2530,332 @@
     justify-content: flex-end;
     margin-bottom: 4px;
   }
+/* ========================================================== */
+/* CSS extracted from index.html inline <style> block         */
+/* Extracted: April 19, 2026 (Session 7)                      */
+/* Original location: index.html lines 55-373                 */
+/*                                                            */
+/* TO MERGE: append this file's contents to your existing     */
+/*   style.css, OR paste these rules at the top of style.css. */
+/* The existing <link rel="stylesheet" href="style.css">      */
+/*   tag at index.html line 53 will pick it up automatically. */
+/* Bump the cache-bust version: style.css?v=20260404 -> v=... */
+/* ========================================================== */
+
+  /* ── GOLD SPOT PRICE BAR ── */
+  #gold-price-bar {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 20px 12px;
+    border-bottom: 1px solid rgba(201,168,76,0.15);
+    background: rgba(201,168,76,0.04);
+  }
+  #gold-price-label {
+    font-family: 'DM Mono', monospace;
+    font-size: 9px;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: var(--dust);
+  }
+  #gold-price-value {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 22px;
+    color: #F0C040;
+    letter-spacing: 0.04em;
+    line-height: 1;
+  }
+  #gold-price-change {
+    font-family: 'DM Mono', monospace;
+    font-size: 10px;
+    padding: 2px 7px;
+    border-radius: 4px;
+  }
+  #gold-price-change.up   { color: #4CAF50; background: rgba(76,175,80,0.13); }
+  #gold-price-change.down { color: #F44336; background: rgba(244,67,54,0.13); }
+  #gold-price-ts {
+    font-family: 'DM Mono', monospace;
+    font-size: 9px;
+    color: var(--stone);
+    margin-left: auto;
+  }
+
+  /* ── ACTIVE LAYER INDICATOR BAR ── */
+  #active-layer-bar {
+    position: fixed;
+    bottom: 72px;
+    left: 0; right: 0;
+    z-index: 100;
+    padding: 0 8px 0 12px;
+    pointer-events: none;
+    opacity: 0;
+    transform: translateY(6px);
+    transition: opacity 0.2s ease, transform 0.2s ease;
+  }
+  #active-layer-bar.visible {
+    opacity: 1;
+    transform: translateY(0);
+    pointer-events: auto;
+  }
+  #active-layer-chips {
+    display: flex;
+    gap: 5px;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+    padding: 4px 0;
+  }
+  #active-layer-chips::-webkit-scrollbar { display: none; }
+  .layer-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    background: rgba(13,12,9,0.88);
+    border: 1px solid rgba(201,168,76,0.4);
+    border-radius: 20px;
+    padding: 4px 10px 4px 9px;
+    font-family: 'DM Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 0.03em;
+    color: #C9A84C;
+    white-space: nowrap;
+    cursor: pointer;
+    backdrop-filter: blur(14px);
+    -webkit-backdrop-filter: blur(14px);
+    flex-shrink: 0;
+    transition: background 0.12s;
+  }
+  .layer-chip:hover { background: rgba(201,168,76,0.16); }
+  .layer-chip .chip-x {
+    font-size: 10px;
+    color: rgba(201,168,76,0.55);
+    margin-left: 1px;
+    line-height: 1;
+  }
+
+  /* ── COORDINATE DISPLAY ── */
+  #coord-display {
+    position: fixed;
+    bottom: 28px;
+    left: 10px;
+    z-index: 10;
+    font-family: 'DM Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 0.05em;
+    color: rgba(196,168,130,0.75);
+    background: rgba(13,12,9,0.52);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    padding: 3px 9px;
+    border-radius: 4px;
+    pointer-events: none;
+    user-select: none;
+  }
+  #zoom-readout {
+    position: fixed;
+    top: 12px;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 9999;
+    font-family: 'DM Mono', monospace;
+    font-size: 18px;
+    font-weight: 700;
+    color: #F0C040;
+    background: rgba(0,0,0,0.85);
+    padding: 8px 16px;
+    border-radius: 6px;
+    border: 2px solid #F0C040;
+    pointer-events: none;
+    user-select: none;
+    box-shadow: 0 2px 12px rgba(0,0,0,0.5);
+  }
+
+  /* ── LIDAR HILLSHADE PICKER ── */
+  .lidar-style-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 9px 14px 9px 22px;
+    cursor: pointer;
+    transition: background 0.1s;
+    border-left: 2px solid transparent;
+  }
+  .lidar-style-row:hover {
+    background: rgba(201,168,76,0.04);
+  }
+  .lidar-style-row.focused {
+    background: rgba(201,168,76,0.08);
+    border-left-color: #C9A84C;
+  }
+  .lidar-badge {
+    font-family: 'DM Mono', monospace;
+    font-size: 8.5px;
+    letter-spacing: 0.08em;
+    padding: 2px 6px;
+    border-radius: 10px;
+    font-weight: 500;
+    margin-right: 4px;
+  }
+  .lidar-badge.overlay {
+    color: #E8A95C;
+    background: rgba(232,169,92,0.12);
+    border: 1px solid rgba(232,169,92,0.25);
+  }
+  .lidar-badge.special {
+    color: #9FE1CB;
+    background: rgba(159,225,203,0.10);
+    border: 1px solid rgba(159,225,203,0.22);
+  }
+  .lidar-controls {
+    margin-top: 8px;
+    padding: 14px 16px 18px;
+    border-top: 1px solid rgba(201,168,76,0.15);
+    background: rgba(13,12,9,0.4);
+  }
+  .lidar-controls-label {
+    font-family: 'DM Mono', monospace;
+    font-size: 9px;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--dust, #9A8A6A);
+    margin-bottom: 4px;
+  }
+  .lidar-focused-name {
+    font-family: 'DM Sans', sans-serif;
+    font-size: 13.5px;
+    font-weight: 500;
+    color: #C9A84C;
+    margin-bottom: 12px;
+  }
+  .lidar-slider-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 12px;
+    color: var(--dust, #9A8A6A);
+    margin: 10px 0 5px;
+  }
+  .lidar-slider-value {
+    color: #F0C040;
+    font-weight: 500;
+    font-family: 'DM Mono', monospace;
+  }
+  .lidar-slider {
+    width: 100%;
+    -webkit-appearance: none;
+    appearance: none;
+    height: 4px;
+    background: rgba(201,168,76,0.18);
+    border-radius: 2px;
+    outline: none;
+    margin: 0;
+    padding: 0;
+    cursor: pointer;
+  }
+  .lidar-slider::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 16px;
+    height: 16px;
+    background: #F0C040;
+    border-radius: 50%;
+    cursor: pointer;
+    border: none;
+  }
+  .lidar-slider::-moz-range-thumb {
+    width: 16px;
+    height: 16px;
+    background: #F0C040;
+    border-radius: 50%;
+    cursor: pointer;
+    border: none;
+  }
+  .lidar-slider-ticks {
+    display: flex;
+    justify-content: space-between;
+    font-family: 'DM Mono', monospace;
+    font-size: 9px;
+    color: rgba(154,138,106,0.7);
+    margin-top: 3px;
+  }
+  .lidar-reset-btn {
+    font-family: 'DM Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 0.06em;
+    background: transparent;
+    color: var(--dust, #9A8A6A);
+    border: 1px solid rgba(201,168,76,0.2);
+    padding: 3px 9px;
+    border-radius: 4px;
+    cursor: pointer;
+  }
+  .lidar-reset-btn:hover {
+    color: #F0C040;
+    border-color: rgba(240,192,64,0.4);
+  }
+
+  /* ── CUSTOM HILLSHADE STANDALONE PANEL (always visible, top-right of map) ── */
+  .custom-hs-panel {
+    position: fixed;
+    top: 80px;
+    right: 24px;
+    width: 300px;
+    background: rgba(20,18,14,0.96);
+    border: 1px solid rgba(201,168,76,0.35);
+    border-radius: 8px;
+    box-shadow: 0 8px 20px rgba(0,0,0,0.55);
+    z-index: 500;
+    font-family: 'DM Sans', sans-serif;
+    color: var(--bone, #F5E6C8);
+  }
+  .custom-hs-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px 14px;
+    border-bottom: 1px solid rgba(201,168,76,0.18);
+    background: rgba(13,12,9,0.6);
+    border-radius: 8px 8px 0 0;
+    user-select: none;
+  }
+  .custom-hs-title {
+    font-weight: 500;
+    color: #C9A84C;
+    font-size: 13px;
+    letter-spacing: 0.02em;
+  }
+  .custom-hs-toggle {
+    cursor: pointer;
+    width: 38px;
+    height: 20px;
+    background: rgba(201,168,76,0.18);
+    border-radius: 10px;
+    position: relative;
+    transition: background 0.15s;
+  }
+  .custom-hs-toggle.on {
+    background: #C9A84C;
+  }
+  .custom-hs-toggle::after {
+    content: '';
+    position: absolute;
+    top: 2px;
+    left: 2px;
+    width: 16px;
+    height: 16px;
+    background: #F5E6C8;
+    border-radius: 50%;
+    transition: left 0.15s;
+  }
+  .custom-hs-toggle.on::after {
+    left: 20px;
+  }
+  .custom-hs-body {
+    padding: 12px 16px 16px;
+  }
+  .custom-hs-reset-row {
+    display: flex;
+    justify-content: flex-end;
+    margin-bottom: 4px;
+  }
