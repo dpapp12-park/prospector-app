@@ -180,6 +180,146 @@ window.PROSPECTOR_CONFIG = window.UNWORKED_GOLD_CONFIG;
     user-select: none;
     box-shadow: 0 2px 12px rgba(0,0,0,0.5);
   }
+
+  /* ── LIDAR HILLSHADE PICKER ── */
+  .lidar-style-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 9px 14px 9px 22px;
+    cursor: pointer;
+    transition: background 0.1s;
+    border-left: 2px solid transparent;
+  }
+  .lidar-style-row:hover {
+    background: rgba(201,168,76,0.04);
+  }
+  .lidar-style-row.focused {
+    background: rgba(201,168,76,0.08);
+    border-left-color: #C9A84C;
+  }
+  .lidar-badge {
+    font-family: 'DM Mono', monospace;
+    font-size: 8.5px;
+    letter-spacing: 0.08em;
+    padding: 2px 6px;
+    border-radius: 10px;
+    font-weight: 500;
+    margin-right: 4px;
+  }
+  .lidar-badge.overlay {
+    color: #E8A95C;
+    background: rgba(232,169,92,0.12);
+    border: 1px solid rgba(232,169,92,0.25);
+  }
+  .lidar-badge.special {
+    color: #9FE1CB;
+    background: rgba(159,225,203,0.10);
+    border: 1px solid rgba(159,225,203,0.22);
+  }
+  .lidar-controls {
+    margin-top: 8px;
+    padding: 14px 16px 18px;
+    border-top: 1px solid rgba(201,168,76,0.15);
+    background: rgba(13,12,9,0.4);
+  }
+  .lidar-controls-label {
+    font-family: 'DM Mono', monospace;
+    font-size: 9px;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--dust, #9A8A6A);
+    margin-bottom: 4px;
+  }
+  .lidar-focused-name {
+    font-family: 'DM Sans', sans-serif;
+    font-size: 13.5px;
+    font-weight: 500;
+    color: #C9A84C;
+    margin-bottom: 12px;
+  }
+  .lidar-slider-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 12px;
+    color: var(--dust, #9A8A6A);
+    margin: 10px 0 5px;
+  }
+  .lidar-slider-value {
+    color: #F0C040;
+    font-weight: 500;
+    font-family: 'DM Mono', monospace;
+  }
+  .lidar-slider {
+    width: 100%;
+    -webkit-appearance: none;
+    appearance: none;
+    height: 4px;
+    background: rgba(201,168,76,0.18);
+    border-radius: 2px;
+    outline: none;
+    margin: 0;
+    padding: 0;
+    cursor: pointer;
+  }
+  .lidar-slider::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 16px;
+    height: 16px;
+    background: #F0C040;
+    border-radius: 50%;
+    cursor: pointer;
+    border: none;
+  }
+  .lidar-slider::-moz-range-thumb {
+    width: 16px;
+    height: 16px;
+    background: #F0C040;
+    border-radius: 50%;
+    cursor: pointer;
+    border: none;
+  }
+  .lidar-slider-ticks {
+    display: flex;
+    justify-content: space-between;
+    font-family: 'DM Mono', monospace;
+    font-size: 9px;
+    color: rgba(154,138,106,0.7);
+    margin-top: 3px;
+  }
+  .lidar-custom-params {
+    margin-top: 18px;
+    padding-top: 14px;
+    border-top: 1px solid rgba(201,168,76,0.12);
+  }
+  .lidar-custom-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--bone, #F5E6C8);
+    margin-bottom: 6px;
+  }
+  .lidar-reset-btn {
+    font-family: 'DM Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 0.06em;
+    background: transparent;
+    color: var(--dust, #9A8A6A);
+    border: 1px solid rgba(201,168,76,0.2);
+    padding: 3px 9px;
+    border-radius: 4px;
+    cursor: pointer;
+  }
+  .lidar-reset-btn:hover {
+    color: #F0C040;
+    border-color: rgba(240,192,64,0.4);
+  }
 </style>
 </head>
 <body>
@@ -489,12 +629,119 @@ window.PROSPECTOR_CONFIG = window.UNWORKED_GOLD_CONFIG;
     </div>
     <div class="group-divider"></div>
 
+    <!-- ── LIDAR HILLSHADE (11 styles + Custom Generator) ── -->
+    <div class="layer-group is-collapsed" id="group-lidar">
+      <div class="group-header" onclick="toggleGroup('lidar')">
+        <div class="group-header-left">
+          <div class="group-title">LiDAR Hillshade</div>
+          <div class="group-count"><span id="lidar-active-count">1</span>/11 On</div>
+        </div>
+        <div class="group-arrow" id="arrow-lidar">▼</div>
+      </div>
+      <div class="group-body collapsed" id="body-lidar">
+        <div class="lidar-style-row" onclick="toggleLidarStyle('hillshade-gray')" id="lidar-row-hillshade-gray">
+          <div class="layer-bullet on" id="lidar-bullet-hillshade-gray">●</div>
+          <span class="layer-name on" id="lidar-name-hillshade-gray">Standard Gray Hillshade</span>
+          <button class="info-btn" onclick="showLayerInfo(event,'lidar-hillshade-gray')">i</button>
+        </div>
+        <div class="lidar-style-row" onclick="toggleLidarStyle('hillshade-multi')" id="lidar-row-hillshade-multi">
+          <div class="layer-bullet" id="lidar-bullet-hillshade-multi">●</div>
+          <span class="layer-name" id="lidar-name-hillshade-multi">Hillshade Multidirectional</span>
+          <button class="info-btn" onclick="showLayerInfo(event,'lidar-hillshade-multi')">i</button>
+        </div>
+        <div class="lidar-style-row" onclick="toggleLidarStyle('hillshade-tinted')" id="lidar-row-hillshade-tinted">
+          <div class="layer-bullet" id="lidar-bullet-hillshade-tinted">●</div>
+          <span class="layer-name" id="lidar-name-hillshade-tinted">Hillshade Elevation Tinted</span>
+          <button class="info-btn" onclick="showLayerInfo(event,'lidar-hillshade-tinted')">i</button>
+        </div>
+        <div class="lidar-style-row" onclick="toggleLidarStyle('hillshade-stretch')" id="lidar-row-hillshade-stretch">
+          <div class="layer-bullet" id="lidar-bullet-hillshade-stretch">●</div>
+          <span class="layer-name" id="lidar-name-hillshade-stretch">Hillshade Gray-Stretch</span>
+          <button class="info-btn" onclick="showLayerInfo(event,'lidar-hillshade-stretch')">i</button>
+        </div>
+        <div class="lidar-style-row" onclick="toggleLidarStyle('low-angle')" id="lidar-row-low-angle">
+          <div class="layer-bullet" id="lidar-bullet-low-angle">●</div>
+          <span class="layer-name" id="lidar-name-low-angle">Low Angle Hillshade</span>
+          <button class="info-btn" onclick="showLayerInfo(event,'lidar-low-angle')">i</button>
+        </div>
+        <div class="lidar-style-row" onclick="toggleLidarStyle('east-lit')" id="lidar-row-east-lit">
+          <div class="layer-bullet" id="lidar-bullet-east-lit">●</div>
+          <span class="layer-name" id="lidar-name-east-lit">East-Lit Hillshade</span>
+          <button class="info-btn" onclick="showLayerInfo(event,'lidar-east-lit')">i</button>
+        </div>
+        <div class="lidar-style-row" onclick="toggleLidarStyle('south-lit')" id="lidar-row-south-lit">
+          <div class="layer-bullet" id="lidar-bullet-south-lit">●</div>
+          <span class="layer-name" id="lidar-name-south-lit">South-Lit Hillshade</span>
+          <button class="info-btn" onclick="showLayerInfo(event,'lidar-south-lit')">i</button>
+        </div>
+        <div class="lidar-style-row" onclick="toggleLidarStyle('slope-map')" id="lidar-row-slope-map">
+          <div class="layer-bullet" id="lidar-bullet-slope-map">●</div>
+          <span class="layer-name" id="lidar-name-slope-map">Slope Map</span>
+          <button class="info-btn" onclick="showLayerInfo(event,'lidar-slope-map')">i</button>
+        </div>
+        <div class="lidar-style-row" onclick="toggleLidarStyle('aspect-map')" id="lidar-row-aspect-map">
+          <div class="layer-bullet" id="lidar-bullet-aspect-map">●</div>
+          <span class="layer-name" id="lidar-name-aspect-map">Aspect Map</span>
+          <button class="info-btn" onclick="showLayerInfo(event,'lidar-aspect-map')">i</button>
+        </div>
+        <div class="lidar-style-row" onclick="toggleLidarStyle('contour')" id="lidar-row-contour">
+          <div class="layer-bullet" id="lidar-bullet-contour">●</div>
+          <span class="layer-name" id="lidar-name-contour">Contour Smoothed 25</span>
+          <span class="lidar-badge overlay">OVERLAY</span>
+          <button class="info-btn" onclick="showLayerInfo(event,'lidar-contour')">i</button>
+        </div>
+        <div class="lidar-style-row" onclick="toggleLidarStyle('custom')" id="lidar-row-custom">
+          <div class="layer-bullet" id="lidar-bullet-custom">●</div>
+          <span class="layer-name" id="lidar-name-custom">Custom Hillshade Generator</span>
+          <span class="lidar-badge special">SPECIAL</span>
+          <button class="info-btn" onclick="showLayerInfo(event,'lidar-custom')">i</button>
+        </div>
+
+        <!-- Layer Controls (focused layer opacity + Custom params) -->
+        <div class="lidar-controls" id="lidar-controls">
+          <div class="lidar-controls-label">Layer Controls</div>
+          <div class="lidar-focused-name" id="lidar-focused-name">Standard Gray Hillshade</div>
+          <div class="lidar-slider-row">
+            <span>Opacity</span>
+            <span class="lidar-slider-value" id="lidar-opacity-value">100%</span>
+          </div>
+          <input type="range" class="lidar-slider" id="lidar-opacity-slider" min="0" max="100" value="100" oninput="updateLidarOpacity(this.value)">
+
+          <div class="lidar-custom-params" id="lidar-custom-params" style="display:none;">
+            <div class="lidar-custom-header">
+              <span>Hillshade Parameters</span>
+              <button class="lidar-reset-btn" onclick="resetCustomHillshade()">Reset</button>
+            </div>
+            <div class="lidar-slider-row">
+              <span>Azimuth (sun direction)</span>
+              <span class="lidar-slider-value" id="lidar-azimuth-value">315&deg;</span>
+            </div>
+            <input type="range" class="lidar-slider" id="lidar-azimuth-slider" min="0" max="360" value="315" step="1" oninput="updateCustomParam('azimuth', this.value)">
+            <div class="lidar-slider-ticks"><span>N 0&deg;</span><span>E 90&deg;</span><span>S 180&deg;</span><span>W 270&deg;</span><span>N 360&deg;</span></div>
+            <div class="lidar-slider-row">
+              <span>Altitude (sun angle)</span>
+              <span class="lidar-slider-value" id="lidar-altitude-value">45&deg;</span>
+            </div>
+            <input type="range" class="lidar-slider" id="lidar-altitude-slider" min="1" max="90" value="45" step="1" oninput="updateCustomParam('altitude', this.value)">
+            <div class="lidar-slider-ticks"><span>Low 1&deg;</span><span>High 90&deg;</span></div>
+            <div class="lidar-slider-row">
+              <span>Z-Factor (exaggeration)</span>
+              <span class="lidar-slider-value" id="lidar-zfactor-value">2&times;</span>
+            </div>
+            <input type="range" class="lidar-slider" id="lidar-zfactor-slider" min="0.5" max="10" value="2" step="0.1" oninput="updateCustomParam('zfactor', this.value)">
+            <div class="lidar-slider-ticks"><span>0.5&times;</span><span>5&times;</span><span>10&times;</span></div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="group-divider"></div>
+
     <!-- ── TERRAIN & OVERLAYS ── -->
     <div class="layer-group is-collapsed" id="group-terrain">
       <div class="group-header" onclick="toggleGroup('terrain')">
         <div class="group-header-left">
           <div class="group-title">Terrain & Overlays</div>
-          <div class="group-count">3 Layers</div>
+          <div class="group-count">2 Layers</div>
         </div>
         <div class="group-arrow" id="arrow-terrain">▼</div>
       </div>
@@ -503,11 +750,6 @@ window.PROSPECTOR_CONFIG = window.UNWORKED_GOLD_CONFIG;
           <div class="layer-bullet" id="bullet-terrain-3d">●</div>
           <span class="layer-name" id="name-terrain-3d">3D Terrain</span>
           <button class="info-btn" onclick="showLayerInfo(event,'terrain-3d')">i</button>
-        </div>
-        <div class="layer-row" onclick="toggleLayer('lidar')">
-          <div class="layer-bullet" id="bullet-lidar">●</div>
-          <span class="layer-name" id="name-lidar">LiDAR Hillshade</span>
-          <button class="info-btn" onclick="showLayerInfo(event,'lidar')">i</button>
         </div>
         <div class="layer-row" onclick="toggleLayer('contours')">
           <div class="layer-bullet" id="bullet-contours">●</div>
@@ -994,7 +1236,6 @@ let layerState = {
   'plss': false,
   'blm-roads': false,
   'terrain-3d': true,
-  'lidar': false,
   'contours': false,
   'gold-occurrences': false,
   'hist-mines': false,
@@ -1014,6 +1255,32 @@ let layerState = {
   'lode-heatmap': false,
   'placer-density': false
 };
+
+// ── LIDAR HILLSHADE STATE ──────────────────────────────
+// 11 USGS 3DEP styles + Custom Hillshade Generator.
+// All render via hillshade-proxy.dpapp12.workers.dev →
+// elevation.nationalmap.gov/.../exportImage, 24h edge cache.
+const LIDAR_STYLES = [
+  { id: 'hillshade-gray',    label: 'Standard Gray Hillshade',    type: 'named', rasterFunction: 'Hillshade Gray' },
+  { id: 'hillshade-multi',   label: 'Hillshade Multidirectional', type: 'named', rasterFunction: 'Hillshade Multidirectional',
+    paint: { 'raster-opacity': 1.0, 'raster-contrast': 0.35, 'raster-brightness-max': 0.92 } },
+  { id: 'hillshade-tinted',  label: 'Hillshade Elevation Tinted', type: 'named', rasterFunction: 'Hillshade Elevation Tinted' },
+  { id: 'hillshade-stretch', label: 'Hillshade Gray-Stretch',     type: 'named', rasterFunction: 'Hillshade Gray-Stretch' },
+  { id: 'low-angle',         label: 'Low Angle Hillshade',        type: 'param', azimuth: 315, altitude: 15, zfactor: 2 },
+  { id: 'east-lit',          label: 'East-Lit Hillshade',         type: 'param', azimuth: 90,  altitude: 45, zfactor: 2 },
+  { id: 'south-lit',         label: 'South-Lit Hillshade',        type: 'param', azimuth: 180, altitude: 45, zfactor: 2 },
+  { id: 'slope-map',         label: 'Slope Map',                  type: 'named', rasterFunction: 'Slope Map' },
+  { id: 'aspect-map',        label: 'Aspect Map',                 type: 'named', rasterFunction: 'Aspect Map' },
+  { id: 'contour',           label: 'Contour Smoothed 25',        type: 'named', rasterFunction: 'Contour Smoothed 25', allowRetry: true },
+  { id: 'custom',            label: 'Custom Hillshade',           type: 'custom' }
+];
+let activeLidarStyles = new Set(['hillshade-gray']);
+let focusedLidarId = 'hillshade-gray';
+let lidarLayerOpacity = {};
+LIDAR_STYLES.forEach(s => { lidarLayerOpacity[s.id] = 100; });
+let customHillshadeParams = { azimuth: 315, altitude: 45, zfactor: 2 };
+let lidarCustomDebounceTimer = null;
+
 let layerPanelOpen = false;
 let styleSwitcherOpen = false;
 let findPanelOpen = false;
@@ -2246,25 +2513,13 @@ function addDemoLayers() {
 
   // fetchBLMBoundaries defined globally below
 
-  // ── USGS 3DEP HILLSHADE (nationwide, via Cloudflare edge cache) ──
-  // Requests go to hillshade-proxy.dpapp12.workers.dev, which forwards to
-  // USGS 3DEPElevation/exportImage and caches responses at edge for 24h.
-  // First user per tile pays USGS render latency (~2s), rest get ~50ms.
-  map.addSource('usgs-hillshade-src', {
-    type: 'raster',
-    tiles: [
-      'https://hillshade-proxy.dpapp12.workers.dev/arcgis/rest/services/3DEPElevation/ImageServer/exportImage?bbox={bbox-epsg-3857}&bboxSR=3857&imageSR=3857&size=256,256&format=png32&transparent=true&renderingRule=%7B%22rasterFunction%22%3A%22Hillshade+Gray%22%7D&f=image'
-    ],
-    tileSize: 256,
-    attribution: 'USGS The National Map: 3D Elevation Program'
-  });
-  map.addLayer({
-    id: 'usgs-hillshade-layer',
-    type: 'raster',
-    source: 'usgs-hillshade-src',
-    layout: { visibility: 'none' },
-    paint: { 'raster-opacity': 1.0 }
-  }, 'active-claims-fill');
+  // ── USGS 3DEP HILLSHADE — 11 styles via renderingRule ──
+  // All styles route through hillshade-proxy.dpapp12.workers.dev,
+  // which forwards to elevation.nationalmap.gov/.../exportImage and
+  // caches at Cloudflare edge 24h. First user per tile pays USGS
+  // render latency (~2s), rest get ~50ms. All 11 layers inserted
+  // below active-claims-fill so claim polygons stay legible.
+  registerLidarLayers();
 
   // ── HILLSHADE OCEAN/WATER MASK ──
   // Paints water polygons opaque blue OVER the hillshade so ocean/lakes
@@ -2280,7 +2535,7 @@ function addDemoLayers() {
     type: 'fill',
     source: 'mapbox-streets-src',
     'source-layer': 'water',
-    layout: { visibility: 'none' },
+    layout: { visibility: (activeLidarStyles.size > 0) ? 'visible' : 'none' },
     paint: {
       'fill-color': '#7BA5C4',
       'fill-opacity': 1.0
@@ -2446,7 +2701,6 @@ function toggleLayer(id) {
     'open-to-claim':  ['open-to-claim-fill', 'open-to-claim-line'],
     'plss':           'plss-layer',
     'blm-roads':      'blm-roads-layer',
-    'lidar':          ['usgs-hillshade-layer', 'hillshade-water-mask'],
     'contours':       ['topo-layer', 'topo-labels'],
     'hist-mines':     'hist-mines-layer',
     'gold-occurrences': 'gold-occurrences-layer',
@@ -2961,7 +3215,6 @@ const LAYER_CHIP_LABELS = {
   'wild-scenic':     '🌊 Wild Scenic',
   'tribal':          '🏔 Tribal',
   'military':        '⚠️ Military',
-  'lidar':           '🗻 LiDAR',
   'contours':        '📈 Contours',
   'terrain-3d':      '⛰ 3D Terrain',
 };
@@ -2976,12 +3229,14 @@ function updateActiveLayerBar() {
     .filter(([id, on]) => on && id !== 'active-claims')
     .map(([id]) => id);
 
-  if (activeIds.length === 0) {
+  const lidarCount = (typeof activeLidarStyles !== 'undefined') ? activeLidarStyles.size : 0;
+
+  if (activeIds.length === 0 && lidarCount === 0) {
     bar.classList.remove('visible');
     return;
   }
 
-  chips.innerHTML = activeIds
+  const chipHtml = activeIds
     .filter(id => LAYER_CHIP_LABELS[id])
     .map(id => `
       <div class="layer-chip" onclick="toggleLayer('${id}')">
@@ -2989,7 +3244,266 @@ function updateActiveLayerBar() {
       </div>`)
     .join('');
 
+  // LiDAR gets one combined chip — focused style when N=1, count when N>1.
+  // Click opens the layer panel so user can customize (at-least-one-on rule
+  // means we don't offer an X to kill it from the chip bar).
+  let lidarChipHtml = '';
+  if (lidarCount > 0) {
+    const focusedStyle = LIDAR_STYLES.find(s => s.id === focusedLidarId);
+    const focusedLabel = focusedStyle ? focusedStyle.label : 'LiDAR Hillshade';
+    const chipLabel = (lidarCount === 1)
+      ? `🗻 ${focusedLabel}`
+      : `🗻 LiDAR Hillshade (${lidarCount})`;
+    lidarChipHtml = `
+      <div class="layer-chip" onclick="toggleLayers()">
+        ${chipLabel}
+      </div>`;
+  }
+
+  chips.innerHTML = chipHtml + lidarChipHtml;
   bar.classList.add('visible');
+}
+
+// ── LIDAR HILLSHADE — URL BUILDERS ──────────────────────
+// buildLidarSourceUrl: named styles use {"rasterFunction":"NAME"}.
+// Parameterized styles (low-angle/east-lit/south-lit) use the
+// "Hillshade" rasterFunction with rasterFunctionArguments for
+// Azimuth/Altitude/ZFactor. Custom delegates to buildCustomHillshadeUrl.
+function buildLidarSourceUrl(styleId) {
+  const style = LIDAR_STYLES.find(s => s.id === styleId);
+  if (!style) return null;
+  let rule;
+  if (style.type === 'named') {
+    rule = { rasterFunction: style.rasterFunction };
+  } else if (style.type === 'param') {
+    rule = {
+      rasterFunction: 'Hillshade',
+      rasterFunctionArguments: {
+        Azimuth:  style.azimuth,
+        Altitude: style.altitude,
+        ZFactor:  style.zfactor
+      }
+    };
+  } else if (style.type === 'custom') {
+    return buildCustomHillshadeUrl();
+  }
+  const encoded = encodeURIComponent(JSON.stringify(rule));
+  return `https://hillshade-proxy.dpapp12.workers.dev/arcgis/rest/services/3DEPElevation/ImageServer/exportImage?bbox={bbox-epsg-3857}&bboxSR=3857&imageSR=3857&size=256,256&format=png32&transparent=true&renderingRule=${encoded}&f=image`;
+}
+
+function buildCustomHillshadeUrl() {
+  const rule = {
+    rasterFunction: 'Hillshade',
+    rasterFunctionArguments: {
+      Azimuth:  Number(customHillshadeParams.azimuth),
+      Altitude: Number(customHillshadeParams.altitude),
+      ZFactor:  Number(customHillshadeParams.zfactor)
+    }
+  };
+  const encoded = encodeURIComponent(JSON.stringify(rule));
+  return `https://hillshade-proxy.dpapp12.workers.dev/arcgis/rest/services/3DEPElevation/ImageServer/exportImage?bbox={bbox-epsg-3857}&bboxSR=3857&imageSR=3857&size=256,256&format=png32&transparent=true&renderingRule=${encoded}&f=image`;
+}
+
+// ── LIDAR HILLSHADE — MAP REGISTRATION ──────────────────
+// Called from addDemoLayers (initial load + setStyle re-init).
+// Adds 11 raster source/layer pairs, all inserted below
+// 'active-claims-fill' so claim polygons remain readable.
+// Visibility per-layer reflects activeLidarStyles Set.
+// Opacity reflects lidarLayerOpacity map (user-adjustable).
+// Per-style paint tuning (e.g. contrast boost for Multidirectional)
+// comes from the style.paint field in LIDAR_STYLES.
+function registerLidarLayers() {
+  if (!map) return;
+  LIDAR_STYLES.forEach(style => {
+    const srcId = `lidar-src-${style.id}`;
+    const lyrId = `lidar-layer-${style.id}`;
+    const url = buildLidarSourceUrl(style.id);
+    if (!url) return;
+
+    if (!map.getSource(srcId)) {
+      map.addSource(srcId, {
+        type: 'raster',
+        tiles: [url],
+        tileSize: 256,
+        attribution: 'USGS The National Map: 3D Elevation Program'
+      });
+    }
+    if (!map.getLayer(lyrId)) {
+      // Start from per-style paint (if any) else default, then overlay
+      // the user's stored opacity for this style.
+      const paint = Object.assign({ 'raster-opacity': 1.0 }, style.paint || {});
+      const storedPct = lidarLayerOpacity[style.id];
+      if (typeof storedPct === 'number') {
+        paint['raster-opacity'] = storedPct / 100;
+      }
+      map.addLayer({
+        id: lyrId,
+        type: 'raster',
+        source: srcId,
+        layout: { visibility: activeLidarStyles.has(style.id) ? 'visible' : 'none' },
+        paint: paint
+      }, 'active-claims-fill');
+    }
+  });
+  // On first mount, mirror state to DOM (handles setStyle re-init too).
+  setFocusedLidarLayer(focusedLidarId);
+  updateLidarActiveCount();
+}
+
+// ── LIDAR HILLSHADE — TOGGLE + FOCUS ────────────────────
+// Click behavior:
+//   inactive row                → turn ON + focus
+//   active but not focused      → set focus (don't toggle off)
+//   active AND focused          → toggle OFF (unless last one on)
+function toggleLidarStyle(styleId) {
+  const style = LIDAR_STYLES.find(s => s.id === styleId);
+  if (!style) return;
+
+  const isActive  = activeLidarStyles.has(styleId);
+  const isFocused = (focusedLidarId === styleId);
+
+  if (!isActive) {
+    activeLidarStyles.add(styleId);
+    focusedLidarId = styleId;
+  } else if (!isFocused) {
+    focusedLidarId = styleId;
+  } else {
+    if (activeLidarStyles.size <= 1) {
+      showStatus('At least one LiDAR style must stay on');
+      return;
+    }
+    activeLidarStyles.delete(styleId);
+    focusedLidarId = Array.from(activeLidarStyles)[0];
+  }
+
+  // Mirror active state to bullets + name classes on every row
+  LIDAR_STYLES.forEach(s => {
+    const bullet = document.getElementById(`lidar-bullet-${s.id}`);
+    const name   = document.getElementById(`lidar-name-${s.id}`);
+    const on     = activeLidarStyles.has(s.id);
+    if (bullet) bullet.classList.toggle('on', on);
+    if (name)   name.classList.toggle('on', on);
+  });
+
+  // Mirror active state to map layer visibility
+  if (map) {
+    LIDAR_STYLES.forEach(s => {
+      const lyrId = `lidar-layer-${s.id}`;
+      if (map.getLayer(lyrId)) {
+        map.setLayoutProperty(lyrId, 'visibility',
+          activeLidarStyles.has(s.id) ? 'visible' : 'none');
+      }
+    });
+  }
+
+  setFocusedLidarLayer(focusedLidarId);
+  syncLidarWaterMask();
+  updateLidarActiveCount();
+  updateActiveLayerBar();
+}
+
+// ── LIDAR HILLSHADE — FOCUSED LAYER UI SYNC ─────────────
+// Updates: focused row border, Layer Controls panel name,
+// Custom params visibility, opacity slider to stored value.
+function setFocusedLidarLayer(styleId) {
+  const style = LIDAR_STYLES.find(s => s.id === styleId);
+  if (!style) return;
+  focusedLidarId = styleId;
+
+  LIDAR_STYLES.forEach(s => {
+    const row = document.getElementById(`lidar-row-${s.id}`);
+    if (row) row.classList.toggle('focused', s.id === styleId);
+  });
+
+  const nameEl = document.getElementById('lidar-focused-name');
+  if (nameEl) nameEl.textContent = style.label;
+
+  // Custom params block visible only when Custom is focused
+  const custom = document.getElementById('lidar-custom-params');
+  if (custom) custom.style.display = (styleId === 'custom') ? '' : 'none';
+
+  // Reflect stored opacity for newly focused layer
+  const slider = document.getElementById('lidar-opacity-slider');
+  const val    = document.getElementById('lidar-opacity-value');
+  const pct    = (typeof lidarLayerOpacity[styleId] === 'number') ? lidarLayerOpacity[styleId] : 100;
+  if (slider) slider.value = pct;
+  if (val)    val.textContent = `${pct}%`;
+}
+
+// ── LIDAR HILLSHADE — OPACITY (focused layer only) ──────
+function updateLidarOpacity(value) {
+  const pct = Number(value);
+  lidarLayerOpacity[focusedLidarId] = pct;
+  const val = document.getElementById('lidar-opacity-value');
+  if (val) val.textContent = `${pct}%`;
+  if (map) {
+    const lyrId = `lidar-layer-${focusedLidarId}`;
+    if (map.getLayer(lyrId)) {
+      map.setPaintProperty(lyrId, 'raster-opacity', pct / 100);
+    }
+  }
+}
+
+// ── LIDAR HILLSHADE — CUSTOM GENERATOR ──────────────────
+// Debounced 300ms so dragging sliders doesn't hammer USGS.
+// Uses source.setTiles() (Mapbox GL v2+) to swap URL in place.
+function updateCustomParam(which, value) {
+  const num = Number(value);
+  customHillshadeParams[which] = num;
+
+  if (which === 'azimuth') {
+    const el = document.getElementById('lidar-azimuth-value');
+    if (el) el.innerHTML = `${num}&deg;`;
+  } else if (which === 'altitude') {
+    const el = document.getElementById('lidar-altitude-value');
+    if (el) el.innerHTML = `${num}&deg;`;
+  } else if (which === 'zfactor') {
+    const el = document.getElementById('lidar-zfactor-value');
+    if (el) el.innerHTML = `${num}&times;`;
+  }
+
+  clearTimeout(lidarCustomDebounceTimer);
+  lidarCustomDebounceTimer = setTimeout(() => {
+    if (!map) return;
+    const src = map.getSource('lidar-src-custom');
+    if (src && typeof src.setTiles === 'function') {
+      src.setTiles([buildCustomHillshadeUrl()]);
+    }
+  }, 300);
+}
+
+function resetCustomHillshade() {
+  customHillshadeParams = { azimuth: 315, altitude: 45, zfactor: 2 };
+  const az = document.getElementById('lidar-azimuth-slider');
+  const al = document.getElementById('lidar-altitude-slider');
+  const zf = document.getElementById('lidar-zfactor-slider');
+  if (az) az.value = 315;
+  if (al) al.value = 45;
+  if (zf) zf.value = 2;
+  const azV = document.getElementById('lidar-azimuth-value');
+  const alV = document.getElementById('lidar-altitude-value');
+  const zfV = document.getElementById('lidar-zfactor-value');
+  if (azV) azV.innerHTML = '315&deg;';
+  if (alV) alV.innerHTML = '45&deg;';
+  if (zfV) zfV.innerHTML = '2&times;';
+  if (map) {
+    const src = map.getSource('lidar-src-custom');
+    if (src && typeof src.setTiles === 'function') {
+      src.setTiles([buildCustomHillshadeUrl()]);
+    }
+  }
+}
+
+// ── LIDAR HILLSHADE — WATER MASK + COUNTER ──────────────
+function syncLidarWaterMask() {
+  if (!map || !map.getLayer('hillshade-water-mask')) return;
+  const vis = (activeLidarStyles.size > 0) ? 'visible' : 'none';
+  map.setLayoutProperty('hillshade-water-mask', 'visibility', vis);
+}
+
+function updateLidarActiveCount() {
+  const el = document.getElementById('lidar-active-count');
+  if (el) el.textContent = String(activeLidarStyles.size);
 }
 
 function showStatus(msg) {
@@ -3031,6 +3545,17 @@ const LAYER_DESCRIPTIONS = {
   'stream-gauges':    'Live USGS water flow data. Green = low water ideal for panning. Red = flood conditions, stay out.',
   'terrain-3d':       'Raises the map into a 3D landscape. Tilt to see valley and ridge shapes.',
   'lidar':            'Shaded relief from elevation data. Reveals old workings and terrain features hidden under tree cover.',
+  'lidar-hillshade-gray':    'Classic single-angle shaded relief. The industry-standard hillshade — best balance of detail and clarity for most terrain.',
+  'lidar-hillshade-multi':   'Lit from four sun angles combined. Reveals subtle features from multiple directions — good for ridges and ravines.',
+  'lidar-hillshade-tinted':  'Hillshade blended with elevation colors (green low, brown high). Shows terrain relief and altitude at a glance.',
+  'lidar-hillshade-stretch': 'Gray hillshade with contrast stretched. Boosts faint relief in flat country — good for benches, terraces, and faded old workings.',
+  'lidar-low-angle':         'Sun at 15° altitude. Long shadows exaggerate subtle relief — best for spotting old adits, cuts, and tailings piles.',
+  'lidar-east-lit':          'Sun from the east. Highlights north-south features that standard hillshade tends to flatten.',
+  'lidar-south-lit':         'Sun from the south. Highlights east-west features — good for reading stream terraces and cross-valley structures.',
+  'lidar-slope-map':         'Colored by steepness. Red = steep cliffs, blue = flat ground. Pinpoints benches and break-in-slope locations.',
+  'lidar-aspect-map':        'Colored by the compass direction slopes face. Useful for identifying consistent hillside orientations and weather exposure.',
+  'lidar-contour':           'Vector elevation lines at smoothed 25-ft intervals. Overlay on any hillshade to read elevation numerically.',
+  'lidar-custom':            'Build your own hillshade. Adjust sun direction, sun angle, and vertical exaggeration to reveal features others miss.',
   'contours':         'Elevation lines at regular intervals. Closer lines = steeper ground.'
 };
 
