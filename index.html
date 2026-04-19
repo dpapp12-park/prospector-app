@@ -290,21 +290,6 @@ window.PROSPECTOR_CONFIG = window.UNWORKED_GOLD_CONFIG;
     color: rgba(154,138,106,0.7);
     margin-top: 3px;
   }
-  .lidar-custom-params {
-    margin-top: 18px;
-    padding-top: 14px;
-    border-top: 1px solid rgba(201,168,76,0.12);
-  }
-  .lidar-custom-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    font-family: 'DM Sans', sans-serif;
-    font-size: 13px;
-    font-weight: 500;
-    color: var(--bone, #F5E6C8);
-    margin-bottom: 6px;
-  }
   .lidar-reset-btn {
     font-family: 'DM Mono', monospace;
     font-size: 10px;
@@ -321,59 +306,66 @@ window.PROSPECTOR_CONFIG = window.UNWORKED_GOLD_CONFIG;
     border-color: rgba(240,192,64,0.4);
   }
 
-  /* ── CUSTOM HILLSHADE MODAL (draggable, soft-dim backdrop) ── */
-  .lidar-modal-backdrop {
-    position: fixed;
-    inset: 0;
-    background: rgba(0,0,0,0.22);
-    z-index: 998;
-    pointer-events: none; /* map stays clickable */
-  }
-  .lidar-modal {
+  /* ── CUSTOM HILLSHADE STANDALONE PANEL (always visible, top-right of map) ── */
+  .custom-hs-panel {
     position: fixed;
     top: 80px;
     right: 24px;
-    width: 320px;
-    background: rgba(20,18,14,0.97);
+    width: 300px;
+    background: rgba(20,18,14,0.96);
     border: 1px solid rgba(201,168,76,0.35);
     border-radius: 8px;
-    box-shadow: 0 10px 28px rgba(0,0,0,0.55);
-    z-index: 999;
+    box-shadow: 0 8px 20px rgba(0,0,0,0.55);
+    z-index: 500;
     font-family: 'DM Sans', sans-serif;
     color: var(--bone, #F5E6C8);
   }
-  .lidar-modal-header {
+  .custom-hs-header {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    padding: 12px 14px;
+    padding: 10px 14px;
     border-bottom: 1px solid rgba(201,168,76,0.18);
-    cursor: grab;
     background: rgba(13,12,9,0.6);
     border-radius: 8px 8px 0 0;
     user-select: none;
   }
-  .lidar-modal-header:active { cursor: grabbing; }
-  .lidar-modal-title {
+  .custom-hs-title {
     font-weight: 500;
     color: #C9A84C;
-    font-size: 14px;
+    font-size: 13px;
     letter-spacing: 0.02em;
   }
-  .lidar-modal-close {
-    background: transparent;
-    border: none;
-    color: var(--dust, #9A8A6A);
-    font-size: 22px;
-    line-height: 1;
+  .custom-hs-toggle {
     cursor: pointer;
-    padding: 0 6px;
+    width: 38px;
+    height: 20px;
+    background: rgba(201,168,76,0.18);
+    border-radius: 10px;
+    position: relative;
+    transition: background 0.15s;
   }
-  .lidar-modal-close:hover { color: #F0C040; }
-  .lidar-modal-body {
-    padding: 12px 16px 18px;
+  .custom-hs-toggle.on {
+    background: #C9A84C;
   }
-  .lidar-modal-reset-row {
+  .custom-hs-toggle::after {
+    content: '';
+    position: absolute;
+    top: 2px;
+    left: 2px;
+    width: 16px;
+    height: 16px;
+    background: #F5E6C8;
+    border-radius: 50%;
+    transition: left 0.15s;
+  }
+  .custom-hs-toggle.on::after {
+    left: 20px;
+  }
+  .custom-hs-body {
+    padding: 12px 16px 16px;
+  }
+  .custom-hs-reset-row {
     display: flex;
     justify-content: flex-end;
     margin-bottom: 4px;
@@ -692,7 +684,7 @@ window.PROSPECTOR_CONFIG = window.UNWORKED_GOLD_CONFIG;
       <div class="group-header" onclick="toggleGroup('lidar')">
         <div class="group-header-left">
           <div class="group-title">LiDAR Hillshade</div>
-          <div class="group-count"><span id="lidar-active-count">1</span>/11 On</div>
+          <div class="group-count"><span id="lidar-active-count">1</span>/10 On</div>
         </div>
         <div class="group-arrow" id="arrow-lidar">▼</div>
       </div>
@@ -748,14 +740,8 @@ window.PROSPECTOR_CONFIG = window.UNWORKED_GOLD_CONFIG;
           <span class="lidar-badge overlay">OVERLAY</span>
           <button class="info-btn" onclick="showLayerInfo(event,'lidar-contour')">i</button>
         </div>
-        <div class="lidar-style-row" onclick="toggleLidarStyle('custom')" id="lidar-row-custom">
-          <div class="layer-bullet" id="lidar-bullet-custom">●</div>
-          <span class="layer-name" id="lidar-name-custom">Custom Hillshade Generator</span>
-          <span class="lidar-badge special">SPECIAL</span>
-          <button class="info-btn" onclick="showLayerInfo(event,'lidar-custom')">i</button>
-        </div>
 
-        <!-- Layer Controls (focused layer opacity + Custom params) -->
+        <!-- Layer Controls (focused layer opacity) -->
         <div class="lidar-controls" id="lidar-controls">
           <div class="lidar-controls-label">Layer Controls</div>
           <div class="lidar-focused-name" id="lidar-focused-name">Standard Gray Hillshade</div>
@@ -1304,8 +1290,7 @@ const LIDAR_STYLES = [
   { id: 'south-lit',         label: 'South-Lit Hillshade',        type: 'param', azimuth: 180, altitude: 45, zfactor: 2 },
   { id: 'slope-map',         label: 'Slope Map',                  type: 'named', rasterFunction: 'Slope Map' },
   { id: 'aspect-map',        label: 'Aspect Map',                 type: 'named', rasterFunction: 'Aspect Map' },
-  { id: 'contour',           label: 'Contour Smoothed 25',        type: 'named', rasterFunction: 'Contour Smoothed 25', allowRetry: true },
-  { id: 'custom',            label: 'Custom Hillshade',           type: 'custom' }
+  { id: 'contour',           label: 'Contour Smoothed 25',        type: 'named', rasterFunction: 'Contour Smoothed 25', allowRetry: true }
 ];
 let activeLidarStyles = new Set(['hillshade-gray']);
 let focusedLidarId = 'hillshade-gray';
@@ -2550,9 +2535,14 @@ function addDemoLayers() {
   // All styles route through hillshade-proxy.dpapp12.workers.dev,
   // which forwards to elevation.nationalmap.gov/.../exportImage and
   // caches at Cloudflare edge 24h. First user per tile pays USGS
-  // render latency (~2s), rest get ~50ms. All 11 layers inserted
+  // render latency (~2s), rest get ~50ms. All 10 layers inserted
   // below active-claims-fill so claim polygons stay legible.
+  // Custom Hillshade is registered separately below.
   registerLidarLayers();
+
+  // Standalone Custom Hillshade — independent of the layer picker.
+  // Source/layer registered once, visibility toggled via its own switch.
+  registerCustomHillshadeLayer();
 
   // ── HILLSHADE OCEAN/WATER MASK ──
   // Paints water polygons opaque blue OVER the hillshade so ocean/lakes
@@ -3451,18 +3441,6 @@ function setFocusedLidarLayer(styleId) {
   const nameEl = document.getElementById('lidar-focused-name');
   if (nameEl) nameEl.textContent = style.label;
 
-  // Custom Hillshade uses a draggable modal instead of inline params.
-  // Other styles close the modal if it's open.
-  const modal    = document.getElementById('lidar-modal');
-  const backdrop = document.getElementById('lidar-modal-backdrop');
-  if (styleId === 'custom') {
-    if (modal)    modal.style.display    = '';
-    if (backdrop) backdrop.style.display = '';
-  } else {
-    if (modal)    modal.style.display    = 'none';
-    if (backdrop) backdrop.style.display = 'none';
-  }
-
   // Reflect stored opacity for newly focused layer
   const slider = document.getElementById('lidar-opacity-slider');
   const val    = document.getElementById('lidar-opacity-value');
@@ -3506,7 +3484,7 @@ function updateCustomParam(which, value) {
   clearTimeout(lidarCustomDebounceTimer);
   lidarCustomDebounceTimer = setTimeout(() => {
     if (!map) return;
-    const src = map.getSource('lidar-src-custom');
+    const src = map.getSource('custom-hs-src');
     if (src && typeof src.setTiles === 'function') {
       src.setTiles([buildCustomHillshadeUrl()]);
     }
@@ -3528,79 +3506,47 @@ function resetCustomHillshade() {
   if (alV) alV.innerHTML = '45&deg;';
   if (zfV) zfV.innerHTML = '2&times;';
   if (map) {
-    const src = map.getSource('lidar-src-custom');
+    const src = map.getSource('custom-hs-src');
     if (src && typeof src.setTiles === 'function') {
       src.setTiles([buildCustomHillshadeUrl()]);
     }
   }
 }
 
-// ── LIDAR CUSTOM HILLSHADE MODAL — close + drag ─────────
-// Close behavior: revert focus to Standard Gray, leaving
-// the Custom raster layer active (still in activeLidarStyles).
-// setFocusedLidarLayer('hillshade-gray') will hide the modal
-// via its existing branch.
-function closeCustomHillshadeModal() {
-  if (focusedLidarId === 'custom') {
-    setFocusedLidarLayer('hillshade-gray');
-    return;
+// ── CUSTOM HILLSHADE — STANDALONE REGISTRATION + TOGGLE ──
+// Runs alongside registerLidarLayers but fully independent.
+// Source/layer created once; visibility toggled via switch.
+let customHillshadeActive = false;
+
+function registerCustomHillshadeLayer() {
+  if (!map) return;
+  if (!map.getSource('custom-hs-src')) {
+    map.addSource('custom-hs-src', {
+      type: 'raster',
+      tiles: [buildCustomHillshadeUrl()],
+      tileSize: 256,
+      attribution: 'USGS The National Map: 3D Elevation Program'
+    });
   }
-  // Edge case: modal is open but focus already moved elsewhere
-  const modal    = document.getElementById('lidar-modal');
-  const backdrop = document.getElementById('lidar-modal-backdrop');
-  if (modal)    modal.style.display    = 'none';
-  if (backdrop) backdrop.style.display = 'none';
+  if (!map.getLayer('custom-hs-layer')) {
+    map.addLayer({
+      id: 'custom-hs-layer',
+      type: 'raster',
+      source: 'custom-hs-src',
+      layout: { visibility: customHillshadeActive ? 'visible' : 'none' },
+      paint: { 'raster-opacity': 1.0 }
+    }, 'active-claims-fill');
+  }
 }
 
-// Drag: user grabs the modal header and drags anywhere on screen.
-// Clamps to viewport so the modal can never be lost off-edge.
-// Initialized once on DOMContentLoaded (header must exist in DOM).
-function initLidarModalDrag() {
-  const header = document.getElementById('lidar-modal-header');
-  const modal  = document.getElementById('lidar-modal');
-  if (!header || !modal) return;
-
-  let dragging = false;
-  let dragStartX = 0, dragStartY = 0;
-  let origLeft = 0, origTop = 0;
-
-  header.addEventListener('mousedown', (e) => {
-    // Ignore clicks on the close button
-    if (e.target && e.target.classList && e.target.classList.contains('lidar-modal-close')) return;
-    dragging = true;
-    const rect = modal.getBoundingClientRect();
-    origLeft = rect.left;
-    origTop  = rect.top;
-    dragStartX = e.clientX;
-    dragStartY = e.clientY;
-    // Switch from right-anchored to absolute left/top
-    modal.style.right = 'auto';
-    modal.style.left  = origLeft + 'px';
-    modal.style.top   = origTop + 'px';
-    e.preventDefault();
-  });
-
-  document.addEventListener('mousemove', (e) => {
-    if (!dragging) return;
-    const dx = e.clientX - dragStartX;
-    const dy = e.clientY - dragStartY;
-    const w = modal.offsetWidth;
-    const h = modal.offsetHeight;
-    const newLeft = Math.max(0, Math.min(window.innerWidth  - w, origLeft + dx));
-    const newTop  = Math.max(0, Math.min(window.innerHeight - h, origTop  + dy));
-    modal.style.left = newLeft + 'px';
-    modal.style.top  = newTop  + 'px';
-  });
-
-  document.addEventListener('mouseup',    () => { dragging = false; });
-  document.addEventListener('mouseleave', () => { dragging = false; });
-}
-
-// Run drag init after DOM is ready (modal exists in body)
-if (document.readyState === 'loading') {
-  document.addEventListener('DOMContentLoaded', initLidarModalDrag);
-} else {
-  initLidarModalDrag();
+function toggleCustomHillshade() {
+  customHillshadeActive = !customHillshadeActive;
+  const toggleEl = document.getElementById('custom-hs-toggle');
+  if (toggleEl) toggleEl.classList.toggle('on', customHillshadeActive);
+  if (map && map.getLayer('custom-hs-layer')) {
+    map.setLayoutProperty('custom-hs-layer', 'visibility',
+      customHillshadeActive ? 'visible' : 'none');
+  }
 }
 
 // ── LIDAR HILLSHADE — WATER MASK + COUNTER ──────────────
@@ -5359,16 +5305,19 @@ window.addEventListener('load', async () => {
 });
 </script>
 
-<!-- Custom Hillshade Modal (draggable, opens when 'custom' style is focused). -->
-<!-- Placed at body-root (not inside any panel) to avoid being hidden by parent display:none. -->
-<div class="lidar-modal-backdrop" id="lidar-modal-backdrop" style="display:none;"></div>
-<div class="lidar-modal" id="lidar-modal" style="display:none;">
-  <div class="lidar-modal-header" id="lidar-modal-header">
-    <span class="lidar-modal-title">Custom Hillshade</span>
-    <button class="lidar-modal-close" onclick="closeCustomHillshadeModal()" aria-label="Close">&times;</button>
+<!-- ========================================================== -->
+<!-- Custom Hillshade Standalone Panel                           -->
+<!-- Always-visible test panel, top-right of map.                -->
+<!-- Independent of the layer picker. Has its own on/off switch  -->
+<!-- that directly toggles its own map source/layer.             -->
+<!-- ========================================================== -->
+<div class="custom-hs-panel" id="custom-hs-panel">
+  <div class="custom-hs-header">
+    <span class="custom-hs-title">Custom Hillshade</span>
+    <div class="custom-hs-toggle" id="custom-hs-toggle" onclick="toggleCustomHillshade()"></div>
   </div>
-  <div class="lidar-modal-body">
-    <div class="lidar-modal-reset-row">
+  <div class="custom-hs-body">
+    <div class="custom-hs-reset-row">
       <button class="lidar-reset-btn" onclick="resetCustomHillshade()">Reset</button>
     </div>
     <div class="lidar-slider-row">
