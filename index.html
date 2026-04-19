@@ -320,6 +320,64 @@ window.PROSPECTOR_CONFIG = window.UNWORKED_GOLD_CONFIG;
     color: #F0C040;
     border-color: rgba(240,192,64,0.4);
   }
+
+  /* ── CUSTOM HILLSHADE MODAL (draggable, soft-dim backdrop) ── */
+  .lidar-modal-backdrop {
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.22);
+    z-index: 998;
+    pointer-events: none; /* map stays clickable */
+  }
+  .lidar-modal {
+    position: fixed;
+    top: 80px;
+    right: 24px;
+    width: 320px;
+    background: rgba(20,18,14,0.97);
+    border: 1px solid rgba(201,168,76,0.35);
+    border-radius: 8px;
+    box-shadow: 0 10px 28px rgba(0,0,0,0.55);
+    z-index: 999;
+    font-family: 'DM Sans', sans-serif;
+    color: var(--bone, #F5E6C8);
+  }
+  .lidar-modal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 12px 14px;
+    border-bottom: 1px solid rgba(201,168,76,0.18);
+    cursor: grab;
+    background: rgba(13,12,9,0.6);
+    border-radius: 8px 8px 0 0;
+    user-select: none;
+  }
+  .lidar-modal-header:active { cursor: grabbing; }
+  .lidar-modal-title {
+    font-weight: 500;
+    color: #C9A84C;
+    font-size: 14px;
+    letter-spacing: 0.02em;
+  }
+  .lidar-modal-close {
+    background: transparent;
+    border: none;
+    color: var(--dust, #9A8A6A);
+    font-size: 22px;
+    line-height: 1;
+    cursor: pointer;
+    padding: 0 6px;
+  }
+  .lidar-modal-close:hover { color: #F0C040; }
+  .lidar-modal-body {
+    padding: 12px 16px 18px;
+  }
+  .lidar-modal-reset-row {
+    display: flex;
+    justify-content: flex-end;
+    margin-bottom: 4px;
+  }
 </style>
 </head>
 <body>
@@ -706,31 +764,6 @@ window.PROSPECTOR_CONFIG = window.UNWORKED_GOLD_CONFIG;
             <span class="lidar-slider-value" id="lidar-opacity-value">100%</span>
           </div>
           <input type="range" class="lidar-slider" id="lidar-opacity-slider" min="0" max="100" value="100" oninput="updateLidarOpacity(this.value)">
-
-          <div class="lidar-custom-params" id="lidar-custom-params" style="display:none;">
-            <div class="lidar-custom-header">
-              <span>Hillshade Parameters</span>
-              <button class="lidar-reset-btn" onclick="resetCustomHillshade()">Reset</button>
-            </div>
-            <div class="lidar-slider-row">
-              <span>Azimuth (sun direction)</span>
-              <span class="lidar-slider-value" id="lidar-azimuth-value">315&deg;</span>
-            </div>
-            <input type="range" class="lidar-slider" id="lidar-azimuth-slider" min="0" max="360" value="315" step="1" oninput="updateCustomParam('azimuth', this.value)">
-            <div class="lidar-slider-ticks"><span>N 0&deg;</span><span>E 90&deg;</span><span>S 180&deg;</span><span>W 270&deg;</span><span>N 360&deg;</span></div>
-            <div class="lidar-slider-row">
-              <span>Altitude (sun angle)</span>
-              <span class="lidar-slider-value" id="lidar-altitude-value">45&deg;</span>
-            </div>
-            <input type="range" class="lidar-slider" id="lidar-altitude-slider" min="1" max="90" value="45" step="1" oninput="updateCustomParam('altitude', this.value)">
-            <div class="lidar-slider-ticks"><span>Low 1&deg;</span><span>High 90&deg;</span></div>
-            <div class="lidar-slider-row">
-              <span>Z-Factor (exaggeration)</span>
-              <span class="lidar-slider-value" id="lidar-zfactor-value">2&times;</span>
-            </div>
-            <input type="range" class="lidar-slider" id="lidar-zfactor-slider" min="0.5" max="10" value="2" step="0.1" oninput="updateCustomParam('zfactor', this.value)">
-            <div class="lidar-slider-ticks"><span>0.5&times;</span><span>5&times;</span><span>10&times;</span></div>
-          </div>
         </div>
       </div>
     </div>
@@ -1208,6 +1241,38 @@ window.PROSPECTOR_CONFIG = window.UNWORKED_GOLD_CONFIG;
       <button class="ai-upgrade-btn" onclick="showStatus('Pro tier coming soon - check back!')">Upgrade to Pro</button>
     </div>
 
+  </div>
+</div>
+
+<!-- Custom Hillshade Modal (draggable, opens when 'custom' style is focused) -->
+<div class="lidar-modal-backdrop" id="lidar-modal-backdrop" style="display:none;"></div>
+<div class="lidar-modal" id="lidar-modal" style="display:none;">
+  <div class="lidar-modal-header" id="lidar-modal-header">
+    <span class="lidar-modal-title">Custom Hillshade</span>
+    <button class="lidar-modal-close" onclick="closeCustomHillshadeModal()" aria-label="Close">&times;</button>
+  </div>
+  <div class="lidar-modal-body">
+    <div class="lidar-modal-reset-row">
+      <button class="lidar-reset-btn" onclick="resetCustomHillshade()">Reset</button>
+    </div>
+    <div class="lidar-slider-row">
+      <span>Azimuth (sun direction)</span>
+      <span class="lidar-slider-value" id="lidar-azimuth-value">315&deg;</span>
+    </div>
+    <input type="range" class="lidar-slider" id="lidar-azimuth-slider" min="0" max="360" value="315" step="1" oninput="updateCustomParam('azimuth', this.value)">
+    <div class="lidar-slider-ticks"><span>N 0&deg;</span><span>E 90&deg;</span><span>S 180&deg;</span><span>W 270&deg;</span><span>N 360&deg;</span></div>
+    <div class="lidar-slider-row">
+      <span>Altitude (sun angle)</span>
+      <span class="lidar-slider-value" id="lidar-altitude-value">45&deg;</span>
+    </div>
+    <input type="range" class="lidar-slider" id="lidar-altitude-slider" min="1" max="90" value="45" step="1" oninput="updateCustomParam('altitude', this.value)">
+    <div class="lidar-slider-ticks"><span>Low 1&deg;</span><span>High 90&deg;</span></div>
+    <div class="lidar-slider-row">
+      <span>Z-Factor (exaggeration)</span>
+      <span class="lidar-slider-value" id="lidar-zfactor-value">2&times;</span>
+    </div>
+    <input type="range" class="lidar-slider" id="lidar-zfactor-slider" min="0.5" max="10" value="2" step="0.1" oninput="updateCustomParam('zfactor', this.value)">
+    <div class="lidar-slider-ticks"><span>0.5&times;</span><span>5&times;</span><span>10&times;</span></div>
   </div>
 </div>
 
@@ -3418,9 +3483,17 @@ function setFocusedLidarLayer(styleId) {
   const nameEl = document.getElementById('lidar-focused-name');
   if (nameEl) nameEl.textContent = style.label;
 
-  // Custom params block visible only when Custom is focused
-  const custom = document.getElementById('lidar-custom-params');
-  if (custom) custom.style.display = (styleId === 'custom') ? '' : 'none';
+  // Custom Hillshade uses a draggable modal instead of inline params.
+  // Other styles close the modal if it's open.
+  const modal    = document.getElementById('lidar-modal');
+  const backdrop = document.getElementById('lidar-modal-backdrop');
+  if (styleId === 'custom') {
+    if (modal)    modal.style.display    = '';
+    if (backdrop) backdrop.style.display = '';
+  } else {
+    if (modal)    modal.style.display    = 'none';
+    if (backdrop) backdrop.style.display = 'none';
+  }
 
   // Reflect stored opacity for newly focused layer
   const slider = document.getElementById('lidar-opacity-slider');
@@ -3492,6 +3565,74 @@ function resetCustomHillshade() {
       src.setTiles([buildCustomHillshadeUrl()]);
     }
   }
+}
+
+// ── LIDAR CUSTOM HILLSHADE MODAL — close + drag ─────────
+// Close behavior: revert focus to Standard Gray, leaving
+// the Custom raster layer active (still in activeLidarStyles).
+// setFocusedLidarLayer('hillshade-gray') will hide the modal
+// via its existing branch.
+function closeCustomHillshadeModal() {
+  if (focusedLidarId === 'custom') {
+    setFocusedLidarLayer('hillshade-gray');
+    return;
+  }
+  // Edge case: modal is open but focus already moved elsewhere
+  const modal    = document.getElementById('lidar-modal');
+  const backdrop = document.getElementById('lidar-modal-backdrop');
+  if (modal)    modal.style.display    = 'none';
+  if (backdrop) backdrop.style.display = 'none';
+}
+
+// Drag: user grabs the modal header and drags anywhere on screen.
+// Clamps to viewport so the modal can never be lost off-edge.
+// Initialized once on DOMContentLoaded (header must exist in DOM).
+function initLidarModalDrag() {
+  const header = document.getElementById('lidar-modal-header');
+  const modal  = document.getElementById('lidar-modal');
+  if (!header || !modal) return;
+
+  let dragging = false;
+  let dragStartX = 0, dragStartY = 0;
+  let origLeft = 0, origTop = 0;
+
+  header.addEventListener('mousedown', (e) => {
+    // Ignore clicks on the close button
+    if (e.target && e.target.classList && e.target.classList.contains('lidar-modal-close')) return;
+    dragging = true;
+    const rect = modal.getBoundingClientRect();
+    origLeft = rect.left;
+    origTop  = rect.top;
+    dragStartX = e.clientX;
+    dragStartY = e.clientY;
+    // Switch from right-anchored to absolute left/top
+    modal.style.right = 'auto';
+    modal.style.left  = origLeft + 'px';
+    modal.style.top   = origTop + 'px';
+    e.preventDefault();
+  });
+
+  document.addEventListener('mousemove', (e) => {
+    if (!dragging) return;
+    const dx = e.clientX - dragStartX;
+    const dy = e.clientY - dragStartY;
+    const w = modal.offsetWidth;
+    const h = modal.offsetHeight;
+    const newLeft = Math.max(0, Math.min(window.innerWidth  - w, origLeft + dx));
+    const newTop  = Math.max(0, Math.min(window.innerHeight - h, origTop  + dy));
+    modal.style.left = newLeft + 'px';
+    modal.style.top  = newTop  + 'px';
+  });
+
+  document.addEventListener('mouseup',    () => { dragging = false; });
+  document.addEventListener('mouseleave', () => { dragging = false; });
+}
+
+// Run drag init after DOM is ready (modal exists in body)
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', initLidarModalDrag);
+} else {
+  initLidarModalDrag();
 }
 
 // ── LIDAR HILLSHADE — WATER MASK + COUNTER ──────────────
