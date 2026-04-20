@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>UNWORKED GOLD | Tactical Prospecting Intelligence</title>
+    <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Mono:wght@400;500&family=DM+Sans:wght@400;500&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --gold: #C9A84C;
+            --gold-bright: #F0C040;
+            --gold-dim: #8A6A20;
+            --rock: #1A1810;
+            --stone: #2E2B22;
+            --cream: #E8D9B0;
+            --panel-border: rgba(201, 168, 76, 0.25);
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body { background-color: var(--rock); color: var(--cream); font-family: 'DM Sans', sans-serif; font-weight: 400; line-height: 1.6; overflow-x: hidden; }
+        .container { max-width: 1200px; margin: 0 auto; padding: 0 40px; }
+        .mono { font-family: 'DM Mono', monospace; text-transform: uppercase; letter-spacing: 0.15em; font-size: 10px; color: #6B6248; }
+        
+        header { padding: 30px 0; border-bottom: 1px solid var(--panel-border); background: var(--rock); text-align: center; }
+        .wordmark { font-family: 'Bebas Neue', sans-serif; font-size: 36px; color: var(--gold-bright); letter-spacing: 2px; }
+
+        /* Hero Section */
+        #hero { position: relative; padding: 120px 0; background: #000; overflow: hidden; border-bottom: 1px solid #333; }
+        .hero-bg { 
+            position: absolute; inset: 0; 
+            background-image: url("assets/images/hero-backdrop.jpg");
+            background-size: cover; background-position: center;
+            opacity: 0.3; filter: sepia(100%) contrast(1.1) brightness(0.6);
+            z-index: 1;
+        }
+        .hero-layout { display: grid; grid-template-columns: 1.2fr 0.8fr; gap: 60px; align-items: center; position: relative; z-index: 10; }
+        @media (max-width: 1000px) { .hero-layout { grid-template-columns: 1fr; text-align: center; } }
+
+        h1 { font-family: 'Bebas Neue', sans-serif; font-size: clamp(50px, 8vw, 100px); line-height: 0.85; margin-bottom: 20px; color: var(--gold-bright); }
+        .hero-sub { font-size: 22px; border-left: 3px solid var(--gold); padding-left: 25px; max-width: 500px; text-align: left; }
+
+        /* Viewfinder Bezel */
+        .viewfinder { aspect-ratio: 1/1; border: 4px solid var(--stone); outline: 1px solid var(--gold-dim); background: #050505; position: relative; overflow: hidden; box-shadow: 0 40px 80px rgba(0,0,0,0.6); }
+        .v-img { position: absolute; inset: 0; opacity: 0; transition: opacity 1s ease-in-out; }
+        .v-img img { width: 100%; height: 100%; object-fit: cover; }
+        .v-active { opacity: 1; }
+        .scan-line { position: absolute; top: 0; left: 0; width: 100%; height: 2px; background: var(--gold-bright); z-index: 20; animation: scan 4s linear infinite; }
+        @keyframes scan { 0% { top: 0%; } 100% { top: 100%; } }
+
+        /* Module Grid */
+        .grid-modules { display: grid; grid-template-columns: repeat(3, 1fr); gap: 25px; padding: 80px 0; }
+        @media (max-width: 900px) { .grid-modules { grid-template-columns: 1fr; } }
+        .module-box { background: var(--stone); border: 1px solid var(--panel-border); padding: 35px; }
+        .module-img { width: 100%; height: 200px; background: #111; border: 1px solid #444; object-fit: cover; margin-bottom: 25px; display: block; opacity: 0.8; }
+        .module-box h3 { font-family: 'Bebas Neue', sans-serif; font-size: 32px; color: var(--gold); margin-bottom: 10px; }
+
+        .btn { display: inline-block; background: var(--gold-bright); color: var(--rock); font-family: 'Bebas Neue', sans-serif; font-size: 30px; padding: 15px 60px; text-decoration: none; margin-top: 30px; border-radius: 2px; transition: 0.2s; }
+        .btn:hover { background: #fff; transform: translateY(-2px); }
+    </style>
+</head>
+<body>
+    <header><div class="wordmark">UNWORKED GOLD</div></header>
+
+    <main>
+        <section id="hero">
+            <div class="hero-bg"></div>
+            <div class="container hero-layout">
+                <div>
+                    <span class="mono" style="color:var(--gold-bright); margin-bottom:10px; display:block;">Registry Survey // v0.4.0</span>
+                    <h1>THE GROUND <br>REMEMBERS.</h1>
+                    <p class="hero-sub">Authentic 1849 mining records integrated with 1m USGS LiDAR. Find the gold the old-timers missed.</p>
+                    <a href="/index.html" class="btn">Launch Instrument</a>
+                </div>
+                <div class="viewfinder">
+                    <div class="scan-line"></div>
+                    <div class="v-img v-active"><img src="assets/images/view-layer-1.jpg"></div>
+                    <div class="v-img"><img src="assets/images/view-layer-2.jpg"></div>
+                    <div class="v-img"><img src="assets/images/view-layer-3.jpg"></div>
+                    <div class="mono" style="position:absolute; bottom:20px; left:20px; z-index:30; background:rgba(0,0,0,0.85); padding:10px; border:1px solid var(--gold-dim);">
+                        FIELD_STATE: <span id="tag">SATELLITE_IMG</span>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section class="container grid-modules">
+            <div class="module-box">
+                <img src="assets/images/patent-survey.jpg" class="module-img" alt="Map Engine">
+                <h3>Map Engine</h3>
+                <p>Deploy 39 tactical layers to spot benches and tailing piles invisible to standard imagery.</p>
+            </div>
+            <div class="module-box">
+                <img src="assets/images/patent-stake.jpg" class="module-img" alt="Claim Intel">
+                <h3>Claim Intel</h3>
+                <p>2.3 Million BLM records. Instantly identify active, closed, and expiring mining ground.</p>
+            </div>
+            <div class="module-box">
+                <div class="module-img" style="display:flex; align-items:center; justify-content:center; color:#444; font-family:monospace; font-size:10px;">[ SUBSURFACE_LOG ]</div>
+                <h3>Advanced LiDAR</h3>
+                <p>10 Custom styles including RRIM Copper/Cyan renders. See the subsurface with authority.</p>
+            </div>
+        </section>
+    </main>
+
+    <script>
+        const imgs = document.querySelectorAll('.v-img');
+        const tag = document.getElementById('tag');
+        const labels = ['SATELLITE_IMG', 'ARCHIVAL_SURVEY', 'LIDAR_SUBSURFACE'];
+        let idx = 0;
+        setInterval(() => {
+            if(imgs.length) {
+                imgs[idx].classList.remove('v-active');
+                idx = (idx + 1) % imgs.length;
+                imgs[idx].classList.add('v-active');
+                tag.innerText = labels[idx];
+            }
+        }, 3000);
+    </script>
+</body>
+</html>
