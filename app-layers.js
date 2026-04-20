@@ -16,6 +16,92 @@
 // Inline onclick="..." handlers in index.html resolve via those globals.
 // ==========================================================
 
+// ── MULTI-FEATURE PICKER (Tool 1) ────────────────────────
+// When a click hits overlapping polygons/points across the same
+// Mapbox layer, Mapbox returns ALL features in e.features. The
+// original inline handlers always used e.features[0], silently
+// losing every other claim/mine/site under the cursor. This
+// helper renders a small popup listing every feature so the
+// user can pick one — then it synthesizes a single-feature event
+// and re-invokes the original handler. The guard at the top of
+// each handler checks e.features.length; on re-entry from the
+// picker, length is 1 and the handler runs normally.
+//
+// getLabel(feature) should return a short, human-readable string
+// (claim name, mine name, etc.) — used as the button label.
+function showFeaturePicker(features, lngLat, handler, getLabel) {
+  // De-dupe by Mapbox feature.id when present; fall back to
+  // stringified property bag. Overlapping tilesets can return
+  // the same polygon twice (e.g. active-claims-fill + a filter
+  // variant) and we don't want duplicate buttons.
+  const uniqueFeatures = [];
+  const seen = new Set();
+  for (const f of features) {
+    const key = (f.id != null)
+      ? ('id:' + f.id)
+      : ('p:' + JSON.stringify(f.properties || {}));
+    if (!seen.has(key)) { seen.add(key); uniqueFeatures.push(f); }
+  }
+  if (uniqueFeatures.length <= 1) {
+    // Nothing to pick — just run the handler with whatever we have.
+    handler({ features: uniqueFeatures, lngLat });
+    return;
+  }
+
+  const escapeHtml = (s) => String(s == null ? '' : s)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;');
+
+  const buttonsHtml = uniqueFeatures.map((f, i) => {
+    const raw = getLabel(f);
+    const label = escapeHtml(raw || ('Feature ' + (i + 1)));
+    return '<button data-picker-idx="' + i + '" style="' +
+      'display:block;width:100%;text-align:left;margin-top:6px;' +
+      'background:rgba(201,168,76,0.08);border:1px solid rgba(201,168,76,0.3);' +
+      'border-radius:8px;padding:10px 12px;font-family:\'DM Sans\',sans-serif;' +
+      'font-size:13px;color:#E8D9B0;cursor:pointer;line-height:1.3">' +
+      label + '</button>';
+  }).join('');
+
+  const popup = new mapboxgl.Popup({ closeButton: false, maxWidth: '280px' })
+    .setLngLat(lngLat)
+    .setHTML(
+      '<div style="font-family:\'DM Sans\',sans-serif;background:#0D0C09;' +
+      'border:1px solid rgba(201,168,76,0.35);border-radius:12px;padding:14px;' +
+      'color:#E8D9B0;width:260px;position:relative">' +
+        '<button data-picker-close="1" style="position:absolute;top:10px;right:10px;' +
+        'background:rgba(255,255,255,0.08);border:none;color:#9A8A6A;width:26px;height:26px;' +
+        'border-radius:50%;cursor:pointer;font-size:14px;display:flex;align-items:center;' +
+        'justify-content:center;line-height:1">✕</button>' +
+        '<div style="font-family:\'DM Mono\',monospace;font-size:9px;letter-spacing:0.12em;' +
+        'text-transform:uppercase;color:#6B6248;margin-bottom:4px;padding-right:30px">' +
+        uniqueFeatures.length + ' features here</div>' +
+        '<div style="font-family:\'Bebas Neue\',sans-serif;font-size:18px;color:#F0C040;' +
+        'letter-spacing:0.04em;margin-bottom:6px">Pick one</div>' +
+        buttonsHtml +
+      '</div>'
+    )
+    .addTo(map);
+
+  const el = popup.getElement();
+  if (!el) return;
+  el.addEventListener('click', (ev) => {
+    if (ev.target.closest('[data-picker-close]')) {
+      popup.remove();
+      return;
+    }
+    const btn = ev.target.closest('[data-picker-idx]');
+    if (!btn) return;
+    const idx = parseInt(btn.getAttribute('data-picker-idx'), 10);
+    const chosen = uniqueFeatures[idx];
+    if (!chosen) return;
+    popup.remove();
+    handler({ features: [chosen], lngLat });
+  });
+}
+
 function addDemoLayers() {
   // ── ACTIVE CLAIMS (real BLM Oregon data) ──
   map.addSource('active-claims-src', {
@@ -30,7 +116,11 @@ function addDemoLayers() {
     'source-layer': 'active_claims_final-0xk0t5',
     paint: {
       'fill-color': '#4CAF50',
-      'fill-opacity': 0.2
+      // Tool 2 (April 19 Session 11): opacity 0 keeps the fill polygon
+      // fully transparent so the map/LiDAR below shows through, while
+      // preserving the click hit-target (Mapbox queries geometry, not pixels).
+      // The accompanying 'active-claims-line' outline remains visible.
+      'fill-opacity': 0
     }
   });
 
@@ -64,7 +154,10 @@ function addDemoLayers() {
       source: src,
       'source-layer': layer,
       layout: { visibility: 'none' },
-      paint: { 'fill-color': '#F44336', 'fill-opacity': 0.15 }
+      // Tool 2 (April 19 Session 11): transparent fill preserves the click
+      // hit-target while letting the map underneath show through. The red
+      // 'closed-claims-line-N' outline stays visible on its own.
+      paint: { 'fill-color': '#F44336', 'fill-opacity': 0 }
     });
     map.addLayer({
       id: `closed-claims-line-${n}`,
@@ -77,7 +170,11 @@ function addDemoLayers() {
   });
 
   // ── POPUPS ──
-  map.on('click', 'active-claims-fill', (e) => {
+  const activeClaimsClickHandler = (e) => {
+    if (e.features.length > 1) {
+      return showFeaturePicker(e.features, e.lngLat, activeClaimsClickHandler,
+        f => f.properties.CSE_NM || f.properties.cse_nm || f.properties.CSE_NM_MLRS || 'Mining Claim');
+    }
     const props = e.features[0].properties;
     const name = props.CSE_NM || props.cse_nm || props.CSE_NM_MLRS || 'Mining Claim';
     const serial = props.CSE_NR || props.cse_nr || '';
@@ -311,10 +408,14 @@ function addDemoLayers() {
         if (distEl) distEl.textContent = miles < 0.1 ? 'Here' : miles < 10 ? `${miles.toFixed(1)} mi` : `${Math.round(miles)} mi`;
       }, () => {});
     }
-  });
+  };
+  map.on('click', 'active-claims-fill', activeClaimsClickHandler);
 
-  ['closed-claims-fill-1','closed-claims-fill-2','closed-claims-fill-3','closed-claims-fill-4','closed-claims-fill-5'].forEach(layerId => {
-  map.on('click', layerId, (e) => {
+  const closedClaimsClickHandler = (e) => {
+    if (e.features.length > 1) {
+      return showFeaturePicker(e.features, e.lngLat, closedClaimsClickHandler,
+        f => f.properties.CSE_NAME || f.properties.CSE_NM || f.properties.cse_nm || 'Mining Claim');
+    }
     const props = e.features[0].properties;
     const name = props.CSE_NAME || props.CSE_NM || props.cse_nm || 'Mining Claim';
     const serial = props.CSE_NR || props.cse_nr || '';
@@ -340,8 +441,10 @@ function addDemoLayers() {
         </div>
       `)
       .addTo(map);
+  };
+  ['closed-claims-fill-1','closed-claims-fill-2','closed-claims-fill-3','closed-claims-fill-4','closed-claims-fill-5'].forEach(layerId => {
+    map.on('click', layerId, closedClaimsClickHandler);
   });
-  }); // end closedChunks forEach click handlers
 
   // ── USGS STREAM GAUGES ──
   fetch('https://waterservices.usgs.gov/nwis/iv/?format=json&stateCd=or&parameterCd=00060&siteStatus=active&siteType=ST')
@@ -395,7 +498,11 @@ function addDemoLayers() {
         }
       });
 
-      map.on('click', 'stream-gauges-layer', (e) => {
+      const streamGaugeClickHandler = (e) => {
+        if (e.features.length > 1) {
+          return showFeaturePicker(e.features, e.lngLat, streamGaugeClickHandler,
+            f => f.properties.name || f.properties.site_no || 'Stream Gauge');
+        }
         const p = e.features[0].properties;
         new mapboxgl.Popup({ closeButton: false })
           .setLngLat(e.lngLat)
@@ -421,7 +528,8 @@ function addDemoLayers() {
             </div>
           `)
           .addTo(map);
-      });
+      };
+      map.on('click', 'stream-gauges-layer', streamGaugeClickHandler);
 
       map.on('mouseenter', 'stream-gauges-layer', () => map.getCanvas().style.cursor = 'pointer');
       map.on('mouseleave', 'stream-gauges-layer', () => map.getCanvas().style.cursor = '');
@@ -596,7 +704,11 @@ function addDemoLayers() {
     }
   });
 
-  map.on('click', 'mercury-layer', (e) => {
+  const mercuryClickHandler = (e) => {
+    if (e.features.length > 1) {
+      return showFeaturePicker(e.features, e.lngLat, mercuryClickHandler,
+        f => f.properties.name || 'Mercury Site');
+    }
     const p = e.features[0].properties;
     new mapboxgl.Popup({ maxWidth: '300px' })
       .setLngLat(e.lngLat)
@@ -611,9 +723,14 @@ function addDemoLayers() {
           ${p.dep_id ? `<div style="margin-top:10px"><a href="https://mrdata.usgs.gov/mrds/show-mrds.php?dep_id=${p.dep_id}" target="_blank" style="font-family:'DM Mono',monospace;font-size:10px;color:#9C27B0;text-decoration:none;padding:3px 8px;border:1px solid rgba(156,39,176,0.4);border-radius:4px;">USGS Record ↗</a></div>` : ''}
         </div>`)
       .addTo(map);
-  });
+  };
+  map.on('click', 'mercury-layer', mercuryClickHandler);
 
-  map.on('click', 'chromium-layer', (e) => {
+  const chromiumClickHandler = (e) => {
+    if (e.features.length > 1) {
+      return showFeaturePicker(e.features, e.lngLat, chromiumClickHandler,
+        f => f.properties.name || 'Chromium Site');
+    }
     const p = e.features[0].properties;
     new mapboxgl.Popup({ maxWidth: '300px' })
       .setLngLat(e.lngLat)
@@ -628,7 +745,8 @@ function addDemoLayers() {
           ${p.dep_id ? `<div style="margin-top:10px"><a href="https://mrdata.usgs.gov/mrds/show-mrds.php?dep_id=${p.dep_id}" target="_blank" style="font-family:'DM Mono',monospace;font-size:10px;color:#00BCD4;text-decoration:none;padding:3px 8px;border:1px solid rgba(0,188,212,0.4);border-radius:4px;">USGS Record ↗</a></div>` : ''}
         </div>`)
       .addTo(map);
-  });
+  };
+  map.on('click', 'chromium-layer', chromiumClickHandler);
 
   map.on('mouseenter', 'mercury-layer', () => map.getCanvas().style.cursor = 'pointer');
   map.on('mouseleave', 'mercury-layer', () => map.getCanvas().style.cursor = '');
@@ -692,7 +810,11 @@ function addDemoLayers() {
     }
   });
 
-  map.on('click', 'copper-layer', (e) => {
+  const copperClickHandler = (e) => {
+    if (e.features.length > 1) {
+      return showFeaturePicker(e.features, e.lngLat, copperClickHandler,
+        f => f.properties.name || 'Copper Site');
+    }
     const p = e.features[0].properties;
     new mapboxgl.Popup({ maxWidth: '300px' })
       .setLngLat(e.lngLat)
@@ -707,9 +829,14 @@ function addDemoLayers() {
           ${p.dep_id ? `<div style="margin-top:10px"><a href="https://mrdata.usgs.gov/mrds/show-mrds.php?dep_id=${p.dep_id}" target="_blank" style="font-family:'DM Mono',monospace;font-size:10px;color:#E87722;text-decoration:none;padding:3px 8px;border:1px solid rgba(232,119,34,0.4);border-radius:4px;">USGS Record ↗</a></div>` : ''}
         </div>`)
       .addTo(map);
-  });
+  };
+  map.on('click', 'copper-layer', copperClickHandler);
 
-  map.on('click', 'antimony-layer', (e) => {
+  const antimonyClickHandler = (e) => {
+    if (e.features.length > 1) {
+      return showFeaturePicker(e.features, e.lngLat, antimonyClickHandler,
+        f => f.properties.name || 'Antimony Site');
+    }
     const p = e.features[0].properties;
     new mapboxgl.Popup({ maxWidth: '300px' })
       .setLngLat(e.lngLat)
@@ -724,9 +851,14 @@ function addDemoLayers() {
           ${p.dep_id ? `<div style="margin-top:10px"><a href="https://mrdata.usgs.gov/mrds/show-mrds.php?dep_id=${p.dep_id}" target="_blank" style="font-family:'DM Mono',monospace;font-size:10px;color:#78909C;text-decoration:none;padding:3px 8px;border:1px solid rgba(120,144,156,0.4);border-radius:4px;">USGS Record ↗</a></div>` : ''}
         </div>`)
       .addTo(map);
-  });
+  };
+  map.on('click', 'antimony-layer', antimonyClickHandler);
 
-  map.on('click', 'silver-layer', (e) => {
+  const silverClickHandler = (e) => {
+    if (e.features.length > 1) {
+      return showFeaturePicker(e.features, e.lngLat, silverClickHandler,
+        f => f.properties.name || 'Silver Site');
+    }
     const p = e.features[0].properties;
     new mapboxgl.Popup({ maxWidth: '300px' })
       .setLngLat(e.lngLat)
@@ -741,7 +873,8 @@ function addDemoLayers() {
           ${p.dep_id ? `<div style="margin-top:10px"><a href="https://mrdata.usgs.gov/mrds/show-mrds.php?dep_id=${p.dep_id}" target="_blank" style="font-family:'DM Mono',monospace;font-size:10px;color:#B0BEC5;text-decoration:none;padding:3px 8px;border:1px solid rgba(176,190,197,0.4);border-radius:4px;">USGS Record ↗</a></div>` : ''}
         </div>`)
       .addTo(map);
-  });
+  };
+  map.on('click', 'silver-layer', silverClickHandler);
 
   map.on('mouseenter', 'copper-layer', () => map.getCanvas().style.cursor = 'pointer');
   map.on('mouseleave', 'copper-layer', () => map.getCanvas().style.cursor = '');
@@ -750,7 +883,11 @@ function addDemoLayers() {
   map.on('mouseenter', 'silver-layer', () => map.getCanvas().style.cursor = 'pointer');
   map.on('mouseleave', 'silver-layer', () => map.getCanvas().style.cursor = '');
 
-  map.on('click', 'gold-occurrences-layer', (e) => {
+  const goldOccurrenceClickHandler = (e) => {
+    if (e.features.length > 1) {
+      return showFeaturePicker(e.features, e.lngLat, goldOccurrenceClickHandler,
+        f => f.properties.name || 'Gold Site');
+    }
     const p = e.features[0].properties;
     const statusColors = {
       'Producer': '#FFD700', 'Past Producer': '#F0C040',
@@ -805,9 +942,14 @@ function addDemoLayers() {
         </div>
       `)
       .addTo(map);
-  });
+  };
+  map.on('click', 'gold-occurrences-layer', goldOccurrenceClickHandler);
 
-  map.on('click', 'hist-mines-layer', (e) => {
+  const histMineClickHandler = (e) => {
+    if (e.features.length > 1) {
+      return showFeaturePicker(e.features, e.lngLat, histMineClickHandler,
+        f => f.properties.name || 'Mine Site');
+    }
     const p = e.features[0].properties;
 
     const operDescs = {
@@ -836,7 +978,8 @@ function addDemoLayers() {
         </div>
       `)
       .addTo(map);
-  });
+  };
+  map.on('click', 'hist-mines-layer', histMineClickHandler);
 
   map.on('mouseenter', 'gold-occurrences-layer', () => map.getCanvas().style.cursor = 'pointer');
   map.on('mouseleave', 'gold-occurrences-layer', () => map.getCanvas().style.cursor = '');
@@ -935,7 +1078,11 @@ function addDemoLayers() {
   }, 'active-claims-fill');
 
   // Popups for restricted areas
-  map.on('click', 'natl-parks-fill', (e) => {
+  const natlParkClickHandler = (e) => {
+    if (e.features.length > 1) {
+      return showFeaturePicker(e.features, e.lngLat, natlParkClickHandler,
+        f => f.properties.UNIT_NAME || f.properties.unit_name || 'National Park');
+    }
     const p = e.features[0].properties;
     new mapboxgl.Popup({ closeButton: false })
       .setLngLat(e.lngLat)
@@ -950,9 +1097,14 @@ function addDemoLayers() {
         </div>
       `)
       .addTo(map);
-  });
+  };
+  map.on('click', 'natl-parks-fill', natlParkClickHandler);
 
-  map.on('click', 'wilderness-fill', (e) => {
+  const wildernessClickHandler = (e) => {
+    if (e.features.length > 1) {
+      return showFeaturePicker(e.features, e.lngLat, wildernessClickHandler,
+        f => f.properties.NAME || f.properties.name || 'Wilderness Area');
+    }
     const p = e.features[0].properties;
     new mapboxgl.Popup({ closeButton: false })
       .setLngLat(e.lngLat)
@@ -967,7 +1119,8 @@ function addDemoLayers() {
         </div>
       `)
       .addTo(map);
-  });
+  };
+  map.on('click', 'wilderness-fill', wildernessClickHandler);
 
   map.on('mouseenter', 'natl-parks-fill', () => map.getCanvas().style.cursor = 'pointer');
   map.on('mouseleave', 'natl-parks-fill', () => map.getCanvas().style.cursor = '');
@@ -1036,7 +1189,11 @@ function addDemoLayers() {
   map.addLayer({ id: 'monuments-line', type: 'line', source: 'monuments-src', layout: { visibility: 'none' },
     paint: { 'line-color': '#9C27B0', 'line-width': 1.5, 'line-opacity': 0.8 } }, 'active-claims-fill');
 
-  map.on('click', 'monuments-fill', (e) => {
+  const monumentClickHandler = (e) => {
+    if (e.features.length > 1) {
+      return showFeaturePicker(e.features, e.lngLat, monumentClickHandler,
+        f => f.properties.NAME || f.properties.name || 'National Monument');
+    }
     const p = e.features[0].properties;
     new mapboxgl.Popup({ closeButton: false }).setLngLat(e.lngLat).setHTML(`
       <div style="font-family:'DM Sans',sans-serif;background:#1A1810;border:1px solid rgba(156,39,176,0.5);border-radius:10px;padding:12px 16px;color:#E8D9B0;min-width:200px">
@@ -1046,14 +1203,19 @@ function addDemoLayers() {
           <div style="font-size:11px;color:#6B6248;margin-top:3px">National Monuments generally prohibit new mining claims. Existing valid claims may continue. Verify with managing agency.</div>
         </div>
       </div>`).addTo(map);
-  });
+  };
+  map.on('click', 'monuments-fill', monumentClickHandler);
 
   // ── WILD & SCENIC RIVERS ──
   map.addSource('wsr-src', { type: 'geojson', data: { type: 'FeatureCollection', features: [] } });
   map.addLayer({ id: 'wsr-layer', type: 'line', source: 'wsr-src', layout: { visibility: 'none' },
     paint: { 'line-color': '#00BCD4', 'line-width': 3, 'line-opacity': 0.8 } });
 
-  map.on('click', 'wsr-layer', (e) => {
+  const wsrClickHandler = (e) => {
+    if (e.features.length > 1) {
+      return showFeaturePicker(e.features, e.lngLat, wsrClickHandler,
+        f => f.properties.NAME || f.properties.name || f.properties.RIVERNAME || f.properties.river_name || 'Wild & Scenic River');
+    }
     const p = e.features[0].properties;
     new mapboxgl.Popup({ closeButton: false }).setLngLat(e.lngLat).setHTML(`
       <div style="font-family:'DM Sans',sans-serif;background:#1A1810;border:1px solid rgba(0,188,212,0.5);border-radius:10px;padding:12px 16px;color:#E8D9B0;min-width:200px">
@@ -1064,7 +1226,8 @@ function addDemoLayers() {
         </div>
         <div style="font-family:'DM Mono',monospace;font-size:10px;color:#6B6248;margin-top:8px">${p.RIVERNAME || p.river_name || ''}</div>
       </div>`).addTo(map);
-  });
+  };
+  map.on('click', 'wsr-layer', wsrClickHandler);
 
   // ── TRIBAL LANDS ──
   map.addSource('tribal-src', { type: 'geojson', data: { type: 'FeatureCollection', features: [] } });
@@ -1073,7 +1236,11 @@ function addDemoLayers() {
   map.addLayer({ id: 'tribal-line', type: 'line', source: 'tribal-src', layout: { visibility: 'none' },
     paint: { 'line-color': '#795548', 'line-width': 1.5, 'line-opacity': 0.8 } }, 'active-claims-fill');
 
-  map.on('click', 'tribal-fill', (e) => {
+  const tribalClickHandler = (e) => {
+    if (e.features.length > 1) {
+      return showFeaturePicker(e.features, e.lngLat, tribalClickHandler,
+        f => f.properties.AIANNHCE || f.properties.NAME || f.properties.name || 'Tribal Land');
+    }
     const p = e.features[0].properties;
     new mapboxgl.Popup({ closeButton: false }).setLngLat(e.lngLat).setHTML(`
       <div style="font-family:'DM Sans',sans-serif;background:#1A1810;border:1px solid rgba(121,85,72,0.5);border-radius:10px;padding:12px 16px;color:#E8D9B0;min-width:200px">
@@ -1083,7 +1250,8 @@ function addDemoLayers() {
           <div style="font-size:11px;color:#6B6248;margin-top:3px">Federally recognized tribal land. Prospecting, detecting, and artifact collecting require tribal permission. Federal laws protecting tribal sovereignty apply.</div>
         </div>
       </div>`).addTo(map);
-  });
+  };
+  map.on('click', 'tribal-fill', tribalClickHandler);
 
   map.on('mouseenter', 'monuments-fill', () => map.getCanvas().style.cursor = 'pointer');
   map.on('mouseleave', 'monuments-fill', () => map.getCanvas().style.cursor = '');
@@ -1228,14 +1396,19 @@ function addDemoLayers() {
     paint: { 'line-color': '#FFAB40', 'line-width': 1.5, 'line-opacity': 0.8 }
   });
 
-  map.on('click', 'blm-roads-layer', (e) => {
+  const blmRoadClickHandler = (e) => {
+    if (e.features.length > 1) {
+      return showFeaturePicker(e.features, e.lngLat, blmRoadClickHandler,
+        f => f.properties.ROUTE_NAME || f.properties.name || 'BLM Road');
+    }
     const p = e.features[0].properties;
     new mapboxgl.Popup({ closeButton: false }).setLngLat(e.lngLat).setHTML(`
       <div style="font-family:'DM Sans',sans-serif;background:#1A1810;border:1px solid rgba(255,171,64,0.5);border-radius:10px;padding:12px 16px;color:#E8D9B0;min-width:180px">
         <div style="font-family:'Bebas Neue',sans-serif;font-size:16px;color:#FFAB40;letter-spacing:0.06em">🛤 ${p.ROUTE_NAME || p.name || 'BLM Road'}</div>
         <div style="font-size:12px;color:#6B6248;margin-top:6px">${p.SURFACE_TYPE || p.ROAD_TYPE || ''}</div>
       </div>`).addTo(map);
-  });
+  };
+  map.on('click', 'blm-roads-layer', blmRoadClickHandler);
   map.on('mouseenter', 'blm-roads-layer', () => map.getCanvas().style.cursor = 'pointer');
   map.on('mouseleave', 'blm-roads-layer', () => map.getCanvas().style.cursor = '');
 
@@ -1246,7 +1419,11 @@ function addDemoLayers() {
   map.addLayer({ id: 'military-line', type: 'line', source: 'military-src', layout: { visibility: 'none' },
     paint: { 'line-color': '#F44336', 'line-width': 1.5, 'line-dasharray': [6, 2], 'line-opacity': 0.8 } }, 'active-claims-fill');
 
-  map.on('click', 'military-fill', (e) => {
+  const militaryClickHandler = (e) => {
+    if (e.features.length > 1) {
+      return showFeaturePicker(e.features, e.lngLat, militaryClickHandler,
+        f => f.properties.Mng_Name || f.properties.Unit_Nm || f.properties.name || 'Military Area');
+    }
     const p = e.features[0].properties;
     new mapboxgl.Popup({ closeButton: false }).setLngLat(e.lngLat).setHTML(`
       <div style="font-family:'DM Sans',sans-serif;background:#1A1810;border:1px solid rgba(244,67,54,0.5);border-radius:10px;padding:12px 16px;color:#E8D9B0;min-width:200px">
@@ -1256,7 +1433,8 @@ function addDemoLayers() {
           <div style="font-size:11px;color:#6B6248;margin-top:3px">Military installation. No prospecting, detecting, or unauthorized entry. Federal law enforced.</div>
         </div>
       </div>`).addTo(map);
-  });
+  };
+  map.on('click', 'military-fill', militaryClickHandler);
   map.on('mouseenter', 'military-fill', () => map.getCanvas().style.cursor = 'pointer');
   map.on('mouseleave', 'military-fill', () => map.getCanvas().style.cursor = '');
 }
