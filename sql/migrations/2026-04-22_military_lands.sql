@@ -39,6 +39,6 @@ GRANT SELECT ON military_lands TO anon, authenticated;
 COMMENT ON TABLE military_lands IS
   'MIRTA military installation boundaries. Source: NTAD Military Bases FeatureServer, FY2024 BSR. Populated by loaders/load_military_lands.py.';
 COMMENT ON COLUMN military_lands.source_id IS
-  'NTAD mirtaLocationsIdpk (DISDI Primary Key Identifier).';
+  'NTAD OBJECTID (cast to TEXT). Not stable across annual BSR republishes; acceptable because refresh cadence is TRUNCATE + full reload. See schema_notes/military_lands.md for why mirtaLocationsIdpk and sdsId were rejected.';
 COMMENT ON COLUMN military_lands.raw IS
   'Full feature properties from source. Every field captured, no filtering. See schema_notes/military_lands.md.';

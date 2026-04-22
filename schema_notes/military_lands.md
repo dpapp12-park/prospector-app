@@ -109,28 +109,30 @@ All 14 non-geometry fields captured. All land in the JSONB `raw` column.
 
 | # | Field | Type | Length | Alias | Nullable | Notes |
 |---|---|---|---|---|---|---|
-| 1 | `OBJECTID` | OID | — | OBJECTID | false | Endpoint-internal. Not stable across re-publishes. **Do not use as `source_id`.** |
-| 2 | `countryName` | String | 25 | Country | true | Filter to "United States" at load time. |
-| 3 | `featureDescription` | String | 2000 | Feature Description | true | Free-text description. Populated or not depending on site. |
-| 4 | `featureName` | String | 80 | Feature Name | true | Display name for map popup and tooltip. This is the human-readable label. |
-| 5 | `isCui` | String | 3 | Controlled Unclassified Information Indicator | true | Y/N/empty. Flag for sensitive records. |
-| 6 | `isFirrmaSite` | String | 3 | Is FIRRMA Site | true | Y/N. Foreign Investment Risk Review Modernization Act sites — released under 31 CFR Part 802. Not prospector-relevant but capture. |
-| 7 | `isJointBase` | String | 3 | Is Joint Base | true | Y/N. Joint Base designation (e.g., JBLM). |
-| 8 | `mediaId` | String | 40 | Media Identifier | true | DISDI internal media reference. Capture, don't display. |
-| 9 | `mirtaLocationsIdpk` | String | 40 | Primary Key Identifier | **false** | DISDI-assigned primary key. **This is our `source_id`** — stable across re-publishes, non-nullable, source-authoritative. |
-| 10 | `sdsId` | GUID | 38 | Globally Unique Identifier | true | DISDI GUID. Second unique identifier. Capture in `raw`, don't use as `source_id` (nullable). |
+| 1 | `OBJECTID` | OID | — | OBJECTID | false | Endpoint-internal integer. **Current `source_id` choice** (Session 16) — server-guaranteed unique + non-null in actual data. NOT stable across annual BSR republishes, but our refresh cadence is TRUNCATE + full reload, which neutralizes that concern. |
+| 2 | `countryName` | String | 25 | Country | true | Actual values are lowercase codes like `"usa"`. Filter to `'usa'` at load time if non-US sites ever appear. |
+| 3 | `featureDescription` | String | 2000 | Feature Description | true | Free-text description. Actual values often `"na"` literal — capture anyway. |
+| 4 | `featureName` | String | 80 | Feature Name | true | Display name for map popup and tooltip. Human-readable label. Not unique (e.g., multiple "Storage Annex" entries). |
+| 5 | `isCui` | String | 3 | Controlled Unclassified Information Indicator | true | Actual values: `"yes"` / `"no"`. Flag for sensitive records. |
+| 6 | `isFirrmaSite` | String | 3 | Is FIRRMA Site | true | `"yes"` / `"no"`. Foreign Investment Risk Review Modernization Act sites. Not prospector-relevant but capture. |
+| 7 | `isJointBase` | String | 3 | Is Joint Base | true | `"yes"` / `"no"`. Joint Base designation (e.g., JBLM). |
+| 8 | `mediaId` | String | 40 | Media Identifier | true | DISDI internal media reference. Actual values often `"na"`. Capture, don't display. |
+| 9 | `mirtaLocationsIdpk` | String | 40 | Primary Key Identifier | **false** per metadata | ⚠️ **Metadata is misleading.** The endpoint metadata labels this as non-nullable Primary Key Identifier, but the actual data populates it with a single space `" "` for every record (100% empty). Do **not** use as `source_id`. Captured in `raw` for archaeology. |
+| 10 | `sdsId` | GUID | 38 | Globally Unique Identifier | true | DISDI GUID. Populated for ~75% of records (619 of 824), empty for the rest with 3 duplicate keys. Do **not** use as `source_id`. Captured in `raw`. |
 | 11 | `siteName` | String | 100 | Site Name | true | Often matches or overlaps with `featureName`. Capture both. |
-| 12 | `siteOperationalStatus` | String | 4 | Site Operational Status | true | Operational status code (e.g., active, inactive). May be useful for filtering closed bases. |
-| 13 | `siteReportingComponent` | String | 22 | Site Reporting Component Code | true | DoD Component (Army, Navy, Air Force, Marine Corps, etc.). Useful for styling or filtering. |
-| 14 | `stateNameCode` | String | 5 | State Name Code | true | Two-letter state code. Useful for state-filtered queries. |
-| — | `Shape__Area` | Double | — | Shape__Area | true | Auto-derived from geometry. Not stored separately — we derive from PostGIS. |
+| 12 | `siteOperationalStatus` | String | 4 | Site Operational Status | true | Actual codes: `"act"`, `"semi"`, etc. Useful for filtering closed bases. |
+| 13 | `siteReportingComponent` | String | 22 | Site Reporting Component Code | true | Actual codes: `"usaf"`, `"usar"` (Army Reserve), etc. Useful for styling or filtering. |
+| 14 | `stateNameCode` | String | 5 | State Name Code | true | Lowercase two-letter state code (e.g., `"ma"`, `"ca"`). Useful for state-filtered queries. |
+| — | `Shape__Area` | Double | — | Shape__Area | true | Auto-derived from geometry. Not stored separately — derive from PostGIS. |
 | — | `Shape__Length` | Double | — | Shape__Length | true | Auto-derived. Same treatment. |
 
 **Geometry:** polygon / multi-polygon, WGS84. Stored in `geometry` column.
 
-**`source_id` choice:** `mirtaLocationsIdpk`. Non-nullable, labeled "Primary
-Key Identifier" at source, stable across publishes. `sdsId` captured in raw
-as backup identifier.
+**`source_id` choice:** `OBJECTID` (integer, cast to TEXT in landing table).
+
+**How we got here (Session 16):** First pick was `mirtaLocationsIdpk` based on the API metadata labeling it "Primary Key Identifier" + non-nullable. Actual data populates it with `" "` (single space) for every record — useless. Second pick was `sdsId` (GUID). Pre-check against `mirta.geojson` showed 202 of 824 records had empty `sdsId`, with 3 duplicate keys among the populated ones. Third pick — `OBJECTID` — verified populated and unique across all 824. The only downside is OBJECTID is not stable across annual BSR republishes; refresh cadence is TRUNCATE + full reload so that doesn't matter for our use.
+
+**Lesson logged:** Trusting endpoint metadata without spot-checking real data costs a retry loop. For future datasets, Step 1 should include fetching one sample record and verifying the "unique identifier" field is actually populated and unique before committing the schema note.
 
 ---
 
