@@ -30,7 +30,7 @@ function addDemoLayers() {
     'source-layer': 'active_claims_final-0xk0t5',
     paint: {
       'fill-color': '#4CAF50',
-      'fill-opacity': 0.2
+      'fill-opacity': 0
     }
   });
 
@@ -64,7 +64,7 @@ function addDemoLayers() {
       source: src,
       'source-layer': layer,
       layout: { visibility: 'none' },
-      paint: { 'fill-color': '#F44336', 'fill-opacity': 0.15 }
+      paint: { 'fill-color': '#F44336', 'fill-opacity': 0 }
     });
     map.addLayer({
       id: `closed-claims-line-${n}`,
