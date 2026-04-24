@@ -148,13 +148,21 @@
   #ai-btn.active .top-icon, #ai-btn:hover .top-icon { content: url('assets/icons/icon_ai_pressed.png'); }
 
   /* ── SEARCH BAR ── */
+  /* Compact pill by default (~240px), expands on focus-within to 480px.
+     Results dropdown is nested inside #searchbar so it follows the width. */
   #searchbar {
     position: absolute;
     top: 72px;
     left: 16px;
-    right: 20px;
+    width: 240px;
+    max-width: calc(100vw - 32px);
     z-index: 100;
     box-sizing: border-box;
+    transition: width 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+  }
+
+  #searchbar:focus-within {
+    width: 480px;
   }
 
   #search-input-wrap {
