@@ -115,7 +115,7 @@ function addDemoLayers() {
       'OREUG':'Eugene District','ORSAK':'Klamath Falls FO','ORPRI':'Prineville District',
       'ORSRO':'Roseburg District','ORVAL':'Vale District'
     };
-    const fieldOffice = blmOrgMap[blmOrg] || (blmOrg ? `BLM ${blmOrg}` : 'BLM Oregon');
+    const fieldOffice = blmOrgMap[blmOrg] || (blmOrg ? `BLM ${blmOrg}` : '—');
 
     const countyRecorderMap = {
       'BAKER':'https://www.bakercounty.org/clerk','BENTON':'https://www.co.benton.or.us/clerk',
