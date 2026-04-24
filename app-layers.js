@@ -860,7 +860,7 @@ function addDemoLayers() {
     id: 'quaternary-faults-layer',
     type: 'line',
     source: 'quaternary-faults-src',
-    'source-layer': 'quaternary_faults-5JqptJ',
+    'source-layer': 'quaternary_faults-5jqptj',
     layout: { visibility: 'none' },
     paint: {
       'line-color': '#E91E63',
