@@ -50,7 +50,7 @@ window.PROSPECTOR_CONFIG = window.UNWORKED_GOLD_CONFIG;
 </script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Mono:wght@400;500&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="style.css?v=20260419-s4">
+<link rel="stylesheet" href="style.css?v=20260423">
 
 </head>
 <body>
@@ -220,6 +220,25 @@ window.PROSPECTOR_CONFIG = window.UNWORKED_GOLD_CONFIG;
           <span class="layer-name" id="name-silver">Silver Occurrences</span>
           <span class="layer-badge pro">PRO</span>
           <button class="info-btn" onclick="showLayerInfo(event,'silver')">i</button>
+        </div>
+      </div>
+    </div>
+    <div class="group-divider"></div>
+
+    <!-- ── GEOLOGY ── -->
+    <div class="layer-group is-collapsed" id="group-geology">
+      <div class="group-header" onclick="toggleGroup('geology')">
+        <div class="group-header-left">
+          <div class="group-title">Geology</div>
+          <div class="group-count">1 Layer</div>
+        </div>
+        <div class="group-arrow" id="arrow-geology">▼</div>
+      </div>
+      <div class="group-body collapsed" id="body-geology">
+        <div class="layer-row" onclick="toggleLayer('quaternary-faults')">
+          <div class="layer-bullet" id="bullet-quaternary-faults" style="color:#E91E63">●</div>
+          <span class="layer-name" id="name-quaternary-faults">Quaternary Faults</span>
+          <button class="info-btn" onclick="showLayerInfo(event,'quaternary-faults')">i</button>
         </div>
       </div>
     </div>
@@ -501,6 +520,7 @@ window.PROSPECTOR_CONFIG = window.UNWORKED_GOLD_CONFIG;
       <div id="toggle-copper" class="toggle"></div>
       <div id="toggle-antimony" class="toggle"></div>
       <div id="toggle-silver" class="toggle"></div>
+      <div id="toggle-quaternary-faults" class="toggle"></div>
       <div id="toggle-open-to-claim" class="toggle"></div>
       <div id="toggle-monuments" class="toggle"></div>
       <div id="toggle-wild-scenic" class="toggle"></div>
@@ -937,14 +957,14 @@ window.PROSPECTOR_CONFIG = window.UNWORKED_GOLD_CONFIG;
   </div>
 </div>
 
-<script src="app.js?v=20260419-s4"></script>
-<script src="app-auth.js?v=20260419-s4"></script>
-<script src="app-user.js?v=20260419-s4"></script>
-<script src="app-data.js?v=20260419-s4"></script>
-<script src="app-lidar.js?v=20260419-s4"></script>
-<script src="app-search.js?v=20260419-s4"></script>
-<script src="app-ai.js?v=20260419-s4"></script>
-<script src="app-layers.js?v=20260419-s4"></script>
+<script src="app.js?v=20260423"></script>
+<script src="app-auth.js?v=20260423"></script>
+<script src="app-user.js?v=20260423"></script>
+<script src="app-data.js?v=20260423"></script>
+<script src="app-lidar.js?v=20260423"></script>
+<script src="app-search.js?v=20260423"></script>
+<script src="app-ai.js?v=20260423"></script>
+<script src="app-layers.js?v=20260423"></script>
 
 </body>
 </html>
