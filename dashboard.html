@@ -8,6 +8,7 @@
 window.UNWORKED_GOLD_CONFIG = {
   supabase_url: 'https://condhfwpzlxrzuadgopc.supabase.co',
   supabase_anon_key: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImNvbmRoZndwemx4cnp1YWRnb3BjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQxOTE4OTcsImV4cCI6MjA4OTc2Nzg5N30.bJBQJuRVyWsO0Xw6CaWcZ9gTzr1b4qcFfhCXi1Au3Fw',
+  mapbox_token: 'pk.eyJ1IjoiZHBhcHAxMiIsImEiOiJjbW4xZWk4NGowbGdkMnFwbjNxMmU1dXJtIn0.aXSQTJByMmxF7E54iId-9w',
 };
 window.PROSPECTOR_CONFIG = window.UNWORKED_GOLD_CONFIG;
 </script>
@@ -1662,17 +1663,18 @@ function buildWeightLine() {
 }
 
 // ── MINI MAP ─────────────────────────────────────────────
-async function fetchMapboxToken() {
-  try {
-    const res = await fetch(`${SUPABASE_URL}/rest/v1/app_config?select=key,value`, {
-      headers: { 'apikey': ANON_KEY, 'Authorization': 'Bearer ' + ANON_KEY }
-    });
-    const rows = await res.json();
-    const config = {};
-    if (Array.isArray(rows)) rows.forEach(r => config[r.key] = r.value);
-    mapboxToken = config.mapbox_token || localStorage.getItem('unworked_gold_mapbox_token') || localStorage.getItem('prospector_mapbox_token');
-    if (mapboxToken && mapboxToken.startsWith('pk.')) initMiniMap();
-  } catch(e) {
+function fetchMapboxToken() {
+  // Reads token from inline window.UNWORKED_GOLD_CONFIG. Previously fetched
+  // from Supabase app_config table; that table was dropped in Session 29
+  // security hardening. Mapbox public tokens (pk.*) are safe to inline.
+  mapboxToken =
+    window.UNWORKED_GOLD_CONFIG?.mapbox_token ||
+    window.PROSPECTOR_CONFIG?.mapbox_token ||
+    localStorage.getItem('unworked_gold_mapbox_token') ||
+    localStorage.getItem('prospector_mapbox_token');
+  if (mapboxToken && mapboxToken.startsWith('pk.')) {
+    initMiniMap();
+  } else {
     document.getElementById('mini-map-placeholder').innerHTML = '<div style="font-size:12px;color:var(--text-3);text-align:center;padding:16px">Map unavailable</div>';
   }
 }

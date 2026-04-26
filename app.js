@@ -63,7 +63,6 @@ let layerPanelOpen = false;
 let styleSwitcherOpen = false;
 let findPanelOpen = false;
 let aiMenuOpen = false;
-let anthropicKey = null;
 const FREE_ROCK_ID_LIMIT = 3;
 let currentStyle = 'satellite';
 
@@ -617,48 +616,18 @@ function showStatus(msg) {
 
 
 
-// ── BOOT: fetch config from Supabase then init map ──
-const BOOT_SUPABASE_URL = window.UNWORKED_GOLD_CONFIG?.supabase_url || window.PROSPECTOR_CONFIG?.supabase_url || 'https://condhfwpzlxrzuadgopc.supabase.co';
-const BOOT_ANON_KEY = window.UNWORKED_GOLD_CONFIG?.supabase_anon_key || window.PROSPECTOR_CONFIG?.supabase_anon_key || '';
-
-window.addEventListener('load', async () => {
-  try {
-    const res = await fetch(
-      `${BOOT_SUPABASE_URL}/rest/v1/app_config?select=key,value`,
-      {
-        headers: {
-          'apikey': BOOT_ANON_KEY,
-          'Authorization': `Bearer ${BOOT_ANON_KEY}`
-        }
-      }
-    );
-    const rows = await res.json();
-    const config = {};
-    rows.forEach(r => config[r.key] = r.value);
-
-    // Store in localStorage as cache
-    if (config.mapbox_token) {
-      localStorage.setItem('unworked_gold_mapbox_token', config.mapbox_token);
-    }
-    if (config.supabase_anon_key) {
-      localStorage.setItem('unworked_gold_supabase_key', config.supabase_anon_key);
-    }
-    if (config.anthropic_key) {
-      anthropicKey = config.anthropic_key;
-    }
-
-    // Init map with token from config
-    const token = config.mapbox_token || localStorage.getItem('unworked_gold_mapbox_token') || localStorage.getItem('prospector_mapbox_token');
-    if (token && token.startsWith('pk.')) {
-      document.getElementById('token-input').value = token;
-      initMap();
-    }
-  } catch(e) {
-    console.error('Config fetch failed, falling back to localStorage', e);
-    const saved = localStorage.getItem('unworked_gold_mapbox_token') || localStorage.getItem('prospector_mapbox_token');
-    if (saved && saved.startsWith('pk.')) {
-      document.getElementById('token-input').value = saved;
-      initMap();
-    }
+// ── BOOT: read mapbox token from inline config, init map ──
+// Previously fetched from Supabase app_config table; that table was
+// dropped in Session 29 security hardening. Mapbox public tokens (pk.*)
+// are inlined directly in window.UNWORKED_GOLD_CONFIG (index.html).
+window.addEventListener('load', () => {
+  const token =
+    window.UNWORKED_GOLD_CONFIG?.mapbox_token ||
+    window.PROSPECTOR_CONFIG?.mapbox_token ||
+    localStorage.getItem('unworked_gold_mapbox_token') ||
+    localStorage.getItem('prospector_mapbox_token');
+  if (token && token.startsWith('pk.')) {
+    document.getElementById('token-input').value = token;
+    initMap();
   }
 });
