@@ -1240,7 +1240,7 @@ function addDemoLayers() {
   // ── ACTIVE CLAIMS BY TYPE (filter on existing tileset) ──
   const claimTypes = [
     { id: 'placer', filter: 'PLACER CLAIM', color: '#64B5F6' },
-    { id: 'lode',   filter: 'LODE CLAIM',   color: '#A5D6A7' },
+    { id: 'lode',   filter: 'LODE CLAIM',   color: '#26A69A' },
     { id: 'tunnel', filter: 'TUNNEL SITE',  color: '#CE93D8' },
     { id: 'mill',   filter: 'MILL SITE',    color: '#FFCC80' }
   ];
