@@ -443,6 +443,18 @@
     flex-shrink: 0;
   }
 
+  /* Pro/Coming-Soon variant — slightly stronger so it reads as a future-feature signal, not a passive label. */
+  .layer-badge.badge-pro {
+    background: rgba(240,192,64,0.18);
+    border-color: rgba(240,192,64,0.45);
+    color: #C9A84C;
+    letter-spacing: 0.04em;
+  }
+
+  /* Row state for layers that exist in the panel but aren't shippable yet. Dimmed so users read it as "coming soon," not "broken toggle." Click still fires showStatus('Coming soon — Pro feature') from toggleLayer. */
+  .layer-row.coming-soon { opacity: 0.55; }
+  .layer-row.coming-soon:hover { opacity: 0.75; }
+
   /* ── TOGGLE SWITCH (keep for compatibility) ── */
   .toggle {
     width: 34px; height: 20px;

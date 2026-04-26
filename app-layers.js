@@ -1368,7 +1368,13 @@ function toggleLayer(id) {
   };
 
   if (id === 'terrain-3d') {
-    map.setTerrain(layerState[id] ? { source: 'mapbox-dem', exaggeration: 1.6 } : null);
+    // setTerrain3D mirrors layerState + both UI controls (floating
+    // 3D button + Layer Panel row); we already flipped layerState[id]
+    // and the bullet/name/toggle classes above, but call through to
+    // ensure the floating-button 'active' class and camera animation
+    // stay in lockstep on every toggle path.
+    setTerrain3D(layerState[id]);
+    updateActiveLayerBar();
     return;
   }
 

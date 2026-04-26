@@ -50,7 +50,7 @@ window.PROSPECTOR_CONFIG = window.UNWORKED_GOLD_CONFIG;
 </script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Mono:wght@400;500&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="style.css?v=20260423-5">
+<link rel="stylesheet" href="style.css?v=20260425-1">
 
 </head>
 <body>
@@ -298,10 +298,10 @@ window.PROSPECTOR_CONFIG = window.UNWORKED_GOLD_CONFIG;
           <span class="layer-name" id="name-closed-claims">Closed / Lapsed Claims</span>
           <button class="info-btn" onclick="showLayerInfo(event,'closed-claims')">i</button>
         </div>
-        <div class="layer-row" onclick="toggleLayer('placer-density')">
+        <div class="layer-row coming-soon" onclick="toggleLayer('placer-density')">
           <div class="layer-bullet" id="bullet-placer-density">●</div>
           <span class="layer-name" id="name-placer-density">Historic Claim Density</span>
-          <span class="layer-badge">Soon</span>
+          <span class="layer-badge badge-pro">🔒 Pro · Soon</span>
           <button class="info-btn" onclick="showLayerInfo(event,'placer-density')">i</button>
         </div>
       </div>
@@ -416,8 +416,8 @@ window.PROSPECTOR_CONFIG = window.UNWORKED_GOLD_CONFIG;
       </div>
       <div class="group-body collapsed" id="body-lidar">
         <div class="lidar-style-row" onclick="toggleLidarStyle('hillshade-gray')" id="lidar-row-hillshade-gray">
-          <div class="layer-bullet on" id="lidar-bullet-hillshade-gray">●</div>
-          <span class="layer-name on" id="lidar-name-hillshade-gray">Standard Gray Hillshade</span>
+          <div class="layer-bullet" id="lidar-bullet-hillshade-gray">●</div>
+          <span class="layer-name" id="lidar-name-hillshade-gray">Standard Gray Hillshade</span>
           <button class="info-btn" onclick="showLayerInfo(event,'lidar-hillshade-gray')">i</button>
         </div>
         <div class="lidar-style-row" onclick="toggleLidarStyle('hillshade-multi')" id="lidar-row-hillshade-multi">
@@ -509,7 +509,7 @@ window.PROSPECTOR_CONFIG = window.UNWORKED_GOLD_CONFIG;
       <div id="toggle-active-claims" class="toggle on"></div>
       <div id="toggle-open-land" class="toggle"></div>
       <div id="toggle-closed-claims" class="toggle"></div>
-      <div id="toggle-terrain-3d" class="toggle on"></div>
+      <div id="toggle-terrain-3d" class="toggle"></div>
       <div id="toggle-lidar" class="toggle"></div>
       <div id="toggle-contours" class="toggle"></div>
       <div id="toggle-gold-occurrences" class="toggle"></div>
@@ -957,14 +957,14 @@ window.PROSPECTOR_CONFIG = window.UNWORKED_GOLD_CONFIG;
   </div>
 </div>
 
-<script src="app.js?v=20260423-5"></script>
-<script src="app-auth.js?v=20260423-5"></script>
-<script src="app-user.js?v=20260423-5"></script>
-<script src="app-data.js?v=20260423-5"></script>
-<script src="app-lidar.js?v=20260423-5"></script>
-<script src="app-search.js?v=20260423-5"></script>
-<script src="app-ai.js?v=20260423-5"></script>
-<script src="app-layers.js?v=20260423-5"></script>
+<script src="app.js?v=20260425-1"></script>
+<script src="app-auth.js?v=20260425-1"></script>
+<script src="app-user.js?v=20260425-1"></script>
+<script src="app-data.js?v=20260425-1"></script>
+<script src="app-lidar.js?v=20260425-1"></script>
+<script src="app-search.js?v=20260425-1"></script>
+<script src="app-ai.js?v=20260425-1"></script>
+<script src="app-layers.js?v=20260425-1"></script>
 
 </body>
 </html>

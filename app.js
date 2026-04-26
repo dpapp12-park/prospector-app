@@ -37,7 +37,7 @@ let layerState = {
   'open-to-claim': false,
   'plss': false,
   'blm-roads': false,
-  'terrain-3d': true,
+  'terrain-3d': false,
   'contours': false,
   'gold-occurrences': false,
   'hist-mines': false,
@@ -234,13 +234,7 @@ function setStyle(name) {
       tileSize: 512,
       maxzoom: 14
     });
-    if (layerState['terrain-3d']) {
-      map.setTerrain({ source: 'mapbox-dem', exaggeration: 1.6 });
-    } else {
-      map.setTerrain(null);
-      map.setPitch(0);
-      map.setBearing(0);
-    }
+    setTerrain3D(layerState['terrain-3d']);
     addDemoLayers();
   });
   toggleStyles();
@@ -492,22 +486,47 @@ function resetBearing() {
 }
 
 let terrain3DOn = false;
+
+// ── 3D TERRAIN — SINGLE SOURCE OF TRUTH ─────────────────
+// All paths that turn 3D terrain on or off route through here:
+//   • toggle3D()                — floating "3D" button
+//   • toggleLayer('terrain-3d') — Layer Panel row (in app-layers.js)
+//   • setStyle()                — basemap re-init after style.load
+// Updates in lockstep:
+//   • map.setTerrain + camera ease
+//   • global terrain3DOn flag
+//   • layerState['terrain-3d']
+//   • #terrain-toggle-btn (floating button) "active" class
+//   • #bullet-terrain-3d / #name-terrain-3d / #toggle-terrain-3d
+//     (Layer Panel row visuals + hidden compat toggle)
+function setTerrain3D(on) {
+  if (!map) return;
+  const next = !!on;
+  terrain3DOn = next;
+  layerState['terrain-3d'] = next;
+
+  if (next) {
+    map.setTerrain({ source: 'mapbox-dem', exaggeration: 1.6 });
+    map.easeTo({ pitch: 55, duration: 600 });
+  } else {
+    map.setTerrain(null);
+    map.easeTo({ pitch: 0, bearing: 0, duration: 600 });
+  }
+
+  const btn = document.getElementById('terrain-toggle-btn');
+  if (btn) btn.classList.toggle('active', next);
+
+  const bullet = document.getElementById('bullet-terrain-3d');
+  const name   = document.getElementById('name-terrain-3d');
+  const tgl    = document.getElementById('toggle-terrain-3d');
+  if (bullet) bullet.classList.toggle('on', next);
+  if (name)   name.classList.toggle('on', next);
+  if (tgl)    tgl.classList.toggle('on', next);
+}
+
 function toggle3D() {
   if (!map) return;
-  terrain3DOn = !terrain3DOn;
-  const btn = document.getElementById('terrain-toggle-btn');
-  btn.classList.toggle('active', terrain3DOn);
-  if (terrain3DOn) {
-    map.easeTo({ pitch: 55, duration: 600 });
-    map.setTerrain({ source: 'mapbox-dem', exaggeration: 1.6 });
-    layerState['terrain-3d'] = true;
-    document.getElementById('toggle-terrain-3d').classList.add('on');
-  } else {
-    map.easeTo({ pitch: 0, duration: 600 });
-    map.setTerrain(null);
-    layerState['terrain-3d'] = false;
-    document.getElementById('toggle-terrain-3d').classList.remove('on');
-  }
+  setTerrain3D(!terrain3DOn);
   showStatus(terrain3DOn ? '3D terrain on' : 'Flat map');
 }
 

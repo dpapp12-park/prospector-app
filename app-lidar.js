@@ -40,7 +40,11 @@ const LIDAR_STYLES = [
   { id: 'aspect-map',        label: 'Aspect Map',                 type: 'named', rasterFunction: 'Aspect Map' },
   { id: 'contour',           label: 'Contour Smoothed 25',        type: 'named', rasterFunction: 'Contour Smoothed 25', allowRetry: true }
 ];
-let activeLidarStyles = new Set(['hillshade-gray']);
+// Boot with no LiDAR style active — basemap is fully visible on first load.
+// User clicks a row in the LiDAR panel to turn one on. focusedLidarId stays
+// pointed at hillshade-gray so the opacity slider has a sensible default
+// when the panel opens; it becomes meaningful only after a style is active.
+let activeLidarStyles = new Set();
 let focusedLidarId = 'hillshade-gray';
 let lidarLayerOpacity = {};
 LIDAR_STYLES.forEach(s => { lidarLayerOpacity[s.id] = 100; });
