@@ -1,0 +1,22 @@
+# Secrets — never commit
+.env
+*.env.local
+!.env.example
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+
+# Virtual environments
+venv/
+.venv/
+env/
+
+# OS
+.DS_Store
+Thumbs.db
+*.geojson
+_attic/
+ 
+ 
