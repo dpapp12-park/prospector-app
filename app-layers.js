@@ -1246,12 +1246,17 @@ function addDemoLayers() {
   ];
 
   claimTypes.forEach(({ id, filter, color }) => {
+    // Filter coalesces BLM_PROD then blm_prod — Mapbox tilesets sometimes
+    // surface property names lowercased depending on upload pipeline. The
+    // popup code at line ~84 reads `props.BLM_PROD || props.blm_prod` for
+    // the same reason. Without this fallback the four subtype layers
+    // silently render zero features. See Finding #8 (Session 24).
     map.addLayer({
       id: `${id}-claims-fill`,
       type: 'fill',
       source: 'active-claims-src',
       'source-layer': 'active_claims_final-0xk0t5',
-      filter: ['==', ['upcase', ['coalesce', ['get', 'BLM_PROD'], '']], filter],
+      filter: ['==', ['upcase', ['coalesce', ['get', 'BLM_PROD'], ['get', 'blm_prod'], '']], filter],
       layout: { visibility: 'none' },
       paint: { 'fill-color': color, 'fill-opacity': 0.35 }
     });
@@ -1260,7 +1265,7 @@ function addDemoLayers() {
       type: 'line',
       source: 'active-claims-src',
       'source-layer': 'active_claims_final-0xk0t5',
-      filter: ['==', ['upcase', ['coalesce', ['get', 'BLM_PROD'], '']], filter],
+      filter: ['==', ['upcase', ['coalesce', ['get', 'BLM_PROD'], ['get', 'blm_prod'], '']], filter],
       layout: { visibility: 'none' },
       paint: { 'line-color': color, 'line-width': 1.5, 'line-opacity': 0.9 }
     });

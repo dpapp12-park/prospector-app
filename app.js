@@ -70,7 +70,10 @@ let currentStyle = 'satellite';
 const styles = {
   satellite: 'mapbox://styles/mapbox/satellite-streets-v12',
   terrain: 'mapbox://styles/mapbox/outdoors-v12',
-  topo: 'mapbox://styles/mapbox/outdoors-v12'
+  // Topo uses a minimal Mapbox frame; the actual topographic content
+  // is the USGS National Map Topo raster overlay added in setStyle()
+  // when name === 'topo'. See Finding #7c (Session 24).
+  topo: 'mapbox://styles/mapbox/light-v11'
 };
 
 function initMap() {
@@ -235,6 +238,27 @@ function setStyle(name) {
       maxzoom: 14
     });
     setTerrain3D(layerState['terrain-3d']);
+
+    // USGS Topo overlay — only when 'topo' basemap is selected.
+    // Public ArcGIS XYZ tile service from The National Map. Web Mercator,
+    // 256px, no auth, US-only coverage. Caches up to ~zoom 17. See
+    // Finding #7c (Session 24). Layer is wiped automatically on next
+    // setStyle() call since Mapbox setStyle() destroys all custom layers.
+    if (name === 'topo') {
+      map.addSource('usgs-topo-src', {
+        type: 'raster',
+        tiles: ['https://basemap.nationalmap.gov/ArcGIS/rest/services/USGSTopo/MapServer/tile/{z}/{y}/{x}'],
+        tileSize: 256,
+        attribution: 'USGS The National Map'
+      });
+      map.addLayer({
+        id: 'usgs-topo-layer',
+        type: 'raster',
+        source: 'usgs-topo-src',
+        paint: { 'raster-opacity': 1.0 }
+      });
+    }
+
     addDemoLayers();
   });
   toggleStyles();

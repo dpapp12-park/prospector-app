@@ -156,12 +156,16 @@ function toggleLidarStyle(styleId) {
   } else if (!isFocused) {
     focusedLidarId = styleId;
   } else {
-    if (activeLidarStyles.size <= 1) {
-      showStatus('At least one LiDAR style must stay on');
-      return;
-    }
+    // Click on the focused-and-active row turns it off. Zero-active is
+    // allowed (matches the new boot-zero default from Finding #1a). If
+    // any styles remain active, focus the first one; if none remain,
+    // focusedLidarId stays pointed at the just-deactivated style so the
+    // LAYER CONTROLS readout stays meaningful when the user re-enables.
+    // See Finding #11a (Session 24).
     activeLidarStyles.delete(styleId);
-    focusedLidarId = Array.from(activeLidarStyles)[0];
+    if (activeLidarStyles.size > 0) {
+      focusedLidarId = Array.from(activeLidarStyles)[0];
+    }
   }
 
   // Mirror active state to bullets + name classes on every row
