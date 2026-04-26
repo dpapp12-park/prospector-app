@@ -2550,3 +2550,506 @@
     justify-content: flex-end;
     margin-bottom: 4px;
   }
+
+/* ============================================================
+ * NEW LAYER PANEL (P2.11) — feature-flagged behind ?newpanel=1
+ *
+ * All classes namespaced with np- prefix. CSS variables that
+ * collide with existing app vars (--gold-bright, --cream) are
+ * overridden ONLY inside #newpanel-root, so existing UI keeps
+ * its current colors.
+ *
+ * Source: v6 mockup (unworkedgold_d3_map.html). Classes were
+ * renamed at port time to avoid collision with the existing
+ * style.css symbols (.tile, .modal, .toast, .layer-card etc.
+ * are all unrelated to the mockup's intent).
+ *
+ * When body.newpanel-on is set, hide the old panel + gear +
+ * old chip bar + custom hillshade test panel. They will be
+ * removed permanently in a later session per LAYERS_SCHEMA.md.
+ * ============================================================ */
+
+#newpanel-root {
+  /* Mockup variable overrides — scoped, do NOT cascade out. */
+  --np-bg:           #0D0C09;
+  --np-bg-soft:      #161410;
+  --np-gold:         #C9A84C;
+  --np-gold-bright:  #E8C76A;
+  --np-cream:        #E8E4D4;
+  --np-muted:        #8A8576;
+  --np-dim:          #5A564B;
+  --np-faint:        #4F4B3F;
+  --np-border:       rgba(255,255,255,0.10);
+  --np-divider:      rgba(255,255,255,0.18);
+  --np-gold-faint:   rgba(201,168,76,0.10);
+  --np-gold-tint:    rgba(201,168,76,0.06);
+  --np-gold-line:    rgba(201,168,76,0.4);
+  --np-surface:      rgba(13,12,9,0.88);
+  --np-danger:       rgba(220, 130, 110, 0.55);
+  --np-danger-bright:rgba(245, 160, 140, 1);
+}
+
+/* Hide old panel UI when new panel mode is on. */
+body.newpanel-on #layer-btn,
+body.newpanel-on #layer-panel,
+body.newpanel-on #active-layer-bar,
+body.newpanel-on #custom-hs-panel {
+  display: none !important;
+}
+
+/* ── TOP CONTROLS WRAPPER ── */
+#newpanel-root .np-top-controls {
+  position: absolute;
+  top: 14px;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  align-items: center;
+  gap: 28px;
+  z-index: 10;
+  font-family: 'DM Sans', system-ui, sans-serif;
+  color: var(--np-cream);
+}
+
+/* ── FLOATING ACTION CHIPS ── */
+#newpanel-root .np-toolbar-action {
+  background: rgba(13, 12, 9, 0.65);
+  border: 1px solid var(--np-gold-line);
+  color: var(--np-cream);
+  padding: 8px 14px;
+  border-radius: 4px;
+  font: 500 10px/1 'DM Mono', monospace;
+  letter-spacing: 0.10em;
+  text-transform: uppercase;
+  cursor: pointer;
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+  transition: background 0.12s, color 0.12s, border-color 0.12s, transform 0.08s;
+  white-space: nowrap;
+  user-select: none;
+}
+#newpanel-root .np-toolbar-action:hover {
+  background: var(--np-gold-faint);
+  color: var(--np-gold-bright);
+  border-color: var(--np-gold);
+}
+#newpanel-root .np-toolbar-action:active { transform: scale(0.97); }
+#newpanel-root .np-toolbar-action.danger {
+  border-color: var(--np-danger);
+  color: rgba(245, 200, 190, 0.9);
+}
+#newpanel-root .np-toolbar-action.danger:hover {
+  background: rgba(220, 80, 60, 0.12);
+  border-color: var(--np-danger-bright);
+  color: rgba(255, 210, 200, 1);
+}
+
+/* ── TOP RAIL ── */
+#newpanel-root .np-top-rail {
+  display: flex;
+  background: var(--np-surface);
+  border: 1px solid var(--np-border);
+  border-radius: 8px;
+  padding: 4px;
+  gap: 4px;
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  transition: border-color 0.15s, background 0.15s;
+  position: relative;
+}
+
+/* ── LEFT RAIL ── */
+#newpanel-root .np-left-rail {
+  position: absolute;
+  left: 14px;
+  top: 50%;
+  transform: translateY(-50%);
+  z-index: 10;
+  background: var(--np-surface);
+  border: 1px solid var(--np-border);
+  border-radius: 8px;
+  overflow: visible;
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  display: flex;
+  flex-direction: column;
+  padding: 4px;
+  gap: 4px;
+  transition: border-color 0.15s, background 0.15s;
+  font-family: 'DM Sans', system-ui, sans-serif;
+}
+
+/* ── UNIFIED TILE ── */
+#newpanel-root .np-tile {
+  width: 64px;
+  min-height: 60px;
+  padding: 6px 4px;
+  background: transparent;
+  border: none;
+  cursor: grab;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  color: var(--np-muted);
+  transition: background 0.12s, color 0.12s;
+  position: relative;
+  user-select: none;
+  border-radius: 4px;
+  font-family: inherit;
+}
+#newpanel-root .np-tile:active { cursor: grabbing; }
+#newpanel-root .np-tile:hover {
+  background: rgba(255,255,255,0.04);
+  color: var(--np-cream);
+}
+#newpanel-root .np-tile.has-active {
+  color: var(--np-gold);
+  background: var(--np-gold-tint);
+}
+#newpanel-root .np-tile-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 22px;
+}
+#newpanel-root .np-tile-icon svg {
+  width: 18px;
+  height: 18px;
+  stroke: currentColor;
+  fill: none;
+  stroke-width: 1.5;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+#newpanel-root .np-tile-icon svg.solid {
+  fill: currentColor;
+  stroke: none;
+}
+#newpanel-root .np-tile-label {
+  font: 500 9px/1.15 'DM Sans', sans-serif;
+  letter-spacing: 0.02em;
+  text-align: center;
+  max-width: 56px;
+}
+
+/* ── DIVIDERS BETWEEN TILES ── */
+#newpanel-root .np-top-rail .np-tile + .np-tile::before {
+  content: '';
+  position: absolute;
+  left: -3px;
+  top: 12px; bottom: 12px;
+  width: 1px;
+  background: var(--np-divider);
+  pointer-events: none;
+}
+#newpanel-root .np-left-rail .np-tile + .np-tile::before {
+  content: '';
+  position: absolute;
+  top: -3px;
+  left: 12px; right: 12px;
+  height: 1px;
+  background: var(--np-divider);
+  pointer-events: none;
+}
+
+/* ── COUNT BADGE ── */
+#newpanel-root .np-tile-badge {
+  display: none;
+  position: absolute;
+  bottom: -5px; right: -5px;
+  min-width: 18px; height: 16px;
+  border-radius: 3px;
+  background: var(--np-gold);
+  color: var(--np-bg);
+  border: 2px solid var(--np-bg);
+  font: 500 9px/1 'DM Mono', monospace;
+  align-items: center;
+  justify-content: center;
+  padding: 0 4px;
+  cursor: help;
+  z-index: 5;
+}
+#newpanel-root .np-tile.has-active .np-tile-badge { display: flex; }
+
+/* ── BADGE POPOUT ── */
+#newpanel-root .np-badge-popout {
+  position: absolute;
+  background: var(--np-bg);
+  border: 1px solid var(--np-gold-line);
+  border-radius: 6px;
+  padding: 8px;
+  min-width: 200px;
+  max-width: 280px;
+  z-index: 50;
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  display: none;
+  flex-direction: column;
+  gap: 4px;
+  pointer-events: auto;
+  text-align: left;
+}
+#newpanel-root .np-top-rail .np-badge-popout { top: 100%; right: -5px; margin-top: 6px; }
+#newpanel-root .np-left-rail .np-badge-popout { left: 100%; bottom: -5px; margin-left: 6px; }
+#newpanel-root .np-tile.popout-open .np-badge-popout { display: flex; }
+#newpanel-root .np-pop-eyebrow {
+  font: 500 9px/1 'DM Mono', monospace;
+  color: var(--np-gold);
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  margin-bottom: 4px;
+}
+#newpanel-root .np-pop-chip {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: var(--np-gold-faint);
+  border: 1px solid var(--np-gold-line);
+  border-radius: 4px;
+  padding: 5px 8px;
+  font-size: 11px;
+  color: var(--np-cream);
+}
+#newpanel-root .np-pop-dot {
+  width: 5px; height: 5px;
+  background: var(--np-gold);
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+#newpanel-root .np-pop-name { flex: 1; }
+#newpanel-root .np-pop-x {
+  color: var(--np-muted);
+  cursor: pointer;
+  padding: 0 4px;
+  font-size: 14px;
+}
+#newpanel-root .np-pop-x:hover { color: var(--np-cream); }
+#newpanel-root .np-pop-empty {
+  font: 500 10px/1 'DM Mono', monospace;
+  color: var(--np-dim);
+  padding: 4px 0;
+  text-align: center;
+}
+
+/* ── DRAG STYLES ── */
+#newpanel-root .np-tile.dragging { opacity: 0.35; }
+#newpanel-root .np-tile.swap-flash { animation: npSwapFlash 0.6s ease-out; }
+@keyframes npSwapFlash {
+  0%   { background: var(--np-gold); color: var(--np-bg); }
+  100% { background: transparent; color: inherit; }
+}
+#newpanel-root .np-top-rail.drag-over,
+#newpanel-root .np-left-rail.drag-over {
+  background: rgba(201,168,76,0.18);
+  border-color: var(--np-gold);
+}
+#newpanel-root .np-tile.drag-target {
+  outline: 2px dashed var(--np-gold);
+  outline-offset: -3px;
+}
+
+/* ── TOAST ── */
+#newpanel-root .np-toast {
+  position: fixed;
+  bottom: 28px;
+  left: 50%;
+  transform: translateX(-50%) translateY(20px);
+  background: var(--np-bg);
+  border: 1px solid var(--np-gold-line);
+  border-radius: 6px;
+  padding: 10px 16px;
+  color: var(--np-cream);
+  font: 500 12px/1.4 'DM Sans', sans-serif;
+  z-index: 300;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.25s, transform 0.25s;
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  max-width: 360px;
+  text-align: center;
+}
+#newpanel-root .np-toast.show {
+  opacity: 1;
+  transform: translateX(-50%) translateY(0);
+}
+
+/* ── MODAL ── */
+#newpanel-root .np-modal-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 200;
+  background: rgba(13,12,9,0.85);
+  backdrop-filter: blur(2px);
+  -webkit-backdrop-filter: blur(2px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 32px;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.2s;
+  font-family: 'DM Sans', system-ui, sans-serif;
+  color: var(--np-cream);
+}
+#newpanel-root .np-modal-backdrop.open {
+  opacity: 1;
+  pointer-events: auto;
+}
+#newpanel-root .np-modal {
+  width: 100%;
+  max-width: 720px;
+  max-height: 100%;
+  background: var(--np-bg);
+  border: 1px solid var(--np-gold-line);
+  border-radius: 8px;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  transform: scale(0.97);
+  transition: transform 0.2s;
+}
+#newpanel-root .np-modal-backdrop.open .np-modal { transform: scale(1); }
+#newpanel-root .np-modal-header {
+  padding: 16px 20px 16px;
+  flex-shrink: 0;
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  border-bottom: 1px solid var(--np-border);
+}
+#newpanel-root .np-modal-eyebrow {
+  font: 500 9px/1 'DM Mono', monospace;
+  color: var(--np-gold);
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  margin-bottom: 4px;
+}
+#newpanel-root .np-modal-title {
+  font: 500 17px/1.2 'DM Sans', sans-serif;
+  color: var(--np-cream);
+}
+#newpanel-root .np-modal-subtitle {
+  font-family: 'DM Mono', monospace;
+  font-size: 10px;
+  color: var(--np-muted);
+  margin-top: 4px;
+  letter-spacing: 0.04em;
+}
+#newpanel-root .np-modal-close {
+  width: 28px; height: 28px;
+  background: transparent;
+  border: none;
+  color: var(--np-muted);
+  font-size: 18px;
+  line-height: 1;
+  cursor: pointer;
+  border-radius: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+#newpanel-root .np-modal-close:hover {
+  background: rgba(255,255,255,0.05);
+  color: var(--np-cream);
+}
+#newpanel-root .np-modal-body {
+  flex: 1;
+  overflow-y: auto;
+  padding: 18px 20px;
+}
+
+/* ── CARD GRID ── */
+#newpanel-root .np-card-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 10px;
+}
+#newpanel-root .np-card-subhead {
+  grid-column: 1 / -1;
+  font: 500 9px/1 'DM Mono', monospace;
+  color: var(--np-gold);
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  margin-top: 10px;
+  margin-bottom: 4px;
+  padding-bottom: 6px;
+  border-bottom: 1px solid var(--np-border);
+}
+#newpanel-root .np-card-subhead:first-child { margin-top: 0; }
+#newpanel-root .np-layer-card {
+  background: var(--np-bg-soft);
+  border: 1px solid var(--np-border);
+  border-radius: 6px;
+  overflow: hidden;
+  cursor: pointer;
+  transition: border-color 0.12s, background 0.12s, transform 0.12s;
+  display: flex;
+  flex-direction: column;
+}
+#newpanel-root .np-layer-card:hover {
+  border-color: rgba(255,255,255,0.18);
+  transform: translateY(-1px);
+}
+#newpanel-root .np-layer-card.on {
+  border-color: var(--np-gold-line);
+  background: var(--np-gold-tint);
+}
+#newpanel-root .np-layer-card.on:hover { border-color: var(--np-gold); }
+#newpanel-root .np-layer-card.soon { opacity: 0.6; }
+#newpanel-root .np-card-thumb {
+  height: 70px;
+  background: #1F2624;
+  position: relative;
+  overflow: hidden;
+}
+#newpanel-root .np-card-thumb svg {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+#newpanel-root .np-card-body {
+  padding: 10px 12px 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+#newpanel-root .np-card-title-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 6px;
+}
+#newpanel-root .np-card-title {
+  font: 500 13px/1.2 'DM Sans', sans-serif;
+  color: var(--np-cream);
+}
+#newpanel-root .np-card-soon {
+  font: 500 8px/1 'DM Mono', monospace;
+  color: var(--np-gold);
+  padding: 2px 5px;
+  border: 1px solid var(--np-gold-line);
+  border-radius: 3px;
+  letter-spacing: 0.06em;
+  flex-shrink: 0;
+}
+#newpanel-root .np-card-desc {
+  font: 400 11px/1.45 'DM Sans', sans-serif;
+  color: var(--np-muted);
+}
+#newpanel-root .np-card-meta {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-family: 'DM Mono', monospace;
+  font-size: 9px;
+  letter-spacing: 0.04em;
+  margin-top: 2px;
+}
+#newpanel-root .np-card-count { color: var(--np-dim); }
+#newpanel-root .np-card-status { color: var(--np-dim); letter-spacing: 0.06em; }
+#newpanel-root .np-layer-card.on .np-card-status { color: var(--np-gold); }
+
+/* End of new layer panel CSS ──────────────────────────── */
