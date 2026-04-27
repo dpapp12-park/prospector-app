@@ -1,12 +1,14 @@
 // ==========================================================
 // app-auth.js — Unworked Gold authentication module
 // Split from app.js, Session 8 commit 3 (April 19, 2026)
+// Updated Session 33: Stripe checkout redirect on signup
 //
 // CONTENTS:
 //   STATE:    SUPABASE_URL, sbClient, currentUser, authMode
 //   FUNCTIONS: initSupabase, promptSupabaseKey, updateAuthUI,
 //              openAuthPanel, toggleAuthMode, submitAuth,
-//              signInWithGoogle, signOut
+//              signInWithGoogle, signOut,
+//              redirectToCheckout, handleCheckoutReturn
 //
 // SHARED STATE: sbClient and currentUser are referenced by
 // app.js (submitFeedback) and app-user.js (saveClaim, saveFind,
@@ -33,11 +35,15 @@ function initSupabase() {
     currentUser = session?.user || null;
     maybeGateToBetaLanding();
     updateAuthUI();
+    if (currentUser && typeof refreshProStatus === 'function') refreshProStatus();
   });
   sbClient.auth.getSession().then(({ data: { session } }) => {
     currentUser = session?.user || null;
     maybeGateToBetaLanding();
     updateAuthUI();
+    if (currentUser && typeof refreshProStatus === 'function') refreshProStatus();
+    // Handle return from Stripe checkout
+    handleCheckoutReturn();
   });
 }
 
@@ -85,7 +91,7 @@ function toggleAuthMode() {
   authMode = authMode === 'signin' ? 'signup' : 'signin';
   const isSignIn = authMode === 'signin';
   document.getElementById('auth-title').textContent = isSignIn ? 'Sign In' : 'Create Account';
-  document.getElementById('auth-sub').textContent = isSignIn ? 'Access your saved claims and finds' : 'Start saving claims and logging finds';
+  document.getElementById('auth-sub').textContent = isSignIn ? 'Access your saved claims and finds' : 'Start your 14-day free trial';
   document.getElementById('auth-submit-btn').textContent = isSignIn ? 'Sign In' : 'Create Account';
   document.getElementById('auth-switch-text').textContent = isSignIn ? "Don't have an account?" : 'Already have an account?';
   document.getElementById('auth-switch-link').textContent = isSignIn ? 'Sign Up' : 'Sign In';
@@ -113,16 +119,25 @@ async function submitAuth() {
     let result;
     if (authMode === 'signin') {
       result = await sbClient.auth.signInWithPassword({ email, password });
+      if (result.error) {
+        errEl.textContent = result.error.message;
+        errEl.style.display = 'block';
+      } else {
+        closeAllPanels();
+        showStatus('Welcome back!');
+      }
     } else {
+      // Sign up — then redirect to Stripe checkout
       result = await sbClient.auth.signUp({ email, password });
-    }
-
-    if (result.error) {
-      errEl.textContent = result.error.message;
-      errEl.style.display = 'block';
-    } else {
-      closeAllPanels();
-      showStatus(authMode === 'signup' ? 'Account created! Check email to verify.' : 'Welcome back!');
+      if (result.error) {
+        errEl.textContent = result.error.message;
+        errEl.style.display = 'block';
+      } else {
+        closeAllPanels();
+        showStatus('Account created! Setting up your trial...');
+        // Small delay so status is visible, then redirect to checkout
+        setTimeout(() => redirectToCheckout(), 1200);
+      }
     }
   } catch (e) {
     errEl.textContent = 'Something went wrong. Try again.';
@@ -131,6 +146,56 @@ async function submitAuth() {
 
   btn.textContent = authMode === 'signin' ? 'Sign In' : 'Create Account';
   btn.style.opacity = '1';
+}
+
+async function redirectToCheckout(priceId) {
+  // Default to monthly price; could offer choice in future
+  const selectedPriceId = priceId || 'price_1TQtUOK5wRMqB1R5aTnlJgbm';
+
+  try {
+    const session = await sbClient.auth.getSession();
+    const token = session?.data?.session?.access_token;
+    if (!token) {
+      showStatus('Please sign in first.');
+      return;
+    }
+
+    const res = await fetch('/api/create-checkout', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`
+      },
+      body: JSON.stringify({ priceId: selectedPriceId })
+    });
+
+    const data = await res.json();
+    if (data.url) {
+      window.location.href = data.url;
+    } else {
+      showStatus('Could not start checkout. Try again.');
+      console.error('Checkout error:', data);
+    }
+  } catch (e) {
+    showStatus('Could not start checkout. Try again.');
+    console.error('redirectToCheckout error:', e);
+  }
+}
+
+function handleCheckoutReturn() {
+  const params = new URLSearchParams(window.location.search);
+  const checkout = params.get('checkout');
+  if (!checkout) return;
+
+  // Clean URL
+  const cleanUrl = window.location.pathname;
+  window.history.replaceState({}, '', cleanUrl);
+
+  if (checkout === 'success') {
+    showStatus('Trial started! Explore the full map.');
+  } else if (checkout === 'canceled') {
+    showStatus('Checkout canceled. You can upgrade anytime from your account.');
+  }
 }
 
 async function signInWithGoogle() {
@@ -148,6 +213,3 @@ async function signOut() {
   document.getElementById('user-menu').classList.remove('show');
   showStatus('Signed out');
 }
-
-
-

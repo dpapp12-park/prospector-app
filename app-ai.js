@@ -34,12 +34,43 @@ function closeAIMenu() {
   document.getElementById('ai-btn').classList.remove('active');
 }
 
+// Cached pro status — refreshed on login and periodically
+// All callers stay synchronous; refreshProStatus() does the async work
+let _proStatusCache = false;
+let _proStatusFetchedAt = 0;
+const PRO_CACHE_TTL_MS = 5 * 60 * 1000; // 5 minutes
+
 function checkProStatus() {
-  // TEMP: Pro unlocked for testing — flip to false before launch
-  // TODO: Wire to Supabase subscription table for v0.5.0 launch.
-  // Query: supabase.from('subscriptions').select('status').eq('user_id', currentUser.id).single()
-  // Return true only if data.status === 'active' || data.status === 'trialing'
-  return true;
+  return _proStatusCache;
+}
+
+async function refreshProStatus() {
+  if (!currentUser || !sbClient) {
+    _proStatusCache = false;
+    return false;
+  }
+  // Skip if cache is fresh
+  if (Date.now() - _proStatusFetchedAt < PRO_CACHE_TTL_MS) {
+    return _proStatusCache;
+  }
+  try {
+    const { data, error } = await sbClient
+      .from('user_subscriptions')
+      .select('status')
+      .eq('user_id', currentUser.id)
+      .single();
+
+    if (error || !data) {
+      _proStatusCache = false;
+    } else {
+      _proStatusCache = data.status === 'active' || data.status === 'trialing';
+    }
+    _proStatusFetchedAt = Date.now();
+  } catch (e) {
+    console.warn('refreshProStatus error:', e);
+    _proStatusCache = false;
+  }
+  return _proStatusCache;
 }
 
 function getRockIdUses() {
