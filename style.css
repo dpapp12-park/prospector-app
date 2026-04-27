@@ -3390,16 +3390,16 @@ body.newpanel-on #zoom-readout {
    ─────────────────────────────────────────────────────── */
 
 /* Hide Mapbox native zoom controls — replaced by rail tiles */
-[data-theme="fullrail"] .mapboxgl-ctrl-top-left { display: none !important; }
+[data-theme="fullrail"] .mapboxgl-ctrl-top-left , [data-theme="fullrail-lidar"] .mapboxgl-ctrl-top-left { display: none !important; }
 
 /* Hide floating top controls bar — tiles move into left rail */
-[data-theme="fullrail"] #newpanel-root .np-top-controls { display: none !important; }
+[data-theme="fullrail"] #newpanel-root .np-top-controls , [data-theme="fullrail-lidar"] #newpanel-root .np-top-controls { display: none !important; }
 
 /* Hide top-left wordmark block — no room in fullrail layout */
-[data-theme="fullrail"] #newpanel-root #np-top-left { display: none !important; }
+[data-theme="fullrail"] #newpanel-root #np-top-left , [data-theme="fullrail-lidar"] #newpanel-root #np-top-left { display: none !important; }
 
 /* LEFT RAIL — full height, left edge */
-[data-theme="fullrail"] #newpanel-root .np-left-rail {
+[data-theme="fullrail"] #newpanel-root .np-left-rail , [data-theme="fullrail-lidar"] #newpanel-root .np-left-rail {
   position: fixed;
   left: 0;
   top: 0;
@@ -3418,10 +3418,10 @@ body.newpanel-on #zoom-readout {
   overflow-x: hidden;
   scrollbar-width: none;
 }
-[data-theme="fullrail"] #newpanel-root .np-left-rail::-webkit-scrollbar { display: none; }
+[data-theme="fullrail"] #newpanel-root .np-left-rail::-webkit-scrollbar , [data-theme="fullrail-lidar"] #newpanel-root .np-left-rail::-webkit-scrollbar { display: none; }
 
 /* RIGHT RAIL — full height, right edge */
-[data-theme="fullrail"] #newpanel-root .np-right-rail {
+[data-theme="fullrail"] #newpanel-root .np-right-rail , [data-theme="fullrail-lidar"] #newpanel-root .np-right-rail {
   position: fixed;
   right: 0;
   top: 0;
@@ -3438,10 +3438,10 @@ body.newpanel-on #zoom-readout {
   scrollbar-width: none;
   justify-content: flex-start;
 }
-[data-theme="fullrail"] #newpanel-root .np-right-rail::-webkit-scrollbar { display: none; }
+[data-theme="fullrail"] #newpanel-root .np-right-rail::-webkit-scrollbar , [data-theme="fullrail-lidar"] #newpanel-root .np-right-rail::-webkit-scrollbar { display: none; }
 
 /* Right tiles same height as left tiles in fullrail */
-[data-theme="fullrail"] #newpanel-root .np-right-tile {
+[data-theme="fullrail"] #newpanel-root .np-right-tile , [data-theme="fullrail-lidar"] #newpanel-root .np-right-tile {
   width: 64px;
   min-height: 60px;
   height: auto;
@@ -3450,12 +3450,12 @@ body.newpanel-on #zoom-readout {
   gap: 4px;
   padding: 6px 4px;
 }
-[data-theme="fullrail"] #newpanel-root .np-right-divider {
+[data-theme="fullrail"] #newpanel-root .np-right-divider , [data-theme="fullrail-lidar"] #newpanel-root .np-right-divider {
   margin: 2px 8px;
 }
 
 /* Filler tiles — placeholder tiles with no function */
-[data-theme="fullrail"] #newpanel-root .np-filler-tile {
+[data-theme="fullrail"] #newpanel-root .np-filler-tile , [data-theme="fullrail-lidar"] #newpanel-root .np-filler-tile {
   width: 64px;
   min-height: 60px;
   display: flex;
@@ -3468,7 +3468,7 @@ body.newpanel-on #zoom-readout {
   border-radius: 4px;
   flex-shrink: 0;
 }
-[data-theme="fullrail"] #newpanel-root .np-filler-tile svg {
+[data-theme="fullrail"] #newpanel-root .np-filler-tile svg , [data-theme="fullrail-lidar"] #newpanel-root .np-filler-tile svg {
   width: 18px;
   height: 18px;
   stroke: var(--np-muted);
@@ -3477,7 +3477,7 @@ body.newpanel-on #zoom-readout {
   stroke-linecap: round;
   stroke-linejoin: round;
 }
-[data-theme="fullrail"] #newpanel-root .np-filler-label {
+[data-theme="fullrail"] #newpanel-root .np-filler-label , [data-theme="fullrail-lidar"] #newpanel-root .np-filler-label {
   font: 500 9px/1.15 'DM Sans', sans-serif;
   color: var(--np-muted);
   letter-spacing: 0.02em;
@@ -3485,22 +3485,22 @@ body.newpanel-on #zoom-readout {
 }
 
 /* Zoom pill hidden in fullrail — zoom is in rail */
-[data-theme="fullrail"] body.newpanel-on #zoom-readout { display: none !important; }
+[data-theme="fullrail"] body.newpanel-on #zoom-readout , [data-theme="fullrail-lidar"] body.newpanel-on #zoom-readout { display: none !important; }
 
 /* Hide existing bottom nav in fullrail */
-[data-theme="fullrail"] #bottom-nav {
+[data-theme="fullrail"] #bottom-nav , [data-theme="fullrail-lidar"] #bottom-nav {
   display: none !important;
 }
 
 /* Hide Reset/Clear in fullrail — top bar is coords only */
 [data-theme="fullrail"] #newpanel-root #np-reset-btn,
-[data-theme="fullrail"] #newpanel-root #np-clear-btn { display: none !important; }
+[data-theme="fullrail"] #newpanel-root #np-clear-btn , [data-theme="fullrail-lidar"] #newpanel-root #np-clear-btn { display: none !important; }
 
 /* Top rail hidden in fullrail — tiles live in left rail */
-[data-theme="fullrail"] #newpanel-root .np-top-rail { display: none !important; }
+[data-theme="fullrail"] #newpanel-root .np-top-rail , [data-theme="fullrail-lidar"] #newpanel-root .np-top-rail { display: none !important; }
 
 /* TOP BAR — full width, anchored to top edge */
-[data-theme="fullrail"] #newpanel-root .np-top-controls {
+[data-theme="fullrail"] #newpanel-root .np-top-controls , [data-theme="fullrail-lidar"] #newpanel-root .np-top-controls {
   display: flex !important;
   position: fixed;
   top: 0;
@@ -3522,7 +3522,7 @@ body.newpanel-on #zoom-readout {
 }
 
 /* Wordmark in top bar */
-[data-theme="fullrail"] #newpanel-root #np-top-left {
+[data-theme="fullrail"] #newpanel-root #np-top-left , [data-theme="fullrail-lidar"] #newpanel-root #np-top-left {
   display: flex !important;
   position: static;
   pointer-events: auto;
@@ -3530,18 +3530,18 @@ body.newpanel-on #zoom-readout {
   align-items: center;
   gap: 16px;
 }
-[data-theme="fullrail"] #newpanel-root .np-version { display: none; }
-[data-theme="fullrail"] #newpanel-root .np-readouts {
+[data-theme="fullrail"] #newpanel-root .np-version , [data-theme="fullrail-lidar"] #newpanel-root .np-version { display: none; }
+[data-theme="fullrail"] #newpanel-root .np-readouts , [data-theme="fullrail-lidar"] #newpanel-root .np-readouts {
   display: flex;
   flex-direction: row;
   gap: 12px;
   font-size: 10px;
   line-height: 1;
 }
-[data-theme="fullrail"] #newpanel-root .np-price { margin-top: 0; }
+[data-theme="fullrail"] #newpanel-root .np-price , [data-theme="fullrail-lidar"] #newpanel-root .np-price { margin-top: 0; }
 
 /* Top rail sits inside top bar, centered */
-[data-theme="fullrail"] #newpanel-root .np-top-rail {
+[data-theme="fullrail"] #newpanel-root .np-top-rail , [data-theme="fullrail-lidar"] #newpanel-root .np-top-rail {
   flex: 1;
   justify-content: center;
   background: transparent;
@@ -3553,19 +3553,19 @@ body.newpanel-on #zoom-readout {
 }
 
 /* Toolbar action buttons in top bar */
-[data-theme="fullrail"] #newpanel-root .np-toolbar-action {
+[data-theme="fullrail"] #newpanel-root .np-toolbar-action , [data-theme="fullrail-lidar"] #newpanel-root .np-toolbar-action {
   white-space: nowrap;
   flex-shrink: 0;
 }
 
 /* Push map canvas down to clear top bar */
-[data-theme="fullrail"] .mapboxgl-map {
+[data-theme="fullrail"] .mapboxgl-map , [data-theme="fullrail-lidar"] .mapboxgl-map {
   top: 52px !important;
   height: calc(100vh - 52px - 52px) !important;
 }
 
 /* BOTTOM BAR — full width, anchored to bottom edge */
-[data-theme="fullrail"] #np-fullrail-bottom {
+[data-theme="fullrail"] #np-fullrail-bottom , [data-theme="fullrail-lidar"] #np-fullrail-bottom {
   position: fixed;
   bottom: 0;
   left: 0;
@@ -3581,7 +3581,7 @@ body.newpanel-on #zoom-readout {
   justify-content: space-around;
   padding: 0 8px;
 }
-[data-theme="fullrail"] .np-bottom-tile {
+[data-theme="fullrail"] .np-bottom-tile , [data-theme="fullrail-lidar"] .np-bottom-tile {
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -3594,14 +3594,14 @@ body.newpanel-on #zoom-readout {
   transition: background 0.12s, color 0.12s;
   font-family: 'DM Sans', sans-serif;
 }
-[data-theme="fullrail"] .np-bottom-tile:hover {
+[data-theme="fullrail"] .np-bottom-tile:hover , [data-theme="fullrail-lidar"] .np-bottom-tile:hover {
   background: rgba(255,255,255,0.04);
   color: var(--np-cream);
 }
-[data-theme="fullrail"] .np-bottom-tile.active {
+[data-theme="fullrail"] .np-bottom-tile.active , [data-theme="fullrail-lidar"] .np-bottom-tile.active {
   color: var(--np-gold);
 }
-[data-theme="fullrail"] .np-bottom-tile svg {
+[data-theme="fullrail"] .np-bottom-tile svg , [data-theme="fullrail-lidar"] .np-bottom-tile svg {
   width: 18px;
   height: 18px;
   stroke: currentColor;
@@ -3610,22 +3610,121 @@ body.newpanel-on #zoom-readout {
   stroke-linecap: round;
   stroke-linejoin: round;
 }
-[data-theme="fullrail"] .np-bottom-label {
+[data-theme="fullrail"] .np-bottom-label , [data-theme="fullrail-lidar"] .np-bottom-label {
   font: 500 9px/1 'DM Mono', monospace;
   letter-spacing: 0.06em;
   text-transform: uppercase;
 }
 
 /* Left rail starts below top bar */
-[data-theme="fullrail"] #newpanel-root .np-left-rail {
+[data-theme="fullrail"] #newpanel-root .np-left-rail , [data-theme="fullrail-lidar"] #newpanel-root .np-left-rail {
   top: 52px;
   height: calc(100vh - 52px - 52px);
 }
 
 /* Right rail starts below top bar */
-[data-theme="fullrail"] #newpanel-root .np-right-rail {
+[data-theme="fullrail"] #newpanel-root .np-right-rail , [data-theme="fullrail-lidar"] #newpanel-root .np-right-rail {
   top: 52px;
   height: calc(100vh - 52px - 52px);
 }
 
 /* End of new layer panel CSS ──────────────────────────── */
+
+/* ── FULLRAIL ZOOM CLUSTER ────────────────────────────────
+   Floating +/- block, top-right of map, left of right rail */
+[data-theme="fullrail"] #np-zoom-cluster,
+[data-theme="fullrail-lidar"] #np-zoom-cluster {
+  position: fixed;
+  top: 60px;
+  right: 80px;
+  z-index: 15;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  background: var(--np-surface);
+  border: 1px solid var(--np-border);
+  border-radius: 6px;
+  overflow: hidden;
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+}
+[data-theme="fullrail"] .np-zoom-btn,
+[data-theme="fullrail-lidar"] .np-zoom-btn {
+  width: 36px;
+  height: 36px;
+  background: transparent;
+  border: none;
+  color: var(--np-muted);
+  font-size: 18px;
+  font-weight: 300;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.12s, color 0.12s;
+  line-height: 1;
+}
+[data-theme="fullrail"] .np-zoom-btn:hover,
+[data-theme="fullrail-lidar"] .np-zoom-btn:hover {
+  background: var(--np-gold-faint);
+  color: var(--np-gold);
+}
+[data-theme="fullrail"] .np-zoom-btn + .np-zoom-btn,
+[data-theme="fullrail-lidar"] .np-zoom-btn + .np-zoom-btn {
+  border-top: 1px solid var(--np-border);
+}
+
+/* ── FULLRAIL JUNCTION ROUNDING ──────────────────────────
+   Inner rounded corners where side rails meet top/bottom bars */
+[data-theme="fullrail"] #newpanel-root .np-left-rail,
+[data-theme="fullrail-lidar"] #newpanel-root .np-left-rail {
+  border-top-right-radius: 8px;
+  border-bottom-right-radius: 8px;
+}
+[data-theme="fullrail"] #newpanel-root .np-right-rail,
+[data-theme="fullrail-lidar"] #newpanel-root .np-right-rail {
+  border-top-left-radius: 8px;
+  border-bottom-left-radius: 8px;
+}
+
+/* ── THEME: FULLRAIL-LIDAR ────────────────────────────────
+   Full Rail layout + LiDAR cold cyan color skin.
+   ─────────────────────────────────────────────────────── */
+[data-theme="fullrail-lidar"] #newpanel-root {
+  --np-bg:           #080E10;
+  --np-bg-soft:      #0D1618;
+  --np-gold:         #00BFA5;
+  --np-gold-bright:  #26D6B8;
+  --np-cream:        #D8ECEA;
+  --np-muted:        #6A9B96;
+  --np-dim:          #3A6663;
+  --np-border:       rgba(0,191,165,0.15);
+  --np-divider:      rgba(0,191,165,0.25);
+  --np-gold-faint:   rgba(0,191,165,0.10);
+  --np-gold-tint:    rgba(0,191,165,0.06);
+  --np-gold-line:    rgba(0,191,165,0.38);
+  --np-surface:      rgba(8,16,18,0.93);
+}
+[data-theme="fullrail-lidar"] #newpanel-root .np-tile,
+[data-theme="fullrail-lidar"] #newpanel-root .np-right-tile {
+  background: rgba(255,255,255,0.04);
+  border: 1px solid rgba(255,255,255,0.08);
+  border-radius: 5px;
+  box-shadow: inset 0 1px 0 rgba(255,255,255,0.07),
+              0 1px 3px rgba(0,0,0,0.4);
+}
+[data-theme="fullrail-lidar"] #newpanel-root .np-tile:hover,
+[data-theme="fullrail-lidar"] #newpanel-root .np-right-tile:hover {
+  background: rgba(0,191,165,0.08);
+  border-color: rgba(0,191,165,0.25);
+}
+[data-theme="fullrail-lidar"] #newpanel-root .np-tile.has-active,
+[data-theme="fullrail-lidar"] #newpanel-root .np-right-tile.active {
+  background: rgba(0,191,165,0.12);
+  border-color: rgba(0,191,165,0.45);
+  box-shadow: inset 0 1px 0 rgba(0,191,165,0.15),
+              0 0 8px rgba(0,191,165,0.12);
+}
+[data-theme="fullrail-lidar"] #newpanel-root .np-wordmark-gold { color: #00BFA5; }
+[data-theme="fullrail-lidar"] #newpanel-root .np-price         { color: #00BFA5; }
+[data-theme="fullrail-lidar"] #newpanel-root .np-arrow         { color: #26D6B8; }

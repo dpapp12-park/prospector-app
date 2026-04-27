@@ -1021,7 +1021,7 @@ async function _bootNewPanel() {
 
   // Fullrail theme — inject tiles after rails are populated
   const _savedTheme = localStorage.getItem('ug_theme');
-  if (_savedTheme === 'fullrail') _applyFullrailTiles();
+  if (_savedTheme === 'fullrail' || _savedTheme === 'fullrail-lidar') _applyFullrailTiles();
 
   console.info('[layer-loader] new panel mounted (?newpanel=1)');
 }
@@ -1060,25 +1060,19 @@ function _applyFullrailTiles() {
     });
   }
 
-  // ── Zoom tiles — prepend to left rail ──
-  const zoomIn = document.createElement('button');
-  zoomIn.className = 'np-tile np-zoom-tile';
-  zoomIn.title = 'Zoom in';
-  zoomIn.innerHTML = `
-    <span class="np-tile-icon"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><line x1="12" y1="8" x2="12" y2="16"/><line x1="8" y1="12" x2="16" y2="12"/></svg></span>
-    <span class="np-tile-label">Zoom In</span>`;
-  zoomIn.addEventListener('click', () => { if (window.map) window.map.zoomIn(); });
-
-  const zoomOut = document.createElement('button');
-  zoomOut.className = 'np-tile np-zoom-tile';
-  zoomOut.title = 'Zoom out';
-  zoomOut.innerHTML = `
-    <span class="np-tile-icon"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><line x1="8" y1="12" x2="16" y2="12"/></svg></span>
-    <span class="np-tile-label">Zoom Out</span>`;
-  zoomOut.addEventListener('click', () => { if (window.map) window.map.zoomOut(); });
-
-  leftRail.prepend(zoomOut);
-  leftRail.prepend(zoomIn);
+  // ── Zoom cluster — fixed top-right, left of right rail ──
+  const existingCluster = document.getElementById('np-zoom-cluster');
+  if (!existingCluster) {
+    const cluster = document.createElement('div');
+    cluster.id = 'np-zoom-cluster';
+    cluster.innerHTML = `
+      <button class="np-zoom-btn" title="Zoom in">+</button>
+      <button class="np-zoom-btn" title="Zoom out">−</button>`;
+    const btns = cluster.querySelectorAll('.np-zoom-btn');
+    btns[0].addEventListener('click', () => { if (window.map) window.map.zoomIn(); });
+    btns[1].addEventListener('click', () => { if (window.map) window.map.zoomOut(); });
+    document.body.appendChild(cluster);
+  }
 
   // ── Filler tile factory ──
   const FILLER_ICONS = [
