@@ -50,7 +50,7 @@ window.PROSPECTOR_CONFIG = window.UNWORKED_GOLD_CONFIG;
 </script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Mono:wght@400;500&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="style.css?v=20260427-1">
+<link rel="stylesheet" href="style.css?v=20260425-3">
 
 </head>
 <body>
@@ -782,6 +782,7 @@ window.PROSPECTOR_CONFIG = window.UNWORKED_GOLD_CONFIG;
     <span id="auth-switch-text">Don't have an account?</span>
     <a onclick="toggleAuthMode()" id="auth-switch-link">Sign Up</a>
   </div>
+  <div class="auth-privacy-note">By signing up you agree to our <a onclick="closeAuthPanel();openPrivacyModal()">Privacy Policy</a></div>
 </div>
 
 <!-- User Menu -->
@@ -790,6 +791,7 @@ window.PROSPECTOR_CONFIG = window.UNWORKED_GOLD_CONFIG;
   <div class="user-menu-item" onclick="viewSavedClaims()">⛏️ Saved Claims</div>
   <div class="user-menu-item" onclick="viewFinds()">📍 My Finds</div>
   <div class="user-menu-item" onclick="signOut()" style="color:#F44336;margin-top:8px;border-top:1px solid var(--panel-border);padding-top:12px">↩ Sign Out</div>
+  <div class="user-menu-item" onclick="openPrivacyModal()" style="font-size:11px;color:var(--dust);margin-top:4px">Privacy Policy</div>
 </div>
 
 <!-- Find Log Panel -->
@@ -953,15 +955,72 @@ window.PROSPECTOR_CONFIG = window.UNWORKED_GOLD_CONFIG;
   </div>
 </div>
 
-<script src="app.js?v=20260427-1"></script>
-<script src="app-auth.js?v=20260427-1"></script>
-<script src="app-user.js?v=20260427-1"></script>
-<script src="app-data.js?v=20260427-1"></script>
-<script src="app-lidar.js?v=20260427-1"></script>
-<script src="app-search.js?v=20260427-1"></script>
-<script src="app-ai.js?v=20260427-1"></script>
-<script src="app-layers.js?v=20260427-1"></script>
-<script src="app-layer-loader.js?v=20260427-1"></script>
+<!-- Privacy Policy Modal -->
+<div id="privacy-modal" onclick="if(event.target===this)closePrivacyModal()" style="display:none">
+  <div id="privacy-modal-inner">
+    <div class="privacy-modal-header">
+      <div class="privacy-modal-title">Privacy Policy</div>
+      <button class="privacy-modal-close" onclick="closePrivacyModal()">✕</button>
+    </div>
+    <div class="privacy-modal-body">
+      <p class="privacy-updated">Effective April 27, 2026</p>
+
+      <h3>What We Collect</h3>
+      <p>We collect the minimum needed to run the app:</p>
+      <ul>
+        <li><strong>Account email</strong> — to log you in and send claim-watch alerts.</li>
+        <li><strong>Saved spots and finds</strong> — locations and notes you save, visible only to you.</li>
+        <li><strong>Saved and watched claims</strong> — used to send alerts when claim status changes.</li>
+        <li><strong>Rock ID / Outcrop Mapper photos</strong> — sent to Anthropic's API for analysis. We don't store your photos.</li>
+        <li><strong>Map viewport</strong> — where the map is positioned, to show relevant data and remember your last location.</li>
+        <li><strong>Device and browser info</strong> — browser type, approximate location, screen size. Used for bug diagnosis only.</li>
+      </ul>
+
+      <h3>How We Use It</h3>
+      <p>Your data has one job: making the app work for you. We use it to keep you logged in, store your saved data, send claim alerts, and process AI tool requests. <strong>We don't sell your data. We don't run ads.</strong></p>
+
+      <h3>Cookies and Analytics</h3>
+      <p><strong>Auth cookies</strong> (Supabase) keep you logged in — required for the app to work. We also use <strong>Plausible Analytics</strong> — a privacy-first tool that sets no cookies and collects no personal information, only aggregate usage counts.</p>
+
+      <h3>Your Rights (GDPR / CCPA)</h3>
+      <ul>
+        <li>Request a copy of all data we hold about you</li>
+        <li>Delete your account and all associated data</li>
+        <li>Opt out of analytics by enabling Do Not Track in your browser</li>
+        <li>Receive your data in a portable format (CSV / JSON) on request</li>
+      </ul>
+
+      <h3>Data Retention</h3>
+      <p>Your data is kept while your account is active. Delete your account and we remove your personal information within 30 days. AI photos are never stored — they're sent to Anthropic and discarded.</p>
+
+      <div class="privacy-contact">
+        Questions? Email us at <a href="mailto:hello@unworkedgold.com">hello@unworkedgold.com</a><br>
+        <a href="/privacy" target="_blank">View full privacy policy →</a>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+function openPrivacyModal() {
+  document.getElementById('privacy-modal').style.display = 'flex';
+  document.body.style.overflow = 'hidden';
+}
+function closePrivacyModal() {
+  document.getElementById('privacy-modal').style.display = 'none';
+  document.body.style.overflow = '';
+}
+</script>
+
+<script src="app.js?v=20260427"></script>
+<script src="app-auth.js?v=20260427"></script>
+<script src="app-user.js?v=20260427"></script>
+<script src="app-data.js?v=20260427"></script>
+<script src="app-lidar.js?v=20260427"></script>
+<script src="app-search.js?v=20260427"></script>
+<script src="app-ai.js?v=20260427"></script>
+<script src="app-layers.js?v=20260427"></script>
+<script src="app-layer-loader.js?v=20260427"></script>
 
 </body>
 </html>

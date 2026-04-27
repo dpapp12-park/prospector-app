@@ -1,0 +1,472 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Privacy Policy — Unworked Gold</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@300;400;500&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --gold: #C9A84C;
+      --gold-bright: #F0C040;
+      --gold-dim: #8A6A20;
+      --ore: #2A2318;
+      --rock: #1A1810;
+      --stone: #2E2B22;
+      --dust: #9A8A6A;
+      --cream: #E8D9B0;
+      --panel-border: rgba(201, 168, 76, 0.25);
+    }
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    html { scroll-behavior: smooth; }
+
+    body {
+      background: var(--rock);
+      color: var(--cream);
+      font-family: 'DM Sans', sans-serif;
+      font-size: 15px;
+      line-height: 1.7;
+      min-height: 100vh;
+    }
+
+    /* Subtle grain texture */
+    body::before {
+      content: '';
+      position: fixed;
+      inset: 0;
+      background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.03'/%3E%3C/svg%3E");
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    /* Top bar */
+    .top-bar {
+      position: sticky;
+      top: 0;
+      z-index: 10;
+      background: rgba(26, 24, 16, 0.95);
+      border-bottom: 1px solid var(--panel-border);
+      backdrop-filter: blur(8px);
+      padding: 0 24px;
+      height: 52px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .wordmark {
+      font-family: 'Bebas Neue', sans-serif;
+      font-size: 20px;
+      letter-spacing: 0.06em;
+      color: var(--cream);
+      text-decoration: none;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .wordmark span { color: var(--gold-bright); }
+
+    .back-link {
+      font-family: 'DM Mono', monospace;
+      font-size: 11px;
+      letter-spacing: 0.08em;
+      color: var(--gold);
+      text-decoration: none;
+      text-transform: uppercase;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      transition: color 0.2s;
+    }
+
+    .back-link:hover { color: var(--gold-bright); }
+
+    .back-link svg { width: 12px; height: 12px; }
+
+    /* Page layout */
+    .page-wrap {
+      position: relative;
+      z-index: 1;
+      max-width: 680px;
+      margin: 0 auto;
+      padding: 56px 24px 80px;
+    }
+
+    /* Header */
+    .page-header {
+      margin-bottom: 48px;
+      padding-bottom: 32px;
+      border-bottom: 1px solid var(--panel-border);
+    }
+
+    .page-eyebrow {
+      font-family: 'DM Mono', monospace;
+      font-size: 11px;
+      letter-spacing: 0.12em;
+      color: var(--gold);
+      text-transform: uppercase;
+      margin-bottom: 12px;
+    }
+
+    .page-title {
+      font-family: 'Bebas Neue', sans-serif;
+      font-size: clamp(42px, 8vw, 64px);
+      letter-spacing: 0.03em;
+      line-height: 1;
+      color: var(--cream);
+      margin-bottom: 16px;
+    }
+
+    .page-title span { color: var(--gold-bright); }
+
+    .page-meta {
+      font-size: 13px;
+      color: var(--dust);
+      font-family: 'DM Mono', monospace;
+    }
+
+    /* Sections */
+    .section {
+      margin-bottom: 48px;
+    }
+
+    .section-label {
+      font-family: 'DM Mono', monospace;
+      font-size: 10px;
+      letter-spacing: 0.15em;
+      text-transform: uppercase;
+      color: var(--gold-dim);
+      margin-bottom: 8px;
+    }
+
+    h2 {
+      font-family: 'Bebas Neue', sans-serif;
+      font-size: 26px;
+      letter-spacing: 0.05em;
+      color: var(--gold-bright);
+      margin-bottom: 16px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    h2::before {
+      content: '';
+      display: inline-block;
+      width: 3px;
+      height: 22px;
+      background: var(--gold);
+      border-radius: 2px;
+      flex-shrink: 0;
+    }
+
+    p {
+      color: #C8BA98;
+      margin-bottom: 14px;
+    }
+
+    p:last-child { margin-bottom: 0; }
+
+    /* Data list cards */
+    .data-grid {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      margin-top: 20px;
+    }
+
+    .data-card {
+      background: var(--stone);
+      border: 1px solid var(--panel-border);
+      border-radius: 6px;
+      padding: 14px 16px;
+      display: grid;
+      grid-template-columns: 28px 1fr;
+      gap: 0 12px;
+      align-items: start;
+    }
+
+    .data-card-icon {
+      font-size: 16px;
+      line-height: 1.6;
+    }
+
+    .data-card-label {
+      font-family: 'DM Sans', sans-serif;
+      font-weight: 500;
+      font-size: 13px;
+      color: var(--cream);
+      margin-bottom: 3px;
+    }
+
+    .data-card-desc {
+      font-size: 13px;
+      color: var(--dust);
+      line-height: 1.5;
+    }
+
+    /* Highlight callout */
+    .callout {
+      background: rgba(201, 168, 76, 0.08);
+      border: 1px solid rgba(201, 168, 76, 0.3);
+      border-radius: 6px;
+      padding: 16px 18px;
+      margin-top: 20px;
+      font-size: 14px;
+      color: #C8BA98;
+    }
+
+    .callout strong {
+      color: var(--gold-bright);
+      font-weight: 500;
+    }
+
+    /* Rights list */
+    .rights-list {
+      list-style: none;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      margin-top: 16px;
+    }
+
+    .rights-list li {
+      display: flex;
+      align-items: flex-start;
+      gap: 10px;
+      font-size: 14px;
+      color: #C8BA98;
+    }
+
+    .rights-list li::before {
+      content: '→';
+      color: var(--gold);
+      font-family: 'DM Mono', monospace;
+      font-size: 12px;
+      margin-top: 2px;
+      flex-shrink: 0;
+    }
+
+    /* Divider */
+    .divider {
+      border: none;
+      border-top: 1px solid var(--panel-border);
+      margin: 40px 0;
+    }
+
+    /* Contact block */
+    .contact-block {
+      background: var(--ore);
+      border: 1px solid var(--panel-border);
+      border-radius: 8px;
+      padding: 24px;
+    }
+
+    .contact-block p {
+      font-size: 14px;
+      margin-bottom: 12px;
+    }
+
+    .contact-email {
+      font-family: 'DM Mono', monospace;
+      font-size: 13px;
+      color: var(--gold-bright);
+      text-decoration: none;
+      border-bottom: 1px solid rgba(240, 192, 64, 0.3);
+      padding-bottom: 1px;
+      transition: border-color 0.2s;
+    }
+
+    .contact-email:hover {
+      border-color: var(--gold-bright);
+    }
+
+    /* Footer */
+    .page-footer {
+      margin-top: 64px;
+      padding-top: 24px;
+      border-top: 1px solid var(--panel-border);
+      text-align: center;
+      font-family: 'DM Mono', monospace;
+      font-size: 11px;
+      color: var(--dust);
+      letter-spacing: 0.05em;
+    }
+
+    @media (max-width: 480px) {
+      .page-wrap { padding: 40px 18px 60px; }
+      .page-title { font-size: 36px; }
+    }
+  </style>
+</head>
+<body>
+
+  <nav class="top-bar">
+    <a href="/" class="wordmark">UNWORKED <span>GOLD</span></a>
+    <a href="/" class="back-link">
+      <svg viewBox="0 0 12 12" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <path d="M8 1L3 6L8 11" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+      </svg>
+      Back to Map
+    </a>
+  </nav>
+
+  <main class="page-wrap">
+
+    <header class="page-header">
+      <div class="page-eyebrow">Legal</div>
+      <h1 class="page-title">Privacy <span>Policy</span></h1>
+      <div class="page-meta">Effective April 27, 2026 · Plain English version</div>
+    </header>
+
+    <div class="section">
+      <p>Unworked Gold is a gold prospecting and mining claims map built for recreational prospectors. This policy explains what data we collect when you use the app, how we use it, and what control you have over it. We've written it in plain English — no lawyer-speak.</p>
+    </div>
+
+    <div class="section">
+      <div class="section-label">Section 01</div>
+      <h2>What We Collect</h2>
+      <p>We collect the minimum needed to run the app. Here's exactly what that means:</p>
+
+      <div class="data-grid">
+        <div class="data-card">
+          <div class="data-card-icon">✉️</div>
+          <div>
+            <div class="data-card-label">Account email</div>
+            <div class="data-card-desc">Used to log you in and send claim-watch alerts. We don't send marketing emails unless you opt in.</div>
+          </div>
+        </div>
+        <div class="data-card">
+          <div class="data-card-icon">📍</div>
+          <div>
+            <div class="data-card-label">Saved spots and finds</div>
+            <div class="data-card-desc">Locations and notes you choose to save in the app. Stored in your account and visible only to you.</div>
+          </div>
+        </div>
+        <div class="data-card">
+          <div class="data-card-icon">⛏️</div>
+          <div>
+            <div class="data-card-label">Saved and watched claims</div>
+            <div class="data-card-desc">BLM mining claims you bookmark or set alerts on. Used to send notifications when claim status changes.</div>
+          </div>
+        </div>
+        <div class="data-card">
+          <div class="data-card-icon">🪨</div>
+          <div>
+            <div class="data-card-label">Rock ID and Outcrop Mapper photos</div>
+            <div class="data-card-desc">Photos you submit for AI analysis are sent to Anthropic's API for identification. We do not store your photos — they are processed and discarded. Anthropic's privacy policy applies to their processing.</div>
+          </div>
+        </div>
+        <div class="data-card">
+          <div class="data-card-icon">🗺️</div>
+          <div>
+            <div class="data-card-label">Map viewport and location</div>
+            <div class="data-card-desc">Where the map is positioned when you use the app. Used to show relevant data layers and remember your last location. We do not track your precise GPS position continuously.</div>
+          </div>
+        </div>
+        <div class="data-card">
+          <div class="data-card-icon">🖥️</div>
+          <div>
+            <div class="data-card-label">Device and browser info</div>
+            <div class="data-card-desc">Browser type, approximate IP-based location, and screen size. Used to diagnose bugs and improve the app. Not tied to your account for profiling purposes.</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="section">
+      <div class="section-label">Section 02</div>
+      <h2>How We Use It</h2>
+      <p>Your data has one job: making the app work for you. Specifically:</p>
+      <ul class="rights-list">
+        <li>Keeping you logged in across sessions</li>
+        <li>Storing your saved spots, finds, and claims so they're there next time</li>
+        <li>Sending email alerts when a claim you're watching changes status</li>
+        <li>Processing AI tool requests (Rock ID, Outcrop Mapper) via Anthropic</li>
+        <li>Understanding how features are used so we can improve them</li>
+      </ul>
+
+      <div class="callout">
+        <strong>We do not sell your data.</strong> We don't run ads. There are no third-party advertisers with access to your account information. The only external service that touches your data is Anthropic (for AI photo analysis) and Supabase (our database host).
+      </div>
+    </div>
+
+    <div class="section">
+      <div class="section-label">Section 03</div>
+      <h2>Cookies and Analytics</h2>
+      <p>We use two types of cookies:</p>
+
+      <div class="data-grid">
+        <div class="data-card">
+          <div class="data-card-icon">🔑</div>
+          <div>
+            <div class="data-card-label">Authentication cookies</div>
+            <div class="data-card-desc">Set by Supabase to keep you logged in. Required for the app to function. Cannot be disabled without breaking your account.</div>
+          </div>
+        </div>
+        <div class="data-card">
+          <div class="data-card-icon">📊</div>
+          <div>
+            <div class="data-card-label">Analytics (Plausible)</div>
+            <div class="data-card-desc">We use Plausible Analytics — a privacy-first tool that doesn't set cookies, doesn't track you across sites, and doesn't collect personal information. It only counts page visits and feature usage in aggregate.</div>
+          </div>
+        </div>
+      </div>
+
+      <p style="margin-top: 16px;">We don't use advertising cookies, tracking pixels, or any third-party marketing scripts.</p>
+    </div>
+
+    <div class="section">
+      <div class="section-label">Section 04</div>
+      <h2>Your Rights</h2>
+      <p>Whether you're in California (CCPA) or the EU/UK (GDPR), you have the right to:</p>
+      <ul class="rights-list">
+        <li>Request a copy of all data we hold about your account</li>
+        <li>Delete your account and all associated data (spots, finds, saved claims, watches)</li>
+        <li>Opt out of analytics at any time by enabling Do Not Track in your browser — Plausible respects it</li>
+        <li>Ask us not to process your data for any purpose beyond running the app</li>
+        <li>Receive your data in a portable format (CSV or JSON) on request</li>
+      </ul>
+
+      <p style="margin-top: 16px;">To exercise any of these rights, email us at the address below. We'll respond within 30 days.</p>
+    </div>
+
+    <div class="section">
+      <div class="section-label">Section 05</div>
+      <h2>Data Retention</h2>
+      <p>Your account data is kept as long as your account is active. If you delete your account, we remove your personal information within 30 days. Anonymized analytics data (aggregate feature usage counts) may be retained indefinitely.</p>
+      <p>AI photo submissions are not retained by us at all — they're sent to Anthropic's API and the response is returned to you. Check <a href="https://www.anthropic.com/privacy" target="_blank" style="color: var(--gold); text-decoration: none;">Anthropic's privacy policy</a> for how they handle API inputs.</p>
+    </div>
+
+    <div class="section">
+      <div class="section-label">Section 06</div>
+      <h2>Changes to This Policy</h2>
+      <p>If we make material changes — meaning changes that affect what data we collect or how we use it — we'll update the "Effective" date at the top and notify logged-in users by email at least 14 days before the change takes effect.</p>
+      <p>Minor edits (typos, clarifications, formatting) won't trigger a notification but the date will update.</p>
+    </div>
+
+    <hr class="divider">
+
+    <div class="section">
+      <div class="section-label">Contact</div>
+      <h2>Questions?</h2>
+      <div class="contact-block">
+        <p>If you have questions about this policy, want to request your data, or want to delete your account, reach out directly:</p>
+        <a href="mailto:hello@unworkedgold.com" class="contact-email">hello@unworkedgold.com</a>
+        <p style="margin-top: 16px; font-size: 13px;">We're a small team and we read every email. You'll hear back within 2 business days.</p>
+      </div>
+    </div>
+
+  </main>
+
+  <footer class="page-footer">
+    <p>© 2026 Unworked Gold · <a href="/" style="color: var(--gold); text-decoration: none;">Back to Map</a></p>
+  </footer>
+
+</body>
+</html>
