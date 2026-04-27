@@ -635,6 +635,15 @@
     transition: opacity 0.2s, transform 0.2s cubic-bezier(0.16, 1, 0.3, 1);
   }
 
+  /* Under new panel — fix to viewport, clear right rail */
+  body.newpanel-on #style-switcher {
+    position: fixed;
+    top: auto;
+    bottom: 160px;
+    right: 80px;
+    z-index: 500;
+  }
+
   #style-switcher.open {
     opacity: 1;
     pointer-events: auto;
@@ -910,6 +919,15 @@
     transition: transform 0.35s cubic-bezier(0.16, 1, 0.3, 1);
     max-height: 85vh;
     overflow-y: auto;
+  }
+
+  /* Under new panel — fix to viewport */
+  body.newpanel-on #account-panel {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    z-index: 500;
   }
 
   #account-panel.open { transform: translateY(0); }
