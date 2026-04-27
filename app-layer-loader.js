@@ -1086,5 +1086,42 @@ function _applyFullrailTiles() {
 
   // Add 4 fillers to right rail bottom
   for (let i = 0; i < 4; i++) rightRail.appendChild(makeFiller(i));
+
+  // ── Bottom bar — full width anchored bar ──
+  const existingBottom = document.getElementById('np-fullrail-bottom');
+  if (!existingBottom) {
+    const bottomBar = document.createElement('div');
+    bottomBar.id = 'np-fullrail-bottom';
+    bottomBar.innerHTML = `
+      <div class="np-bottom-tile active" onclick="setNav(this)">
+        <svg viewBox="0 0 24 24"><polygon points="3,7 9,4 15,7 21,4 21,17 15,20 9,17 3,20"/><line x1="9" y1="4" x2="9" y2="17"/><line x1="15" y1="7" x2="15" y2="20"/></svg>
+        <span class="np-bottom-label">Map</span>
+      </div>
+      <div class="np-bottom-tile" onclick="setNav(this)">
+        <svg viewBox="0 0 24 24"><line x1="6" y1="3" x2="6" y2="21"/><polygon points="6,4 18,4 14,9 18,14 6,14"/></svg>
+        <span class="np-bottom-label">Claims</span>
+      </div>
+      <div class="np-bottom-tile" onclick="setNav(this)">
+        <svg viewBox="0 0 24 24"><path d="M5 4h14v16H5z"/><line x1="9" y1="9" x2="15" y2="9"/><line x1="9" y1="13" x2="15" y2="13"/><line x1="9" y1="17" x2="13" y2="17"/></svg>
+        <span class="np-bottom-label">Finds</span>
+      </div>
+      <div class="np-bottom-tile" onclick="setNav(this)">
+        <svg viewBox="0 0 24 24"><path d="M12 3 v12"/><polyline points="7,10 12,15 17,10"/><line x1="5" y1="20" x2="19" y2="20"/></svg>
+        <span class="np-bottom-label">Offline</span>
+      </div>
+      <div class="np-bottom-tile" onclick="openAuthPanel ? openAuthPanel() : null">
+        <svg viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M4 21 c0 -5 4 -8 8 -8 s8 3 8 8"/></svg>
+        <span class="np-bottom-label">Sign In</span>
+      </div>
+    `;
+    document.body.appendChild(bottomBar);
+  }
+
+  // ── Move #np-top-left into top controls ──
+  const topLeft = document.getElementById('np-top-left');
+  const topControls = document.querySelector('#newpanel-root .np-top-controls');
+  if (topLeft && topControls && !topControls.contains(topLeft)) {
+    topControls.prepend(topLeft);
+  }
 }
 

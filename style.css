@@ -3487,4 +3487,138 @@ body.newpanel-on #zoom-readout {
 /* Zoom pill hidden in fullrail — zoom is in rail */
 [data-theme="fullrail"] body.newpanel-on #zoom-readout { display: none !important; }
 
+/* Hide existing bottom nav in fullrail */
+[data-theme="fullrail"] #bottom-nav {
+  display: none !important;
+}
+
+/* TOP BAR — full width, anchored to top edge */
+[data-theme="fullrail"] #newpanel-root .np-top-controls {
+  display: flex !important;
+  position: fixed;
+  top: 0;
+  left: 72px;
+  right: 72px;
+  transform: none;
+  height: 52px;
+  background: var(--np-surface);
+  border-bottom: 1px solid var(--np-border);
+  border-left: none;
+  border-right: none;
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  z-index: 10;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 16px;
+  gap: 12px;
+}
+
+/* Wordmark in top bar */
+[data-theme="fullrail"] #newpanel-root #np-top-left {
+  display: flex !important;
+  position: static;
+  pointer-events: auto;
+  flex-direction: row;
+  align-items: center;
+  gap: 16px;
+}
+[data-theme="fullrail"] #newpanel-root .np-version { display: none; }
+[data-theme="fullrail"] #newpanel-root .np-readouts {
+  display: flex;
+  flex-direction: row;
+  gap: 12px;
+  font-size: 10px;
+  line-height: 1;
+}
+[data-theme="fullrail"] #newpanel-root .np-price { margin-top: 0; }
+
+/* Top rail sits inside top bar, centered */
+[data-theme="fullrail"] #newpanel-root .np-top-rail {
+  flex: 1;
+  justify-content: center;
+  background: transparent;
+  border: none;
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+  border-radius: 0;
+  padding: 0;
+}
+
+/* Toolbar action buttons in top bar */
+[data-theme="fullrail"] #newpanel-root .np-toolbar-action {
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+/* Push map canvas down to clear top bar */
+[data-theme="fullrail"] .mapboxgl-map {
+  top: 52px !important;
+  height: calc(100vh - 52px - 52px) !important;
+}
+
+/* BOTTOM BAR — full width, anchored to bottom edge */
+[data-theme="fullrail"] #np-fullrail-bottom {
+  position: fixed;
+  bottom: 0;
+  left: 72px;
+  right: 72px;
+  height: 52px;
+  background: var(--np-surface);
+  border-top: 1px solid var(--np-border);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  z-index: 10;
+  display: flex;
+  align-items: center;
+  justify-content: space-around;
+  padding: 0 8px;
+}
+[data-theme="fullrail"] .np-bottom-tile {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 3px;
+  color: var(--np-muted);
+  cursor: pointer;
+  padding: 6px 16px;
+  border-radius: 4px;
+  transition: background 0.12s, color 0.12s;
+  font-family: 'DM Sans', sans-serif;
+}
+[data-theme="fullrail"] .np-bottom-tile:hover {
+  background: rgba(255,255,255,0.04);
+  color: var(--np-cream);
+}
+[data-theme="fullrail"] .np-bottom-tile.active {
+  color: var(--np-gold);
+}
+[data-theme="fullrail"] .np-bottom-tile svg {
+  width: 18px;
+  height: 18px;
+  stroke: currentColor;
+  fill: none;
+  stroke-width: 1.5;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+[data-theme="fullrail"] .np-bottom-label {
+  font: 500 9px/1 'DM Mono', monospace;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+/* Left rail starts below top bar */
+[data-theme="fullrail"] #newpanel-root .np-left-rail {
+  top: 52px;
+  height: calc(100vh - 52px - 52px);
+}
+
+/* Right rail starts below top bar */
+[data-theme="fullrail"] #newpanel-root .np-right-rail {
+  top: 52px;
+  height: calc(100vh - 52px - 52px);
+}
+
 /* End of new layer panel CSS ──────────────────────────── */
