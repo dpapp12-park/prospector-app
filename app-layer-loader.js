@@ -513,9 +513,6 @@ function _mountNewPanelScaffold() {
   const _savedTheme = localStorage.getItem('ug_theme');
   if (_savedTheme) document.documentElement.dataset.theme = _savedTheme;
 
-  // Fullrail theme — inject zoom tiles + filler tiles into both rails
-  if (_savedTheme === 'fullrail') _applyFullrailTiles();
-
   // Wire fixed controls
   document.getElementById('np-modal-close').addEventListener('click', _closeNewPanelModal);
   document.getElementById('np-modal-backdrop').addEventListener('click', e => {
@@ -1022,6 +1019,10 @@ async function _bootNewPanel() {
   // Cards are not mounted yet (modal closed), but tile badges should reflect counts.
   _renderRails();
 
+  // Fullrail theme — inject tiles after rails are populated
+  const _savedTheme = localStorage.getItem('ug_theme');
+  if (_savedTheme === 'fullrail') _applyFullrailTiles();
+
   console.info('[layer-loader] new panel mounted (?newpanel=1)');
 }
 
@@ -1047,7 +1048,15 @@ function _applyFullrailTiles() {
   const topRail = document.getElementById('np-top-rail');
   if (topRail && leftRail) {
     Array.from(topRail.children).forEach(tile => {
-      leftRail.appendChild(tile.cloneNode(true));
+      const clone = tile.cloneNode(true);
+      // Re-wire click: top rail tiles open the modal for their category
+      const catId = tile.dataset.cat;
+      if (catId) {
+        clone.addEventListener('click', () => {
+          _openNewPanelModal(catId);
+        });
+      }
+      leftRail.appendChild(clone);
     });
   }
 
