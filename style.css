@@ -3183,6 +3183,7 @@ body.newpanel-on #searchbar.np-search-open {
 .chs-reset:hover { border-color: #C9A84C; color: #C9A84C; }
 
 
+/* ── RIGHT RAIL ──
    Vertical action rail on the right edge — Search, Pin, Measure,
    Show, AI, Account. Ported from v6 mockup. AI tile is gold-tinted
    to match the mockup; the rest are muted-by-default. */
