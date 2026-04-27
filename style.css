@@ -2626,14 +2626,6 @@ body.newpanel-on #gps-btn {
   display: none !important;
 }
 
-/* Custom Hillshade sliders panel — repositioned for new panel layout */
-body.newpanel-on #custom-hs-panel {
-  top: auto;
-  bottom: 120px;
-  left: 50%;
-  transform: translateX(-50%);
-}
-
 /* Searchbar relocates to the right side under newpanel mode and
    starts hidden. The right-rail Search tile toggles the
    .np-search-open class on #searchbar to show/hide it; JS also
@@ -3105,7 +3097,43 @@ body.newpanel-on #searchbar.np-search-open {
 #newpanel-root .np-card-status { color: var(--np-dim); letter-spacing: 0.06em; }
 #newpanel-root .np-layer-card.on .np-card-status { color: var(--np-gold); }
 
-/* ── RIGHT RAIL ──
+/* ── INLINE SUB-CONTROLS (e.g. Custom Hillshade sliders) ── */
+#newpanel-root .np-sub-control {
+  padding: 10px 12px 6px;
+  border-top: 1px solid var(--np-border);
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+#newpanel-root .np-sub-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 6px;
+  font-size: 11px;
+}
+#newpanel-root .np-sub-label { color: var(--np-dim); }
+#newpanel-root .np-sub-value { color: var(--np-gold); font-weight: 600; min-width: 36px; text-align: right; }
+#newpanel-root .np-sub-slider {
+  width: 100%;
+  accent-color: var(--np-gold);
+  cursor: pointer;
+  margin-top: 2px;
+}
+#newpanel-root .np-sub-reset {
+  align-self: flex-end;
+  margin-top: 8px;
+  background: transparent;
+  border: 1px solid var(--np-border);
+  color: var(--np-dim);
+  border-radius: 4px;
+  padding: 3px 10px;
+  font-size: 11px;
+  cursor: pointer;
+}
+#newpanel-root .np-sub-reset:hover { border-color: var(--np-gold); color: var(--np-gold); }
+
+
    Vertical action rail on the right edge — Search, Pin, Measure,
    Show, AI, Account. Ported from v6 mockup. AI tile is gold-tinted
    to match the mockup; the rest are muted-by-default. */

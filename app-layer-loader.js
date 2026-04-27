@@ -344,7 +344,12 @@ let _newPanelToastTimer = null;
 let _newPanelPopoutTimer = null;
 
 function _isNewPanelEnabled() {
-  return true; // new panel is now always-on
+  try {
+    const params = new URLSearchParams(window.location.search);
+    return params.get('newpanel') === '1';
+  } catch (e) {
+    return false;
+  }
 }
 
 function _loadRailsState() {
@@ -943,6 +948,32 @@ function _renderCard(l) {
   else              status = '+ ADD';
   const soonPill = isComingSoon ? `<span class="np-card-soon">SOON</span>` : '';
 
+  // Inline sub-controls — rendered below the card when ON
+  let subControlHtml = '';
+  if (isOn && l.subControl && l.subControl.type === 'multiInput') {
+    const sc = l.subControl;
+    // Map schema input IDs to the legacy element IDs updateCustomParam expects
+    const baseIdMap = { az: 'lidar-azimuth', alt: 'lidar-altitude', z: 'lidar-zfactor' };
+    const paramMap  = { az: 'azimuth',       alt: 'altitude',       z: 'zfactor'       };
+    const rows = sc.inputs.map(inp => {
+      const baseId = baseIdMap[inp.id] || `lidar-${inp.id}`;
+      const param  = paramMap[inp.id]  || inp.id;
+      const step   = inp.step ? `step="${inp.step}"` : 'step="1"';
+      return `
+        <div class="np-sub-row">
+          <span class="np-sub-label">${inp.label}</span>
+          <span class="np-sub-value" id="${baseId}-value">${inp.default}${inp.unit}</span>
+        </div>
+        <input type="range" class="np-sub-slider" id="${baseId}-slider"
+          min="${inp.min}" max="${inp.max}" value="${inp.default}" ${step}
+          oninput="updateCustomParam('${param}', this.value)">`;
+    }).join('');
+    const resetBtn = sc.resetButton
+      ? `<button class="np-sub-reset" onclick="event.stopPropagation();${sc.onReset}()">Reset</button>`
+      : '';
+    subControlHtml = `<div class="np-sub-control" onclick="event.stopPropagation()">${rows}${resetBtn}</div>`;
+  }
+
   return `<div class="np-layer-card ${isOn ? 'on' : ''} ${isComingSoon ? 'soon' : ''}" id="card-${l.id}" data-layer="${l.id}">
     <div class="np-card-thumb">${_newPanelThumb(l.thumb)}</div>
     <div class="np-card-body">
@@ -956,6 +987,7 @@ function _renderCard(l) {
         <span class="np-card-status" id="card-status-${l.id}">${status}</span>
       </div>
     </div>
+    ${subControlHtml}
   </div>`;
 }
 
