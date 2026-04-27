@@ -316,12 +316,57 @@ function toggleCustomHillshade() {
     toggleEl.textContent = customHillshadeActive ? 'ON' : 'OFF';
   }
   const panel = document.getElementById('custom-hs-panel');
-  if (panel) panel.style.display = customHillshadeActive ? 'block' : 'none';
+  if (panel) {
+    panel.style.display = customHillshadeActive ? 'block' : 'none';
+    if (customHillshadeActive) panel.classList.remove('minimized');
+  }
   if (map && map.getLayer('custom-hs-layer')) {
     map.setLayoutProperty('custom-hs-layer', 'visibility',
       customHillshadeActive ? 'visible' : 'none');
   }
 }
+
+function customHsMinimize() {
+  const panel = document.getElementById('custom-hs-panel');
+  if (!panel) return;
+  panel.classList.toggle('minimized');
+  document.getElementById('custom-hs-min').innerHTML =
+    panel.classList.contains('minimized') ? '&#43;' : '&#8722;';
+}
+
+function customHsClose() {
+  // Hide the panel and turn off the layer
+  if (customHillshadeActive) toggleCustomHillshade();
+  else {
+    const panel = document.getElementById('custom-hs-panel');
+    if (panel) panel.style.display = 'none';
+  }
+}
+
+// Drag logic — attached once on first show
+(function _initChsDrag() {
+  document.addEventListener('DOMContentLoaded', () => {
+    const panel = document.getElementById('custom-hs-panel');
+    const handle = document.getElementById('custom-hs-drag');
+    if (!panel || !handle) return;
+    let dragging = false, ox = 0, oy = 0;
+    handle.addEventListener('mousedown', e => {
+      if (e.target.classList.contains('custom-hs-btn')) return;
+      dragging = true;
+      const r = panel.getBoundingClientRect();
+      ox = e.clientX - r.left;
+      oy = e.clientY - r.top;
+      e.preventDefault();
+    });
+    document.addEventListener('mousemove', e => {
+      if (!dragging) return;
+      panel.style.left   = (e.clientX - ox) + 'px';
+      panel.style.top    = (e.clientY - oy) + 'px';
+      panel.style.bottom = 'auto';
+    });
+    document.addEventListener('mouseup', () => { dragging = false; });
+  });
+}());
 
 // ── LIDAR HILLSHADE — WATER MASK + COUNTER ──────────────
 function syncLidarWaterMask() {
