@@ -546,8 +546,13 @@ function _mountNewPanelScaffold() {
       const isOpen = sb.classList.toggle('np-search-open');
       btn.classList.toggle('active', isOpen);
       if (isOpen) {
+        // Align searchbar's top edge with the Search tile's top.
+        const tileRect = btn.getBoundingClientRect();
+        sb.style.top = tileRect.top + 'px';
         const input = document.getElementById('search-input');
         if (input) setTimeout(() => input.focus(), 50);
+      } else {
+        sb.style.top = '';
       }
       return;
     }
@@ -583,6 +588,7 @@ function _mountNewPanelScaffold() {
     if (sb.contains(e.target)) return;
     if (e.target.closest('#np-right-rail .np-right-tile[data-action="search"]')) return;
     sb.classList.remove('np-search-open');
+    sb.style.top = '';
     const searchTile = document.querySelector('#np-right-rail .np-right-tile[data-action="search"]');
     if (searchTile) searchTile.classList.remove('active');
   });

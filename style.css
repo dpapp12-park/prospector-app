@@ -2591,24 +2591,33 @@
 
 /* Hide old panel UI when new panel mode is on.
    #ai-btn is hidden because the AI tool now lives in the right rail.
+   #fab + #fab-hint are hidden because the right-rail Pin tile
+   replaces the FAB's tap-to-save behavior. (Drag-to-drop-pin from
+   the FAB is NOT yet ported — separate ticket.)
+   #feedback-fab is hidden — feedback gets its own home later.
    These elements (and the rules) get permanently removed when the
    newpanel scaffold becomes the canonical index. */
 body.newpanel-on #layer-btn,
 body.newpanel-on #layer-panel,
 body.newpanel-on #active-layer-bar,
 body.newpanel-on #custom-hs-panel,
-body.newpanel-on #ai-btn {
+body.newpanel-on #ai-btn,
+body.newpanel-on #fab,
+body.newpanel-on #fab-hint,
+body.newpanel-on #feedback-fab {
   display: none !important;
 }
 
 /* Searchbar relocates to the right side under newpanel mode and
    starts hidden. The right-rail Search tile toggles the
-   .np-search-open class on #searchbar to show/hide it. */
+   .np-search-open class on #searchbar to show/hide it; JS also
+   sets inline #searchbar.style.top so it aligns with the Search
+   tile's top edge (no !important here for that reason). */
 body.newpanel-on #searchbar {
-  top: 50% !important;
-  left: auto !important;
-  right: 88px !important;
-  transform: translateY(-50%);
+  top: 90px;
+  left: auto;
+  right: 88px;
+  transform: none;
   display: none;
 }
 body.newpanel-on #searchbar.np-search-open {
