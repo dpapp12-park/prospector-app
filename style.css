@@ -2612,7 +2612,6 @@
 body.newpanel-on #layer-btn,
 body.newpanel-on #layer-panel,
 body.newpanel-on #active-layer-bar,
-body.newpanel-on #custom-hs-panel,
 body.newpanel-on #ai-btn,
 body.newpanel-on #fab,
 body.newpanel-on #fab-hint,
@@ -2625,6 +2624,14 @@ body.newpanel-on #terrain-toggle-btn,
 body.newpanel-on #style-btn,
 body.newpanel-on #gps-btn {
   display: none !important;
+}
+
+/* Custom Hillshade sliders panel — repositioned for new panel layout */
+body.newpanel-on #custom-hs-panel {
+  top: auto;
+  bottom: 120px;
+  left: 50%;
+  transform: translateX(-50%);
 }
 
 /* Searchbar relocates to the right side under newpanel mode and

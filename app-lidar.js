@@ -315,6 +315,8 @@ function toggleCustomHillshade() {
     toggleEl.classList.toggle('on', customHillshadeActive);
     toggleEl.textContent = customHillshadeActive ? 'ON' : 'OFF';
   }
+  const panel = document.getElementById('custom-hs-panel');
+  if (panel) panel.style.display = customHillshadeActive ? 'block' : 'none';
   if (map && map.getLayer('custom-hs-layer')) {
     map.setLayoutProperty('custom-hs-layer', 'visibility',
       customHillshadeActive ? 'visible' : 'none');
