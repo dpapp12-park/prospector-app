@@ -3150,4 +3150,26 @@ body.newpanel-on #searchbar.np-search-open {
   color: var(--np-gold-bright);
 }
 
+/* ── ZOOM PILL ──
+   Override the chunky default #zoom-readout (top-center, fat 18px,
+   2px gold border, drop shadow) with the small v6 mockup pill, and
+   move it to bottom-center. The element + JS update logic in app.js
+   are unchanged; this is style + position only. */
+body.newpanel-on #zoom-readout {
+  top: auto;
+  bottom: 14px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: rgba(13,12,9,0.88);
+  border: 1px solid rgba(201,168,76,0.4);
+  color: #C9A84C;
+  font: 500 11px/1 'DM Mono', monospace;
+  padding: 7px 12px;
+  border-radius: 4px;
+  letter-spacing: 0.05em;
+  box-shadow: none;
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+}
+
 /* End of new layer panel CSS ──────────────────────────── */
