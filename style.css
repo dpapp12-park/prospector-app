@@ -538,6 +538,14 @@
     height: 32px;
   }
 
+  .nav-icon-svg {
+    width: 24px;
+    height: 24px;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+  }
+  .nav-item.active .nav-icon-svg { stroke: var(--gold); }
+
   .nav-item:nth-child(1).active .nav-icon-img { content: url('assets/icons/icon_nav_map_pressed.png'); }
   .nav-item:nth-child(2).active .nav-icon-img { content: url('assets/icons/icon_nav_claims_pressed.png'); }
   .nav-item:nth-child(3).active .nav-icon-img { content: url('assets/icons/icon_nav_finds_pressed.png'); }
