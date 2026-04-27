@@ -3248,8 +3248,9 @@ body.newpanel-on #searchbar.np-search-open {
   background: rgba(255,255,255,0.04);
   color: var(--np-cream);
 }
-#newpanel-root .np-right-tile.ai { color: var(--np-gold); }
-#newpanel-root .np-right-tile.ai:hover {
+#newpanel-root .np-right-tile.ai { color: var(--np-muted); }
+#newpanel-root .np-right-tile.ai:hover,
+#newpanel-root .np-right-tile.ai.active {
   background: var(--np-gold-faint);
   color: var(--np-gold-bright);
 }

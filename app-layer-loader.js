@@ -1072,17 +1072,17 @@ function _applyFullrailTiles() {
   const rightRail = document.getElementById('np-right-rail');
   if (!leftRail || !rightRail) return;
 
-  // ── Move top rail tiles into left rail ──
+  // ── Clone top rail tiles into left rail ──
+  // Use the rendered top rail tiles. Force a fresh render first
+  // to guarantee all tiles are present regardless of localStorage state.
+  _renderRails();
   const topRail = document.getElementById('np-top-rail');
   if (topRail && leftRail) {
     Array.from(topRail.children).forEach(tile => {
       const clone = tile.cloneNode(true);
-      // Re-wire click: top rail tiles open the modal for their category
       const catId = tile.dataset.cat;
       if (catId) {
-        clone.addEventListener('click', () => {
-          _openNewPanelModal(catId);
-        });
+        clone.addEventListener('click', () => { _openNewPanelModal(catId); });
       }
       leftRail.appendChild(clone);
     });
