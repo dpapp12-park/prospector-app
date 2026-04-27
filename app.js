@@ -131,6 +131,9 @@ function startMap(token) {
     initDrawSearch();
     initFABDrag();
 
+    // Apply theme-specific map paint properties
+    _applyThemeMapStyle();
+
     // Fly to location requested from dashboard
     const flyReq = localStorage.getItem('unworked_gold_fly_to') || localStorage.getItem('prospector_fly_to');
     if (flyReq) {
@@ -259,6 +262,7 @@ function setStyle(name) {
     }
 
     addDemoLayers();
+    _applyThemeMapStyle();
   });
   toggleStyles();
   showStatus(`Style: ${name}`);
@@ -615,6 +619,35 @@ function showStatus(msg) {
 }
 
 
+
+// ── THEME MAP STYLE ──────────────────────────────────────
+// Applies map paint properties based on active UI theme.
+// Called on map load and after setStyle() reloads.
+// LiDAR themes: desaturated, cooler, slightly darker satellite.
+// ─────────────────────────────────────────────────────────
+function _applyThemeMapStyle() {
+  if (!map) return;
+  const theme = localStorage.getItem('ug_theme') || '';
+  const isLidar = theme === 'lidar' || theme === 'fullrail-lidar';
+
+  try {
+    if (isLidar) {
+      map.setPaintProperty('satellite', 'raster-saturation',   -0.75);
+      map.setPaintProperty('satellite', 'raster-contrast',      0.10);
+      map.setPaintProperty('satellite', 'raster-brightness-max', 0.80);
+      map.setPaintProperty('satellite', 'raster-hue-rotate',   200);
+    } else {
+      // Default — restore satellite to natural
+      map.setPaintProperty('satellite', 'raster-saturation',    0);
+      map.setPaintProperty('satellite', 'raster-contrast',      0);
+      map.setPaintProperty('satellite', 'raster-brightness-max', 1);
+      map.setPaintProperty('satellite', 'raster-hue-rotate',    0);
+    }
+  } catch(e) {
+    // Layer may not exist yet on some style loads — safe to ignore
+    console.warn('[theme] map paint not ready:', e.message);
+  }
+}
 
 // ── BOOT: read mapbox token from inline config, init map ──
 // Previously fetched from Supabase app_config table; that table was
