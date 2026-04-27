@@ -3487,14 +3487,20 @@ body.newpanel-on #zoom-readout {
 /* Zoom pill hidden in fullrail — zoom is in rail */
 [data-theme="fullrail"] body.newpanel-on #zoom-readout , [data-theme="fullrail-lidar"] body.newpanel-on #zoom-readout { display: none !important; }
 
-/* Hide existing bottom nav in fullrail */
-[data-theme="fullrail"] #bottom-nav , [data-theme="fullrail-lidar"] #bottom-nav {
+/* Hide existing bottom nav in fullrail — !important to beat z-index:100 */
+[data-theme="fullrail"] #bottom-nav,
+[data-theme="fullrail-lidar"] #bottom-nav {
   display: none !important;
+  visibility: hidden !important;
+  opacity: 0 !important;
+  pointer-events: none !important;
 }
 
 /* Hide Reset/Clear in fullrail — top bar is coords only */
 [data-theme="fullrail"] #newpanel-root #np-reset-btn,
-[data-theme="fullrail"] #newpanel-root #np-clear-btn , [data-theme="fullrail-lidar"] #newpanel-root #np-clear-btn { display: none !important; }
+[data-theme="fullrail"] #newpanel-root #np-clear-btn,
+[data-theme="fullrail-lidar"] #newpanel-root #np-reset-btn,
+[data-theme="fullrail-lidar"] #newpanel-root #np-clear-btn { display: none !important; }
 
 /* Top rail hidden in fullrail — tiles live in left rail */
 [data-theme="fullrail"] #newpanel-root .np-top-rail , [data-theme="fullrail-lidar"] #newpanel-root .np-top-rail { display: none !important; }
@@ -3575,7 +3581,7 @@ body.newpanel-on #zoom-readout {
   border-top: 1px solid var(--np-border);
   backdrop-filter: blur(8px);
   -webkit-backdrop-filter: blur(8px);
-  z-index: 20;
+  z-index: 110;
   display: flex;
   align-items: center;
   justify-content: space-around;
