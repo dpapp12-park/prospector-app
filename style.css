@@ -2617,7 +2617,13 @@ body.newpanel-on #ai-btn,
 body.newpanel-on #fab,
 body.newpanel-on #fab-hint,
 body.newpanel-on #feedback-fab,
-body.newpanel-on #topbar {
+body.newpanel-on #topbar,
+body.newpanel-on #draw-btn,
+body.newpanel-on #draw-hint,
+body.newpanel-on #custom-compass,
+body.newpanel-on #terrain-toggle-btn,
+body.newpanel-on #style-btn,
+body.newpanel-on #gps-btn {
   display: none !important;
 }
 

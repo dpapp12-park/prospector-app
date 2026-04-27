@@ -481,6 +481,13 @@ function _mountNewPanelScaffold() {
     <div class="np-right-rail" id="np-right-rail">
       <button class="np-right-tile" data-action="search" title="Search"><svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><line x1="20" y1="20" x2="16.5" y2="16.5"/></svg><span class="np-right-tile-label">Search</span></button>
       <button class="np-right-tile" data-action="pin" title="Drop pin"><svg viewBox="0 0 24 24"><path d="M12 2 C8 2 5 5 5 9 c0 5 7 13 7 13 s7 -8 7 -13 c0 -4 -3 -7 -7 -7 z"/><circle cx="12" cy="9" r="2.5"/></svg><span class="np-right-tile-label">Pin</span></button>
+      <button class="np-right-tile" data-action="draw" title="Draw to search claims"><svg viewBox="0 0 24 24"><polygon points="12,3 21,8 18,19 6,19 3,8"/></svg><span class="np-right-tile-label">Draw</span></button>
+      <div class="np-right-divider"></div>
+      <button class="np-right-tile" data-action="gps" title="My location"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><circle cx="12" cy="12" r="7"/><line x1="12" y1="2" x2="12" y2="5"/><line x1="12" y1="19" x2="12" y2="22"/><line x1="2" y1="12" x2="5" y2="12"/><line x1="19" y1="12" x2="22" y2="12"/></svg><span class="np-right-tile-label">GPS</span></button>
+      <button class="np-right-tile" data-action="compass" title="Reset north"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><polygon points="12,4 14,12 12,14 10,12" fill="currentColor" stroke="none"/><polygon points="12,20 14,12 12,10 10,12" opacity="0.4" fill="currentColor" stroke="none"/></svg><span class="np-right-tile-label">North</span></button>
+      <button class="np-right-tile" data-action="style" title="Map style"><svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="4" rx="1"/><rect x="3" y="10" width="18" height="4" rx="1"/><rect x="3" y="16" width="18" height="4" rx="1"/></svg><span class="np-right-tile-label">Style</span></button>
+      <button class="np-right-tile" data-action="3d" title="Toggle 3D terrain"><svg viewBox="0 0 24 24"><polygon points="3,20 9,10 13,15 17,7 21,20"/></svg><span class="np-right-tile-label">3D</span></button>
+      <div class="np-right-divider"></div>
       <button class="np-right-tile" data-action="measure" title="Measure (coming soon)"><svg viewBox="0 0 24 24"><path d="M3 16 L16 3 L21 8 L8 21 Z"/><line x1="7" y1="12" x2="9" y2="14"/><line x1="10" y1="9" x2="12" y2="11"/><line x1="13" y1="6" x2="15" y2="8"/></svg><span class="np-right-tile-label">Measure</span></button>
       <button class="np-right-tile" data-action="show" title="Show"><svg viewBox="0 0 24 24"><path d="M2 12 s4 -7 10 -7 s10 7 10 7 s-4 7 -10 7 s-10 -7 -10 -7 z"/><circle cx="12" cy="12" r="3"/></svg><span class="np-right-tile-label">Show</span></button>
       <div class="np-right-divider"></div>
@@ -586,6 +593,12 @@ function _mountNewPanelScaffold() {
       _newPanelToast(action === 'measure' ? 'Measure — coming soon' : 'Show — coming soon');
       return;
     }
+
+    if (action === 'gps')     { if (typeof locateUser    === 'function') locateUser();    return; }
+    if (action === 'compass') { if (typeof resetBearing  === 'function') resetBearing();  return; }
+    if (action === 'style')   { if (typeof toggleStyles  === 'function') toggleStyles();  return; }
+    if (action === '3d')      { if (typeof toggle3D      === 'function') toggle3D();      return; }
+    if (action === 'draw')    { if (typeof toggleDraw    === 'function') toggleDraw();    return; }
   });
 
   // Click outside #searchbar closes it (only under newpanel mode).
