@@ -344,12 +344,7 @@ let _newPanelToastTimer = null;
 let _newPanelPopoutTimer = null;
 
 function _isNewPanelEnabled() {
-  try {
-    const params = new URLSearchParams(window.location.search);
-    return params.get('newpanel') === '1';
-  } catch (e) {
-    return false;
-  }
+  return true; // new panel is always-on
 }
 
 function _loadRailsState() {
