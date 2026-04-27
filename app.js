@@ -107,6 +107,7 @@ function startMap(token) {
     bearing: 0,
     antialias: true
   });
+  window.map = map; // expose for cross-module access (zoom cluster, theme map style)
 
   map.addControl(new mapboxgl.NavigationControl({ visualizePitch: false, showCompass: false }), 'top-left');
   map.addControl(new mapboxgl.ScaleControl({ unit: 'imperial' }), 'bottom-left');

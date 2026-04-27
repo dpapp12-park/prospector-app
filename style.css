@@ -1941,6 +1941,15 @@
     -webkit-overflow-scrolling: touch;
   }
 
+  body.newpanel-on #rock-id-panel,
+  body.newpanel-on #outcrop-panel {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    z-index: 500;
+  }
+
   #rock-id-panel.open,
   #outcrop-panel.open { transform: translateY(0); }
 
