@@ -1858,6 +1858,15 @@
     transition: opacity 0.2s, transform 0.2s cubic-bezier(0.16, 1, 0.3, 1);
   }
 
+  /* Under new panel — fix position and z-index to sit left of right rail */
+  body.newpanel-on #ai-tools-menu {
+    position: fixed;
+    top: auto;
+    bottom: 120px;
+    right: 80px;
+    z-index: 500;
+  }
+
   #ai-tools-menu.open {
     opacity: 1;
     pointer-events: auto;
