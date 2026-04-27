@@ -1863,10 +1863,10 @@
 
   /* ── AI TOOLS MENU ── */
   #ai-tools-menu {
-    position: absolute;
-    top: 70px;
-    right: 20px;
-    z-index: 100;
+    position: fixed;
+    bottom: 120px;
+    right: 80px;
+    z-index: 500;
     display: flex;
     flex-direction: column;
     gap: 6px;
@@ -1876,10 +1876,9 @@
     transition: opacity 0.2s, transform 0.2s cubic-bezier(0.16, 1, 0.3, 1);
   }
 
-  /* Under new panel — fix position and z-index to sit left of right rail */
+  /* Under new panel — same position works for all themes */
   body.newpanel-on #ai-tools-menu {
     position: fixed;
-    top: auto;
     bottom: 120px;
     right: 80px;
     z-index: 500;

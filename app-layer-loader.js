@@ -1069,8 +1069,8 @@ function _applyFullrailTiles() {
       <button class="np-zoom-btn" title="Zoom in">+</button>
       <button class="np-zoom-btn" title="Zoom out">−</button>`;
     const btns = cluster.querySelectorAll('.np-zoom-btn');
-    btns[0].addEventListener('click', () => { if (window.map) window.map.zoomIn(); });
-    btns[1].addEventListener('click', () => { if (window.map) window.map.zoomOut(); });
+    btns[0].addEventListener('click', () => { if (window.map) window.map.zoomIn(); else showStatus('Map not ready'); });
+    btns[1].addEventListener('click', () => { if (window.map) window.map.zoomOut(); else showStatus('Map not ready'); });
     document.body.appendChild(cluster);
   }
 
