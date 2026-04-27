@@ -513,6 +513,9 @@ function _mountNewPanelScaffold() {
   const _savedTheme = localStorage.getItem('ug_theme');
   if (_savedTheme) document.documentElement.dataset.theme = _savedTheme;
 
+  // Fullrail theme — inject zoom tiles + filler tiles into both rails
+  if (_savedTheme === 'fullrail') _applyFullrailTiles();
+
   // Wire fixed controls
   document.getElementById('np-modal-close').addEventListener('click', _closeNewPanelModal);
   document.getElementById('np-modal-backdrop').addEventListener('click', e => {
@@ -1027,5 +1030,61 @@ if (document.readyState === 'loading') {
 } else {
   // Already loaded — boot on next tick.
   setTimeout(_bootNewPanel, 0);
+}
+
+/* ----------------------------------------------------------
+ * FULLRAIL THEME — inject zoom tiles + filler tiles
+ * Called after scaffold mount when data-theme="fullrail".
+ * Adds Zoom In / Zoom Out at top of left rail (wired to map),
+ * then pads both rails with muted filler tiles to fill height.
+ * ---------------------------------------------------------- */
+function _applyFullrailTiles() {
+  const leftRail  = document.getElementById('np-left-rail');
+  const rightRail = document.getElementById('np-right-rail');
+  if (!leftRail || !rightRail) return;
+
+  // ── Zoom tiles — prepend to left rail ──
+  const zoomIn = document.createElement('button');
+  zoomIn.className = 'np-tile np-zoom-tile';
+  zoomIn.title = 'Zoom in';
+  zoomIn.innerHTML = `
+    <span class="np-tile-icon"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><line x1="12" y1="8" x2="12" y2="16"/><line x1="8" y1="12" x2="16" y2="12"/></svg></span>
+    <span class="np-tile-label">Zoom In</span>`;
+  zoomIn.addEventListener('click', () => { if (window.map) window.map.zoomIn(); });
+
+  const zoomOut = document.createElement('button');
+  zoomOut.className = 'np-tile np-zoom-tile';
+  zoomOut.title = 'Zoom out';
+  zoomOut.innerHTML = `
+    <span class="np-tile-icon"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><line x1="8" y1="12" x2="16" y2="12"/></svg></span>
+    <span class="np-tile-label">Zoom Out</span>`;
+  zoomOut.addEventListener('click', () => { if (window.map) window.map.zoomOut(); });
+
+  leftRail.prepend(zoomOut);
+  leftRail.prepend(zoomIn);
+
+  // ── Filler tile factory ──
+  const FILLER_ICONS = [
+    `<circle cx="12" cy="12" r="1"/><circle cx="12" cy="6" r="1"/><circle cx="12" cy="18" r="1"/>`,
+    `<line x1="4" y1="12" x2="20" y2="12"/>`,
+    `<rect x="6" y="6" width="12" height="12" rx="2"/>`,
+    `<polygon points="12,4 20,20 4,20"/>`,
+    `<circle cx="12" cy="12" r="8"/>`,
+  ];
+
+  function makeFiller(i) {
+    const div = document.createElement('div');
+    div.className = 'np-filler-tile';
+    div.innerHTML = `
+      <svg viewBox="0 0 24 24">${FILLER_ICONS[i % FILLER_ICONS.length]}</svg>
+      <span class="np-filler-label">···</span>`;
+    return div;
+  }
+
+  // Add 6 fillers to left rail bottom
+  for (let i = 0; i < 6; i++) leftRail.appendChild(makeFiller(i));
+
+  // Add 4 fillers to right rail bottom
+  for (let i = 0; i < 4; i++) rightRail.appendChild(makeFiller(i));
 }
 

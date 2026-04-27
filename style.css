@@ -3383,4 +3383,108 @@ body.newpanel-on #zoom-readout {
 [data-theme="lidar"] #newpanel-root .np-price         { color: #00BFA5; }
 [data-theme="lidar"] #newpanel-root .np-arrow         { color: #26D6B8; }
 
+/* ── THEME: FULLRAIL ──────────────────────────────────────
+   Full-height/width rails anchored to all four screen edges.
+   Top rail tiles merged into left rail. Zoom +/- in left rail.
+   Applied via document.documentElement.dataset.theme = 'fullrail'
+   ─────────────────────────────────────────────────────── */
+
+/* Hide Mapbox native zoom controls — replaced by rail tiles */
+[data-theme="fullrail"] .mapboxgl-ctrl-top-left { display: none !important; }
+
+/* Hide floating top controls bar — tiles move into left rail */
+[data-theme="fullrail"] #newpanel-root .np-top-controls { display: none !important; }
+
+/* Hide top-left wordmark block — no room in fullrail layout */
+[data-theme="fullrail"] #newpanel-root #np-top-left { display: none !important; }
+
+/* LEFT RAIL — full height, left edge */
+[data-theme="fullrail"] #newpanel-root .np-left-rail {
+  position: fixed;
+  left: 0;
+  top: 0;
+  transform: none;
+  height: 100vh;
+  width: 72px;
+  border-radius: 0;
+  border-top: none;
+  border-bottom: none;
+  border-left: none;
+  border-right: 1px solid var(--np-border);
+  padding: 6px 4px;
+  gap: 2px;
+  justify-content: flex-start;
+  overflow-y: auto;
+  overflow-x: hidden;
+  scrollbar-width: none;
+}
+[data-theme="fullrail"] #newpanel-root .np-left-rail::-webkit-scrollbar { display: none; }
+
+/* RIGHT RAIL — full height, right edge */
+[data-theme="fullrail"] #newpanel-root .np-right-rail {
+  position: fixed;
+  right: 0;
+  top: 0;
+  transform: none;
+  height: 100vh;
+  width: 72px;
+  border-radius: 0;
+  border-top: none;
+  border-bottom: none;
+  border-right: none;
+  border-left: 1px solid var(--np-border);
+  overflow-y: auto;
+  overflow-x: hidden;
+  scrollbar-width: none;
+  justify-content: flex-start;
+}
+[data-theme="fullrail"] #newpanel-root .np-right-rail::-webkit-scrollbar { display: none; }
+
+/* Right tiles same height as left tiles in fullrail */
+[data-theme="fullrail"] #newpanel-root .np-right-tile {
+  width: 64px;
+  min-height: 60px;
+  height: auto;
+  flex-shrink: 0;
+  flex-direction: column;
+  gap: 4px;
+  padding: 6px 4px;
+}
+[data-theme="fullrail"] #newpanel-root .np-right-divider {
+  margin: 2px 8px;
+}
+
+/* Filler tiles — placeholder tiles with no function */
+[data-theme="fullrail"] #newpanel-root .np-filler-tile {
+  width: 64px;
+  min-height: 60px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  opacity: 0.2;
+  cursor: default;
+  border-radius: 4px;
+  flex-shrink: 0;
+}
+[data-theme="fullrail"] #newpanel-root .np-filler-tile svg {
+  width: 18px;
+  height: 18px;
+  stroke: var(--np-muted);
+  fill: none;
+  stroke-width: 1.5;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+[data-theme="fullrail"] #newpanel-root .np-filler-label {
+  font: 500 9px/1.15 'DM Sans', sans-serif;
+  color: var(--np-muted);
+  letter-spacing: 0.02em;
+  text-align: center;
+}
+
+/* Zoom pill hidden in fullrail — zoom is in rail */
+[data-theme="fullrail"] body.newpanel-on #zoom-readout { display: none !important; }
+
 /* End of new layer panel CSS ──────────────────────────── */
