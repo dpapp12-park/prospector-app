@@ -2595,6 +2595,10 @@
    replaces the FAB's tap-to-save behavior. (Drag-to-drop-pin from
    the FAB is NOT yet ported — separate ticket.)
    #feedback-fab is hidden — feedback gets its own home later.
+   #topbar is hidden — the v6 top-left treatment (#np-top-left)
+   replaces the wordmark + tagline. The old top-actions buttons
+   (Style / GPS) need a new home — discussed in Session 28+ tools
+   pass; until then they are temporarily off-screen.
    These elements (and the rules) get permanently removed when the
    newpanel scaffold becomes the canonical index. */
 body.newpanel-on #layer-btn,
@@ -2604,7 +2608,8 @@ body.newpanel-on #custom-hs-panel,
 body.newpanel-on #ai-btn,
 body.newpanel-on #fab,
 body.newpanel-on #fab-hint,
-body.newpanel-on #feedback-fab {
+body.newpanel-on #feedback-fab,
+body.newpanel-on #topbar {
   display: none !important;
 }
 
@@ -3153,11 +3158,13 @@ body.newpanel-on #searchbar.np-search-open {
 /* ── ZOOM PILL ──
    Override the chunky default #zoom-readout (top-center, fat 18px,
    2px gold border, drop shadow) with the small v6 mockup pill, and
-   move it to bottom-center. The element + JS update logic in app.js
-   are unchanged; this is style + position only. */
+   move it to bottom-center. Sits above #bottom-nav (which is ~80px
+   tall) so it doesn't collide with the nav buttons. The element +
+   JS update logic in app.js are unchanged; this is style + position
+   only. */
 body.newpanel-on #zoom-readout {
   top: auto;
-  bottom: 14px;
+  bottom: 96px;
   left: 50%;
   transform: translateX(-50%);
   background: rgba(13,12,9,0.88);
@@ -3170,6 +3177,57 @@ body.newpanel-on #zoom-readout {
   box-shadow: none;
   backdrop-filter: blur(8px);
   -webkit-backdrop-filter: blur(8px);
+}
+
+/* ── TOP-LEFT TREATMENT ──
+   v6 mockup wordmark + version + coords + Au price block, replaces
+   the live app's #topbar visually under newpanel mode. Coords are
+   updated via map.on('move') wired in app-layer-loader.js scaffold
+   mount; gold price text mirrors #gold-price-value (which lives
+   inside the hidden #account-panel) via a MutationObserver, also
+   wired in scaffold mount. */
+#newpanel-root #np-top-left {
+  position: absolute;
+  top: 16px;
+  left: 18px;
+  z-index: 10;
+  pointer-events: none;
+  font-family: 'DM Sans', system-ui, sans-serif;
+}
+#newpanel-root .np-wordmark {
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: 16px;
+  letter-spacing: 0.18em;
+  color: #E8E4D4;
+  line-height: 1;
+  margin-bottom: 2px;
+}
+#newpanel-root .np-wordmark-gold { color: #C9A84C; }
+#newpanel-root .np-version {
+  font-family: 'DM Mono', monospace;
+  font-size: 9px;
+  letter-spacing: 0.12em;
+  color: #4F4B3F;
+  text-transform: uppercase;
+  margin-bottom: 10px;
+}
+#newpanel-root .np-readouts {
+  font-family: 'DM Mono', monospace;
+  font-size: 11px;
+  line-height: 1.6;
+}
+#newpanel-root .np-coords {
+  color: rgba(232,228,212,0.7);
+  letter-spacing: 0.04em;
+}
+#newpanel-root .np-price {
+  color: #C9A84C;
+  letter-spacing: 0.04em;
+  margin-top: 2px;
+}
+#newpanel-root .np-arrow {
+  color: #E8C76A;
+  margin-left: 2px;
 }
 
 /* End of new layer panel CSS ──────────────────────────── */

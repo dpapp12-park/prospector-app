@@ -470,6 +470,14 @@ function _mountNewPanelScaffold() {
       <button class="np-toolbar-action danger" id="np-clear-btn" title="Turn off all active layers">Clear Layers</button>
     </div>
     <div class="np-left-rail" id="np-left-rail" data-rail="left"></div>
+    <div id="np-top-left">
+      <div class="np-wordmark">UNWORKED <span class="np-wordmark-gold">GOLD</span></div>
+      <div class="np-version">field instrument · v0.5</div>
+      <div class="np-readouts">
+        <div class="np-coords" id="np-coords">\u2014</div>
+        <div class="np-price">Au <span id="np-gold-value">\u2014</span> <span class="np-arrow" id="np-gold-arrow"></span></div>
+      </div>
+    </div>
     <div class="np-right-rail" id="np-right-rail">
       <button class="np-right-tile" data-action="search" title="Search"><svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><line x1="20" y1="20" x2="16.5" y2="16.5"/></svg><span class="np-right-tile-label">Search</span></button>
       <button class="np-right-tile" data-action="pin" title="Drop pin"><svg viewBox="0 0 24 24"><path d="M12 2 C8 2 5 5 5 9 c0 5 7 13 7 13 s7 -8 7 -13 c0 -4 -3 -7 -7 -7 z"/><circle cx="12" cy="9" r="2.5"/></svg><span class="np-right-tile-label">Pin</span></button>
@@ -592,6 +600,42 @@ function _mountNewPanelScaffold() {
     const searchTile = document.querySelector('#np-right-rail .np-right-tile[data-action="search"]');
     if (searchTile) searchTile.classList.remove('active');
   });
+
+  // Top-left coords + gold price sync.
+  // Coords: poll map.on('move') and write to #np-coords. Map may
+  //   not exist yet when scaffold mounts, so we retry until it does.
+  // Gold price: mirror #gold-price-value (lives inside hidden
+  //   #account-panel) via MutationObserver. Trigger one fetch on
+  //   boot so something flows in. Per [P1.14] both endpoints are
+  //   currently broken — element will likely show "—" until that's
+  //   fixed.
+  function _initNpTopLeft() {
+    if (typeof map === 'undefined' || !map) {
+      setTimeout(_initNpTopLeft, 200);
+      return;
+    }
+    const coordsEl = document.getElementById('np-coords');
+    const sync = () => {
+      if (!coordsEl) return;
+      const c = map.getCenter();
+      const lat = c.lat >= 0 ? c.lat.toFixed(3) + '\u00B0N' : Math.abs(c.lat).toFixed(3) + '\u00B0S';
+      const lng = c.lng >= 0 ? c.lng.toFixed(3) + '\u00B0E' : Math.abs(c.lng).toFixed(3) + '\u00B0W';
+      coordsEl.textContent = lat + ' \u00B7 ' + lng;
+    };
+    sync();
+    map.on('move', sync);
+
+    if (typeof fetchGoldPrice === 'function') fetchGoldPrice();
+    const srcEl = document.getElementById('gold-price-value');
+    const dstEl = document.getElementById('np-gold-value');
+    if (srcEl && dstEl) {
+      const mirror = () => { dstEl.textContent = srcEl.textContent || '\u2014'; };
+      mirror();
+      const obs = new MutationObserver(mirror);
+      obs.observe(srcEl, { childList: true, characterData: true, subtree: true });
+    }
+  }
+  _initNpTopLeft();
 
   // Document-level drag listeners (single bind, mockup pattern).
   document.addEventListener('dragover', _onNewPanelDragOver);
