@@ -2589,12 +2589,30 @@
   --np-danger-bright:rgba(245, 160, 140, 1);
 }
 
-/* Hide old panel UI when new panel mode is on. */
+/* Hide old panel UI when new panel mode is on.
+   #ai-btn is hidden because the AI tool now lives in the right rail.
+   These elements (and the rules) get permanently removed when the
+   newpanel scaffold becomes the canonical index. */
 body.newpanel-on #layer-btn,
 body.newpanel-on #layer-panel,
 body.newpanel-on #active-layer-bar,
-body.newpanel-on #custom-hs-panel {
+body.newpanel-on #custom-hs-panel,
+body.newpanel-on #ai-btn {
   display: none !important;
+}
+
+/* Searchbar relocates to the right side under newpanel mode and
+   starts hidden. The right-rail Search tile toggles the
+   .np-search-open class on #searchbar to show/hide it. */
+body.newpanel-on #searchbar {
+  top: 50% !important;
+  left: auto !important;
+  right: 88px !important;
+  transform: translateY(-50%);
+  display: none;
+}
+body.newpanel-on #searchbar.np-search-open {
+  display: block;
 }
 
 /* ── TOP CONTROLS WRAPPER ── */
@@ -3051,5 +3069,76 @@ body.newpanel-on #custom-hs-panel {
 #newpanel-root .np-card-count { color: var(--np-dim); }
 #newpanel-root .np-card-status { color: var(--np-dim); letter-spacing: 0.06em; }
 #newpanel-root .np-layer-card.on .np-card-status { color: var(--np-gold); }
+
+/* ── RIGHT RAIL ──
+   Vertical action rail on the right edge — Search, Pin, Measure,
+   Show, AI, Account. Ported from v6 mockup. AI tile is gold-tinted
+   to match the mockup; the rest are muted-by-default. */
+#newpanel-root .np-right-rail {
+  position: absolute;
+  top: 50%;
+  right: 14px;
+  transform: translateY(-50%);
+  z-index: 10;
+  background: var(--np-surface);
+  border: 1px solid var(--np-border);
+  border-radius: 8px;
+  overflow: hidden;
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  display: flex;
+  flex-direction: column;
+  font-family: 'DM Sans', system-ui, sans-serif;
+}
+#newpanel-root .np-right-tile {
+  width: 64px;
+  height: 56px;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 3px;
+  color: var(--np-muted);
+  transition: background 0.12s, color 0.12s;
+  position: relative;
+}
+#newpanel-root .np-right-tile:hover {
+  background: rgba(255,255,255,0.04);
+  color: var(--np-cream);
+}
+#newpanel-root .np-right-tile.ai { color: var(--np-gold); }
+#newpanel-root .np-right-tile.ai:hover {
+  background: var(--np-gold-faint);
+  color: var(--np-gold-bright);
+}
+#newpanel-root .np-right-tile svg {
+  width: 18px;
+  height: 18px;
+  stroke: currentColor;
+  fill: none;
+  stroke-width: 1.5;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+#newpanel-root .np-right-tile.ai svg {
+  fill: currentColor;
+  stroke: none;
+}
+#newpanel-root .np-right-tile-label {
+  font: 500 9px/1 'DM Sans', sans-serif;
+  letter-spacing: 0.02em;
+}
+#newpanel-root .np-right-divider {
+  height: 1px;
+  background: var(--np-border);
+  margin: 0 8px;
+}
+#newpanel-root .np-right-tile.active {
+  background: var(--np-gold-faint);
+  color: var(--np-gold-bright);
+}
 
 /* End of new layer panel CSS ──────────────────────────── */

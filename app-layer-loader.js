@@ -470,6 +470,16 @@ function _mountNewPanelScaffold() {
       <button class="np-toolbar-action danger" id="np-clear-btn" title="Turn off all active layers">Clear Layers</button>
     </div>
     <div class="np-left-rail" id="np-left-rail" data-rail="left"></div>
+    <div class="np-right-rail" id="np-right-rail">
+      <button class="np-right-tile" data-action="search" title="Search"><svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><line x1="20" y1="20" x2="16.5" y2="16.5"/></svg><span class="np-right-tile-label">Search</span></button>
+      <button class="np-right-tile" data-action="pin" title="Drop pin"><svg viewBox="0 0 24 24"><path d="M12 2 C8 2 5 5 5 9 c0 5 7 13 7 13 s7 -8 7 -13 c0 -4 -3 -7 -7 -7 z"/><circle cx="12" cy="9" r="2.5"/></svg><span class="np-right-tile-label">Pin</span></button>
+      <button class="np-right-tile" data-action="measure" title="Measure (coming soon)"><svg viewBox="0 0 24 24"><path d="M3 16 L16 3 L21 8 L8 21 Z"/><line x1="7" y1="12" x2="9" y2="14"/><line x1="10" y1="9" x2="12" y2="11"/><line x1="13" y1="6" x2="15" y2="8"/></svg><span class="np-right-tile-label">Measure</span></button>
+      <button class="np-right-tile" data-action="show" title="Show"><svg viewBox="0 0 24 24"><path d="M2 12 s4 -7 10 -7 s10 7 10 7 s-4 7 -10 7 s-10 -7 -10 -7 z"/><circle cx="12" cy="12" r="3"/></svg><span class="np-right-tile-label">Show</span></button>
+      <div class="np-right-divider"></div>
+      <button class="np-right-tile ai" data-action="ai" title="AI tools"><svg viewBox="0 0 24 24"><path d="M12 2 L14 9 L21 11 L14 13 L12 20 L10 13 L3 11 L10 9 Z"/></svg><span class="np-right-tile-label">AI</span></button>
+      <div class="np-right-divider"></div>
+      <button class="np-right-tile" data-action="account" title="Account"><svg viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M4 21 c0 -5 4 -8 8 -8 s8 3 8 8"/></svg><span class="np-right-tile-label">Account</span></button>
+    </div>
     <div class="np-modal-backdrop" id="np-modal-backdrop">
       <div class="np-modal">
         <div class="np-modal-header">
@@ -520,6 +530,61 @@ function _mountNewPanelScaffold() {
     if (_activeModalCat) _renderModalCards(_activeModalCat);
     _renderRails();
     _newPanelToast('Layers cleared');
+  });
+
+  // Right rail click delegation. Each tile carries data-action; one
+  // listener routes to the correct handler. Search toggles the
+  // existing #searchbar (relocated by CSS under .newpanel-on).
+  document.getElementById('np-right-rail').addEventListener('click', (e) => {
+    const btn = e.target.closest('.np-right-tile');
+    if (!btn) return;
+    const action = btn.dataset.action;
+
+    if (action === 'search') {
+      const sb = document.getElementById('searchbar');
+      if (!sb) return;
+      const isOpen = sb.classList.toggle('np-search-open');
+      btn.classList.toggle('active', isOpen);
+      if (isOpen) {
+        const input = document.getElementById('search-input');
+        if (input) setTimeout(() => input.focus(), 50);
+      }
+      return;
+    }
+
+    if (action === 'pin') {
+      // Tap-to-save behavior matches the existing FAB tap path.
+      if (typeof openSpotFromFAB === 'function') openSpotFromFAB();
+      return;
+    }
+
+    if (action === 'ai') {
+      if (typeof toggleAIMenu === 'function') toggleAIMenu();
+      return;
+    }
+
+    if (action === 'account') {
+      if (typeof openAccountPanel === 'function') openAccountPanel();
+      return;
+    }
+
+    if (action === 'measure' || action === 'show') {
+      // Placeholder tiles per v6 mockup — no behavior yet.
+      _newPanelToast(action === 'measure' ? 'Measure — coming soon' : 'Show — coming soon');
+      return;
+    }
+  });
+
+  // Click outside #searchbar closes it (only under newpanel mode).
+  document.addEventListener('click', (e) => {
+    if (!document.body.classList.contains('newpanel-on')) return;
+    const sb = document.getElementById('searchbar');
+    if (!sb || !sb.classList.contains('np-search-open')) return;
+    if (sb.contains(e.target)) return;
+    if (e.target.closest('#np-right-rail .np-right-tile[data-action="search"]')) return;
+    sb.classList.remove('np-search-open');
+    const searchTile = document.querySelector('#np-right-rail .np-right-tile[data-action="search"]');
+    if (searchTile) searchTile.classList.remove('active');
   });
 
   // Document-level drag listeners (single bind, mockup pattern).
