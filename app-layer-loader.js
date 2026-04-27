@@ -509,6 +509,10 @@ function _mountNewPanelScaffold() {
   `;
   document.body.appendChild(root);
 
+  // Apply saved theme
+  const _savedTheme = localStorage.getItem('ug_theme');
+  if (_savedTheme) document.documentElement.dataset.theme = _savedTheme;
+
   // Wire fixed controls
   document.getElementById('np-modal-close').addEventListener('click', _closeNewPanelModal);
   document.getElementById('np-modal-backdrop').addEventListener('click', e => {

@@ -902,6 +902,23 @@ body {
                   </button>
                 </div>
               </div>
+              <!-- Map Theme -->
+              <div>
+                <label style="display:block;font-size:12px;color:var(--text-2);margin-bottom:8px;">Map Theme</label>
+                <div style="display:flex;gap:6px;">
+                  <button class="theme-btn" data-theme=""
+                    onclick="selectTheme('')"
+                    style="flex:1;padding:10px 4px;border-radius:8px;border:1px solid var(--border);background:var(--bg-2);color:var(--text-2);font-family:'DM Sans',sans-serif;font-size:12px;cursor:pointer;">
+                    ⚫ Default
+                  </button>
+                  <button class="theme-btn" data-theme="lidar"
+                    onclick="selectTheme('lidar')"
+                    style="flex:1;padding:10px 4px;border-radius:8px;border:1px solid var(--border);background:var(--bg-2);color:var(--text-2);font-family:'DM Sans',sans-serif;font-size:12px;cursor:pointer;">
+                    🔵 LiDAR
+                  </button>
+                </div>
+              </div>
+
               <div>
                 <label style="display:block;font-size:12px;color:var(--text-2);margin-bottom:8px;">Claim Alerts</label>
                 <div style="display:flex;flex-direction:column;gap:6px;">
@@ -1367,6 +1384,29 @@ function selectExperience(level) {
   });
   profileData.experience_level = level;
 }
+
+function selectTheme(theme) {
+  document.querySelectorAll('.theme-btn').forEach(b => {
+    const isSelected = b.dataset.theme === theme;
+    b.style.borderColor = isSelected ? 'var(--gold)' : 'var(--border)';
+    b.style.color       = isSelected ? 'var(--gold)' : 'var(--text-2)';
+    b.style.fontWeight  = isSelected ? '600' : '400';
+  });
+  if (theme) localStorage.setItem('ug_theme', theme);
+  else localStorage.removeItem('ug_theme');
+}
+
+// Init theme button state on dashboard load
+(function initThemeBtns() {
+  const saved = localStorage.getItem('ug_theme') || '';
+  document.querySelectorAll('.theme-btn').forEach(b => {
+    if (b.dataset.theme === saved) {
+      b.style.borderColor = 'var(--gold)';
+      b.style.color = 'var(--gold)';
+      b.style.fontWeight = '600';
+    }
+  });
+})();
 
 async function saveProfile() {
   if (!currentUser) return;
