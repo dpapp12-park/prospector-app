@@ -615,9 +615,10 @@ function _mountNewPanelScaffold() {
     if (action === 'draw')    { if (typeof toggleDraw    === 'function') toggleDraw();    return; }
   });
 
-  // Click outside #searchbar closes it (only under newpanel mode).
+  // Click outside closes AI menu and searchbar (only under newpanel mode).
   document.addEventListener('click', (e) => {
     if (!document.body.classList.contains('newpanel-on')) return;
+
     // Close AI menu if click is outside menu and tile
     const menu = document.getElementById('ai-tools-menu');
     const aiTile = document.querySelector('#np-right-rail .np-right-tile[data-action="ai"]');
@@ -628,8 +629,8 @@ function _mountNewPanelScaffold() {
       menu.style.bottom = '';
       if (aiTile) aiTile.classList.remove('active');
     }
-  document.addEventListener('click', (e) => {
-    if (!document.body.classList.contains('newpanel-on')) return;
+
+    // Close searchbar if click is outside
     const sb = document.getElementById('searchbar');
     if (!sb || !sb.classList.contains('np-search-open')) return;
     if (sb.contains(e.target)) return;
