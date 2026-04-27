@@ -1971,9 +1971,13 @@ Write a 3-4 sentence plain English analysis for a beginner gold prospector. Cove
 
   try {
     // Calls via Cloudflare Pages Function proxy to avoid CORS
+    const sessionData = await sbClient.auth.getSession();
+    const token = sessionData?.data?.session?.access_token;
+    const aiHeaders = { 'Content-Type': 'application/json' };
+    if (token) aiHeaders['Authorization'] = 'Bearer ' + token;
     const response = await fetch('/api/claude', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: aiHeaders,
       body: JSON.stringify({
         model: 'claude-sonnet-4-20250514',
         max_tokens: 300,

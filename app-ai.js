@@ -174,9 +174,15 @@ async function compressImage(file, maxDim, quality) {
 async function analyzeWithClaude(base64, systemPrompt, userPrompt) {
   // Calls via Cloudflare Pages Function proxy (/api/claude) to avoid CORS
   // API key is stored as ANTHROPIC_KEY env var in Cloudflare Pages settings
+  var headers = { 'Content-Type': 'application/json' };
+  if (typeof sbClient !== 'undefined' && sbClient) {
+    var sessionData = await sbClient.auth.getSession();
+    var token = sessionData?.data?.session?.access_token;
+    if (token) headers['Authorization'] = 'Bearer ' + token;
+  }
   var response = await fetch('/api/claude', {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
+    headers: headers,
     body: JSON.stringify({
       model: 'claude-sonnet-4-20250514',
       max_tokens: 800,
