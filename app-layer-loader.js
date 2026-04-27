@@ -578,7 +578,22 @@ function _mountNewPanelScaffold() {
     }
 
     if (action === 'ai') {
-      if (typeof toggleAIMenu === 'function') toggleAIMenu();
+      const isOpen = btn.classList.toggle('active');
+      const menu = document.getElementById('ai-tools-menu');
+      if (!menu) return;
+      if (isOpen) {
+        // Position menu to the left of the tile
+        const tileRect = btn.getBoundingClientRect();
+        menu.style.top = tileRect.top + 'px';
+        menu.style.bottom = 'auto';
+        menu.style.right = (window.innerWidth - tileRect.left + 8) + 'px';
+        menu.classList.add('open');
+      } else {
+        menu.classList.remove('open');
+        menu.style.top = '';
+        menu.style.right = '';
+        menu.style.bottom = '';
+      }
       return;
     }
 
@@ -601,6 +616,18 @@ function _mountNewPanelScaffold() {
   });
 
   // Click outside #searchbar closes it (only under newpanel mode).
+  document.addEventListener('click', (e) => {
+    if (!document.body.classList.contains('newpanel-on')) return;
+    // Close AI menu if click is outside menu and tile
+    const menu = document.getElementById('ai-tools-menu');
+    const aiTile = document.querySelector('#np-right-rail .np-right-tile[data-action="ai"]');
+    if (menu && menu.classList.contains('open') && !menu.contains(e.target) && e.target !== aiTile && !aiTile?.contains(e.target)) {
+      menu.classList.remove('open');
+      menu.style.top = '';
+      menu.style.right = '';
+      menu.style.bottom = '';
+      if (aiTile) aiTile.classList.remove('active');
+    }
   document.addEventListener('click', (e) => {
     if (!document.body.classList.contains('newpanel-on')) return;
     const sb = document.getElementById('searchbar');
@@ -1069,8 +1096,8 @@ function _applyFullrailTiles() {
       <button class="np-zoom-btn" title="Zoom in">+</button>
       <button class="np-zoom-btn" title="Zoom out">−</button>`;
     const btns = cluster.querySelectorAll('.np-zoom-btn');
-    btns[0].addEventListener('click', () => { if (window.map) window.map.zoomIn(); else showStatus('Map not ready'); });
-    btns[1].addEventListener('click', () => { if (window.map) window.map.zoomOut(); else showStatus('Map not ready'); });
+    btns[0].addEventListener('click', () => { try { if (window.map && window.map.zoomIn) window.map.zoomIn(); } catch(e) {} });
+    btns[1].addEventListener('click', () => { try { if (window.map && window.map.zoomOut) window.map.zoomOut(); } catch(e) {} });
     document.body.appendChild(cluster);
   }
 
