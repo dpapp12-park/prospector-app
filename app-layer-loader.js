@@ -1043,6 +1043,14 @@ function _applyFullrailTiles() {
   const rightRail = document.getElementById('np-right-rail');
   if (!leftRail || !rightRail) return;
 
+  // ── Move top rail tiles into left rail ──
+  const topRail = document.getElementById('np-top-rail');
+  if (topRail && leftRail) {
+    Array.from(topRail.children).forEach(tile => {
+      leftRail.appendChild(tile.cloneNode(true));
+    });
+  }
+
   // ── Zoom tiles — prepend to left rail ──
   const zoomIn = document.createElement('button');
   zoomIn.className = 'np-tile np-zoom-tile';

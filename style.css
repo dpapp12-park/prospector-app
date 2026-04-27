@@ -3492,13 +3492,20 @@ body.newpanel-on #zoom-readout {
   display: none !important;
 }
 
+/* Hide Reset/Clear in fullrail — top bar is coords only */
+[data-theme="fullrail"] #newpanel-root #np-reset-btn,
+[data-theme="fullrail"] #newpanel-root #np-clear-btn { display: none !important; }
+
+/* Top rail hidden in fullrail — tiles live in left rail */
+[data-theme="fullrail"] #newpanel-root .np-top-rail { display: none !important; }
+
 /* TOP BAR — full width, anchored to top edge */
 [data-theme="fullrail"] #newpanel-root .np-top-controls {
   display: flex !important;
   position: fixed;
   top: 0;
-  left: 72px;
-  right: 72px;
+  left: 0;
+  right: 0;
   transform: none;
   height: 52px;
   background: var(--np-surface);
@@ -3507,7 +3514,7 @@ body.newpanel-on #zoom-readout {
   border-right: none;
   backdrop-filter: blur(8px);
   -webkit-backdrop-filter: blur(8px);
-  z-index: 10;
+  z-index: 20;
   align-items: center;
   justify-content: space-between;
   padding: 0 16px;
@@ -3561,14 +3568,14 @@ body.newpanel-on #zoom-readout {
 [data-theme="fullrail"] #np-fullrail-bottom {
   position: fixed;
   bottom: 0;
-  left: 72px;
-  right: 72px;
+  left: 0;
+  right: 0;
   height: 52px;
   background: var(--np-surface);
   border-top: 1px solid var(--np-border);
   backdrop-filter: blur(8px);
   -webkit-backdrop-filter: blur(8px);
-  z-index: 10;
+  z-index: 20;
   display: flex;
   align-items: center;
   justify-content: space-around;
