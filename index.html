@@ -50,7 +50,7 @@ window.PROSPECTOR_CONFIG = window.UNWORKED_GOLD_CONFIG;
 </script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Mono:wght@400;500&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="style.css?v=20260425-3">
+<link rel="stylesheet" href="style.css?v=20260427-2">
 
 </head>
 <body>
@@ -135,6 +135,20 @@ window.PROSPECTOR_CONFIG = window.UNWORKED_GOLD_CONFIG;
     <h3>Map Layers</h3>
     <button id="layer-panel-close" onclick="toggleLayers()">✕</button>
   </div>
+  <!-- ── LAYER UPGRADE GATE ─────────────────────────────── -->
+  <!-- Shown when user has no active subscription.          -->
+  <!-- applySubscriptionGating() in app-ai.js controls      -->
+  <!-- display and messaging (trial vs. expired).           -->
+  <div id="layer-upgrade-gate" style="display:none;">
+    <div class="lug-card">
+      <div class="lug-icon">⛏️</div>
+      <div class="lug-title">Your trial has ended</div>
+      <div class="lug-sub">Upgrade to Pro to unlock all map layers.</div>
+      <button class="lug-btn" onclick="redirectToCheckout()">Upgrade to Pro</button>
+      <div class="lug-footer">Basemap &amp; search still available</div>
+    </div>
+  </div>
+
   <div id="layer-panel-scroll">
 
     <div id="region-banner">
@@ -1013,12 +1027,12 @@ function closePrivacyModal() {
 </script>
 
 <script src="app.js?v=20260427"></script>
-<script src="app-auth.js?v=20260427"></script>
+<script src="app-auth.js?v=20260427-2"></script>
 <script src="app-user.js?v=20260427"></script>
 <script src="app-data.js?v=20260427"></script>
 <script src="app-lidar.js?v=20260427"></script>
 <script src="app-search.js?v=20260427"></script>
-<script src="app-ai.js?v=20260427"></script>
+<script src="app-ai.js?v=20260427-2"></script>
 <script src="app-layers.js?v=20260427"></script>
 <script src="app-layer-loader.js?v=20260427"></script>
 

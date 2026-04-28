@@ -38,19 +38,31 @@ function closeAIMenu() {
 // All callers stay synchronous; refreshProStatus() does the async work
 let _proStatusCache = false;
 let _proStatusFetchedAt = 0;
+let _subscriptionRawStatus = null; // 'active' | 'trialing' | 'canceled' | 'past_due' | null
 const PRO_CACHE_TTL_MS = 5 * 60 * 1000; // 5 minutes
 
 function checkProStatus() {
   return _proStatusCache;
 }
 
+// Returns one of: 'active' | 'no_subscription' | 'expired' | 'signed_out'
+function getSubscriptionState() {
+  if (!currentUser) return 'signed_out';
+  if (_subscriptionRawStatus === 'active' || _subscriptionRawStatus === 'trialing') return 'active';
+  if (_subscriptionRawStatus === null) return 'no_subscription';
+  return 'expired'; // canceled, past_due
+}
+
 async function refreshProStatus() {
   if (!currentUser || !sbClient) {
     _proStatusCache = false;
+    _subscriptionRawStatus = null;
+    applySubscriptionGating();
     return false;
   }
   // Skip if cache is fresh
   if (Date.now() - _proStatusFetchedAt < PRO_CACHE_TTL_MS) {
+    applySubscriptionGating();
     return _proStatusCache;
   }
   try {
@@ -62,15 +74,51 @@ async function refreshProStatus() {
 
     if (error || !data) {
       _proStatusCache = false;
+      _subscriptionRawStatus = null;
     } else {
+      _subscriptionRawStatus = data.status;
       _proStatusCache = data.status === 'active' || data.status === 'trialing';
     }
     _proStatusFetchedAt = Date.now();
   } catch (e) {
     console.warn('refreshProStatus error:', e);
     _proStatusCache = false;
+    _subscriptionRawStatus = null;
   }
+  applySubscriptionGating();
   return _proStatusCache;
+}
+
+// Show or hide the layer panel upgrade gate based on subscription state
+function applySubscriptionGating() {
+  const gate = document.getElementById('layer-upgrade-gate');
+  if (!gate) return;
+
+  const state = getSubscriptionState();
+
+  // No gate needed: not signed in (handled by beta landing), or active/trialing
+  if (state === 'signed_out' || state === 'active') {
+    gate.style.display = 'none';
+    return;
+  }
+
+  // Update messaging based on state
+  const titleEl = gate.querySelector('.lug-title');
+  const subEl   = gate.querySelector('.lug-sub');
+  const btnEl   = gate.querySelector('.lug-btn');
+
+  if (state === 'no_subscription') {
+    titleEl.textContent = 'Start your free trial';
+    subEl.textContent   = '14 days free, then $12.99/mo. Cancel anytime.';
+    btnEl.textContent   = 'Start Free Trial';
+  } else {
+    // expired — canceled or past_due
+    titleEl.textContent = 'Your trial has ended';
+    subEl.textContent   = 'Upgrade to Pro to unlock all map layers.';
+    btnEl.textContent   = 'Upgrade to Pro';
+  }
+
+  gate.style.display = 'flex';
 }
 
 function getRockIdUses() {
