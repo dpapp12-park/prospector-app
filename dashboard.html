@@ -695,6 +695,122 @@ body {
   #topbar { padding: 0 16px; }
   #user-email-display { display: none; }
 }
+
+/* ── BILLING TAB ─────────────────────────────────────── */
+.billing-plan-card {
+  background: var(--surface);
+  border: 0.5px solid var(--border-md);
+  border-radius: var(--radius);
+  padding: 24px;
+  margin-bottom: 16px;
+  box-shadow: var(--shadow);
+}
+.billing-plan-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+.billing-plan-label {
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--text-3);
+  margin-bottom: 4px;
+}
+.billing-plan-name {
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--text);
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+.billing-badge {
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.03em;
+  padding: 3px 9px;
+  border-radius: 20px;
+}
+.billing-badge-gold   { background: var(--gold-bg);  color: var(--gold); }
+.billing-badge-green  { background: var(--green-bg); color: var(--green); }
+.billing-badge-red    { background: var(--red-bg);   color: var(--red); }
+.billing-trial {
+  font-size: 13px;
+  color: var(--text-2);
+  margin-bottom: 14px;
+  padding: 10px 12px;
+  background: var(--gold-bg);
+  border-radius: var(--radius-sm);
+}
+.billing-price {
+  font-size: 13px;
+  color: var(--text-3);
+  margin-bottom: 16px;
+}
+.billing-features {
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+}
+.billing-feature {
+  font-size: 13px;
+  color: var(--text-2);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.billing-feature::before {
+  content: none;
+}
+.billing-manage-btn {
+  flex-shrink: 0;
+  background: var(--surface);
+  border: 0.5px solid var(--border-md);
+  border-radius: var(--radius-sm);
+  padding: 8px 14px;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--text-2);
+  cursor: pointer;
+  white-space: nowrap;
+  transition: color 0.15s, border-color 0.15s;
+}
+.billing-manage-btn:hover { color: var(--text); border-color: var(--text-3); }
+.billing-manage-btn:disabled { opacity: 0.5; cursor: default; }
+.billing-cta-card {
+  background: var(--gold-bg);
+  border: 0.5px solid rgba(184, 122, 20, 0.25);
+  border-radius: var(--radius);
+  padding: 20px 24px;
+  margin-bottom: 16px;
+}
+.billing-cta-text {
+  font-size: 14px;
+  color: var(--text-2);
+  margin-bottom: 14px;
+}
+.billing-start-btn {
+  background: var(--gold);
+  color: #fff;
+  border: none;
+  border-radius: var(--radius-sm);
+  padding: 11px 20px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: opacity 0.15s;
+}
+.billing-start-btn:hover { opacity: 0.88; }
+.billing-error {
+  font-size: 14px;
+  color: var(--text-3);
+  padding: 20px 0;
+}
 </style>
 </head>
 <body>
@@ -766,6 +882,7 @@ body {
         <button class="tab-btn" onclick="switchTab('spots')">Spots</button>
         <button class="tab-btn" onclick="switchTab('watches')">Watching</button>
         <button class="tab-btn" onclick="switchTab('profile')">Profile</button>
+        <button class="tab-btn" onclick="switchTab('billing')">Billing</button>
       </div>
 
       <!-- Tab: Saved Claims -->
@@ -1014,6 +1131,14 @@ body {
         </div><!-- end 2-col grid -->
       </div><!-- end tab-profile -->
 
+      <!-- Tab: Billing -->
+      <div id="tab-billing" class="tab-pane">
+        <div id="billing-content" style="max-width:560px;padding-top:4px;">
+          <div class="loading-pulse"></div>
+          <div class="loading-pulse" style="width:70%"></div>
+        </div>
+      </div><!-- end tab-billing -->
+
       <!-- Charts -->
       <div id="charts-section">
         <div class="section-title">Activity overview</div>
@@ -1207,6 +1332,7 @@ function switchTab(name) {
   document.getElementById('tab-' + name).classList.add('active');
   event.target.classList.add('active');
   if (name === 'profile') loadProfile();
+  if (name === 'billing') loadBillingTab();
 }
 
 // ── PROFILE TAB ──────────────────────────────────────────
@@ -2273,6 +2399,152 @@ async function signOut() {
 // ── UTILS ────────────────────────────────────────────────
 function escHtml(str) {
   return String(str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+// ── BILLING TAB ──────────────────────────────────────────
+let _billingLoaded = false;
+
+async function loadBillingTab() {
+  if (_billingLoaded) return;
+  _billingLoaded = true;
+
+  const el = document.getElementById('billing-content');
+  if (!el || !sbClient || !currentUser) return;
+
+  try {
+    const { data, error } = await sbClient
+      .from('user_subscriptions')
+      .select('*')
+      .eq('user_id', currentUser.id)
+      .single();
+
+    if (error || !data) {
+      el.innerHTML = renderNoSubscription();
+    } else {
+      el.innerHTML = renderBillingCard(data);
+    }
+  } catch (e) {
+    el.innerHTML = '<div class="billing-error">Could not load billing info. Please try again.</div>';
+  }
+}
+
+function renderBillingCard(sub) {
+  const statusMap = {
+    trialing: { text: 'Free Trial', cls: 'gold' },
+    active:   { text: 'Pro',        cls: 'green' },
+    canceled: { text: 'Canceled',   cls: 'red' },
+    past_due: { text: 'Past Due',   cls: 'red' },
+  };
+  const badge = statusMap[sub.status] || { text: sub.status, cls: 'gold' };
+
+  // Trial countdown — Stripe stores trial_end as Unix timestamp (seconds)
+  let trialHtml = '';
+  if (sub.status === 'trialing' && sub.trial_end) {
+    const endDate = new Date(sub.trial_end * 1000);
+    const daysLeft = Math.max(0, Math.ceil((endDate - Date.now()) / 86400000));
+    const endStr   = endDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+    trialHtml = `<div class="billing-trial">
+      <strong>${daysLeft} day${daysLeft !== 1 ? 's' : ''} remaining</strong> &middot; Trial ends ${endStr}
+    </div>`;
+  } else if (sub.status === 'past_due') {
+    trialHtml = '<div class="billing-trial" style="background:var(--red-bg);color:var(--red);">Payment failed. Update your payment method to restore access.</div>';
+  }
+
+  const features = [
+    'All map layers unlocked',
+    'Rock Identifier (AI Vision)',
+    'Outcrop Mapper (AI Vision)',
+    'AI credits included monthly',
+    'Claim monitoring alerts',
+  ];
+  const featureList = features.map(f => `<div class="billing-feature">&#10003; ${f}</div>`).join('');
+
+  const resubHtml = (sub.status === 'canceled' || sub.status === 'past_due')
+    ? `<div class="billing-cta-card">
+        <div class="billing-cta-text">Your plan has ended. Resubscribe to restore full access.</div>
+        <button class="billing-start-btn" onclick="startBillingCheckout()">Resubscribe &middot; $12.99/mo</button>
+      </div>`
+    : '';
+
+  return `
+    <div class="billing-plan-card">
+      <div class="billing-plan-header">
+        <div>
+          <div class="billing-plan-label">Current Plan</div>
+          <div class="billing-plan-name">
+            Unworked Gold
+            <span class="billing-badge billing-badge-${badge.cls}">${badge.text}</span>
+          </div>
+        </div>
+        <button class="billing-manage-btn" onclick="openBillingPortal()">Manage Billing &#8599;</button>
+      </div>
+      ${trialHtml}
+      <div class="billing-price">$12.99 / month &middot; Cancel anytime</div>
+      <div class="billing-features">${featureList}</div>
+    </div>
+    ${resubHtml}
+  `;
+}
+
+function renderNoSubscription() {
+  return `
+    <div class="billing-plan-card">
+      <div class="billing-plan-header">
+        <div>
+          <div class="billing-plan-label">Current Plan</div>
+          <div class="billing-plan-name">No active plan</div>
+        </div>
+      </div>
+      <div class="billing-trial">Start your 14-day free trial to unlock all map layers and AI tools.</div>
+      <button class="billing-start-btn" onclick="startBillingCheckout()">Start Free Trial &middot; 14 days free</button>
+    </div>
+  `;
+}
+
+async function openBillingPortal() {
+  const btn = document.querySelector('.billing-manage-btn');
+  if (btn) { btn.textContent = 'Opening...'; btn.disabled = true; }
+  try {
+    const { data: { session } } = await sbClient.auth.getSession();
+    const token = session?.access_token;
+    if (!token) { alert('Please sign in first.'); return; }
+    const res = await fetch('/api/create-portal', {
+      method: 'POST',
+      headers: { 'Authorization': `Bearer ${token}` },
+    });
+    const data = await res.json();
+    if (data.url) {
+      window.location.href = data.url;
+    } else {
+      alert('Could not open billing portal. Please try again.');
+    }
+  } catch (e) {
+    alert('Could not open billing portal. Please try again.');
+  }
+  if (btn) { btn.textContent = 'Manage Billing \u2197'; btn.disabled = false; }
+}
+
+async function startBillingCheckout() {
+  const btn = event?.target;
+  if (btn) { btn.textContent = 'Loading...'; btn.disabled = true; }
+  try {
+    const { data: { session } } = await sbClient.auth.getSession();
+    const token = session?.access_token;
+    const res = await fetch('/api/create-checkout', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`,
+      },
+      body: JSON.stringify({ priceId: 'price_1TQtUOK5wRMqB1R5aTnlJgbm' }),
+    });
+    const data = await res.json();
+    if (data.url) window.location.href = data.url;
+    else alert('Could not start checkout. Please try again.');
+  } catch (e) {
+    alert('Could not start checkout. Please try again.');
+  }
+  if (btn) { btn.textContent = 'Start Free Trial'; btn.disabled = false; }
 }
 </script>
 </body>
