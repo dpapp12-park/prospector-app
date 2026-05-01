@@ -16,6 +16,101 @@
 // Inline onclick="..." handlers in index.html resolve via those globals.
 // ==========================================================
 
+// ── MULTI-FEATURE PICKER ─────────────────────────────────
+// Rebuilt Session 34 from Session 13 chat history (A-17).
+// When a Mapbox click hits overlapping polygons, e.features
+// contains ALL of them. The original handlers always used
+// e.features[0], silently losing every other feature under
+// the cursor. This helper shows a small "Pick one" popup so
+// the user can choose — then synthesizes a single-feature
+// event and re-invokes the original handler.
+//
+// Usage:
+//   const h = (e) => {
+//     if (e.features.length > 1) {
+//       showFeaturePicker(e.features, e.lngLat, h,
+//         f => f.properties.CSE_NM || 'Claim');
+//       return;
+//     }
+//     // ... normal single-feature handler
+//   };
+//   map.on('click', 'layer-id', h);
+//
+// open-to-claim-fill intentionally skipped (all features
+// produce identical popups, picker adds no value).
+// ─────────────────────────────────────────────────────────
+
+// Module-level state — one picker open at a time
+let _pickerFeatures = [];
+let _pickerHandler  = null;
+let _pickerLngLat   = null;
+let _pickerPopup    = null;
+
+function _pickFeature(idx) {
+  if (_pickerPopup) { _pickerPopup.remove(); _pickerPopup = null; }
+  const f = _pickerFeatures[idx];
+  if (f && _pickerHandler && _pickerLngLat) {
+    _pickerHandler({ features: [f], lngLat: _pickerLngLat });
+  }
+}
+
+function showFeaturePicker(features, lngLat, handler, getLabel) {
+  // De-dupe by feature.id when present; fall back to property hash.
+  const unique = [];
+  const seen   = new Set();
+  for (const f of features) {
+    const key = (f.id != null)
+      ? 'id:' + f.id
+      : 'p:'  + JSON.stringify(f.properties || {});
+    if (!seen.has(key)) { seen.add(key); unique.push(f); }
+  }
+  if (unique.length <= 1) {
+    handler({ features: unique, lngLat });
+    return;
+  }
+
+  // Store state for _pickFeature() calls from popup buttons
+  _pickerFeatures = unique;
+  _pickerHandler  = handler;
+  _pickerLngLat   = lngLat;
+  if (_pickerPopup) _pickerPopup.remove();
+
+  const esc = (s) => String(s == null ? '' : s)
+    .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+
+  const btns = unique.map((f, i) => `
+    <button onclick="_pickFeature(${i})"
+      style="display:block;width:100%;text-align:left;
+             background:rgba(201,168,76,0.08);
+             border:1px solid rgba(201,168,76,0.22);
+             border-radius:6px;padding:8px 12px;color:#E8D9B0;
+             cursor:pointer;font-size:12px;font-family:'DM Sans',sans-serif;
+             margin-bottom:6px;transition:background 0.15s"
+      onmouseover="this.style.background='rgba(201,168,76,0.18)'"
+      onmouseout="this.style.background='rgba(201,168,76,0.08)'">
+      ${esc(getLabel(f))}
+    </button>`).join('');
+
+  const html = `
+    <div style="font-family:'DM Sans',sans-serif;background:#0D0C09;
+                border:1px solid rgba(201,168,76,0.35);border-radius:12px;
+                padding:14px;color:#E8D9B0;min-width:210px;position:relative">
+      <div style="font-size:10px;color:#9A8A6A;letter-spacing:0.08em;
+                  text-transform:uppercase;margin-bottom:10px">
+        ${unique.length} overlapping features
+      </div>
+      ${btns}
+      <div style="margin-top:4px;font-size:10px;color:#6B6248;text-align:center">
+        Tap a row to open it
+      </div>
+    </div>`;
+
+  _pickerPopup = new mapboxgl.Popup({ closeButton: true, maxWidth: '280px' })
+    .setLngLat(lngLat)
+    .setHTML(html)
+    .addTo(map);
+}
+
 function addDemoLayers() {
   // ── ACTIVE CLAIMS (real BLM Oregon data) ──
   map.addSource('active-claims-src', {
@@ -77,7 +172,12 @@ function addDemoLayers() {
   });
 
   // ── POPUPS ──
-  map.on('click', 'active-claims-fill', (e) => {
+  const _activeClaimsClick = (e) => {
+    if (e.features.length > 1) {
+      showFeaturePicker(e.features, e.lngLat, _activeClaimsClick,
+        f => f.properties.CSE_NM || f.properties.cse_nm || f.properties.CSE_NAME || 'Mining Claim');
+      return;
+    }
     const props = e.features[0].properties;
     const name = props.CSE_NM || props.cse_nm || props.CSE_NM_MLRS || 'Mining Claim';
     const serial = props.CSE_NR || props.cse_nr || '';
@@ -311,10 +411,15 @@ function addDemoLayers() {
         if (distEl) distEl.textContent = miles < 0.1 ? 'Here' : miles < 10 ? `${miles.toFixed(1)} mi` : `${Math.round(miles)} mi`;
       }, () => {});
     }
-  });
+  };
+  map.on('click', 'active-claims-fill', _activeClaimsClick);
 
-  ['closed-claims-fill-1','closed-claims-fill-2','closed-claims-fill-3','closed-claims-fill-4','closed-claims-fill-5'].forEach(layerId => {
-  map.on('click', layerId, (e) => {
+  const _closedClaimsClick = (e) => {
+    if (e.features.length > 1) {
+      showFeaturePicker(e.features, e.lngLat, _closedClaimsClick,
+        f => f.properties.CSE_NAME || f.properties.CSE_NM || f.properties.cse_nm || 'Closed Claim');
+      return;
+    }
     const props = e.features[0].properties;
     const name = props.CSE_NAME || props.CSE_NM || props.cse_nm || 'Mining Claim';
     const serial = props.CSE_NR || props.cse_nr || '';
@@ -340,7 +445,9 @@ function addDemoLayers() {
         </div>
       `)
       .addTo(map);
-  });
+  };
+  ['closed-claims-fill-1','closed-claims-fill-2','closed-claims-fill-3','closed-claims-fill-4','closed-claims-fill-5'].forEach(layerId => {
+    map.on('click', layerId, _closedClaimsClick);
   }); // end closedChunks forEach click handlers
 
   // ── USGS STREAM GAUGES ──
@@ -750,7 +857,12 @@ function addDemoLayers() {
   map.on('mouseenter', 'silver-layer', () => map.getCanvas().style.cursor = 'pointer');
   map.on('mouseleave', 'silver-layer', () => map.getCanvas().style.cursor = '');
 
-  map.on('click', 'gold-occurrences-layer', (e) => {
+  const _goldClick = (e) => {
+    if (e.features.length > 1) {
+      showFeaturePicker(e.features, e.lngLat, _goldClick,
+        f => f.properties.name || f.properties.site_name || f.properties.DEP_NAME || 'Gold Site');
+      return;
+    }
     const p = e.features[0].properties;
     const statusColors = {
       'Producer': '#FFD700', 'Past Producer': '#F0C040',
@@ -805,9 +917,15 @@ function addDemoLayers() {
         </div>
       `)
       .addTo(map);
-  });
+  };
+  map.on('click', 'gold-occurrences-layer', _goldClick);
 
-  map.on('click', 'hist-mines-layer', (e) => {
+  const _minesClick = (e) => {
+    if (e.features.length > 1) {
+      showFeaturePicker(e.features, e.lngLat, _minesClick,
+        f => f.properties.name || f.properties.site_name || 'Mine Site');
+      return;
+    }
     const p = e.features[0].properties;
 
     const operDescs = {
@@ -836,7 +954,8 @@ function addDemoLayers() {
         </div>
       `)
       .addTo(map);
-  });
+  };
+  map.on('click', 'hist-mines-layer', _minesClick);
 
   map.on('mouseenter', 'gold-occurrences-layer', () => map.getCanvas().style.cursor = 'pointer');
   map.on('mouseleave', 'gold-occurrences-layer', () => map.getCanvas().style.cursor = '');
