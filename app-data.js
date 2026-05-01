@@ -19,11 +19,11 @@
 
 // ── RESTRICTED LANDS FETCH ──────────────────────────────
 let parksLoaded = false;
-// ── PAD-US v3.0 base URL (USGS) — single endpoint for parks, monuments, military, tribal
-// Des_Tp codes: NP=National Park, NM=National Monument
-// Mang_Name codes: DOD=Military, BIA/TRIB=Tribal
-// Fields: Unit_Nm (name), Mang_Name (manager), State_Nm (state), Des_Tp (type)
-const PADUS_BASE = 'https://services.arcgis.com/v01gqwM5QqNysAAi/arcgis/rest/services/Manager_Name/FeatureServer/0/query';
+// ── PAD-US v3.0 — USGS authoritative federal fee layer
+// Mang_Name: NPS, BLM, USFS, FWS, DOD, BIA, TRIB
+// Des_Tp: NP=National Park, NM=National Monument
+// Fields: Unit_Nm, Mang_Name, State_Nm, Des_Tp
+const PADUS_BASE = 'https://gis1.usgs.gov/arcgis/rest/services/padus3/Federal_Fee_Managers_Authoritative/MapServer/0/query';
 
 function _padusUrl(where, bbox) {
   const geom = encodeURIComponent(bbox);
@@ -36,17 +36,16 @@ async function fetchNationalParks() {
   const bounds = map.getBounds();
   const bbox = `${bounds.getWest()},${bounds.getSouth()},${bounds.getEast()},${bounds.getNorth()}`;
   try {
-    const res = await fetch(_padusUrl("Des_Tp='NP'", bbox));
+    const res = await fetch(_padusUrl("Mang_Name='NPS'", bbox));
     const data = await res.json();
     if (!data.features) throw new Error('No features in response');
-    // Normalize field names so existing popup code works
     data.features.forEach(f => {
       f.properties.UNIT_NAME = f.properties.Unit_Nm || 'National Park';
       f.properties.STATE = f.properties.State_Nm || '';
     });
     parksLoaded = true;
     map.getSource('natl-parks-src').setData(data);
-    showStatus(`${data.features.length} national park units loaded`);
+    showStatus(`${data.features.length} NPS units loaded`);
   } catch(e) {
     showStatus('National parks data unavailable');
     console.error('Parks load failed:', e);
@@ -120,21 +119,18 @@ let wsrLoaded = false;
 async function fetchWildScenic() {
   if (wsrLoaded) return;
   showStatus('Loading Wild & Scenic Rivers...');
-  const bounds = map.getBounds();
-  const bbox = `${bounds.getWest()},${bounds.getSouth()},${bounds.getEast()},${bounds.getNorth()}`;
   try {
-    // National Wild & Scenic River System — USFS/BLM/FWS/NPS national dataset
-    const url = `https://services1.arcgis.com/IAQQkLXctKHrf8Av/ArcGIS/rest/services/Wild_and_Scenic_River_System/FeatureServer/0/query?where=1%3D1&geometry=${encodeURIComponent(bbox)}&geometryType=esriGeometryEnvelope&spatialRel=esriSpatialRelIntersects&inSR=4326&outFields=RIVER_NAME%2CCLASSIFICATION%2CSTATE&returnGeometry=true&f=geojson&outSR=4326`;
+    // Full national WSR dataset — small enough to fetch without bbox (~1000 segments)
+    const url = 'https://services1.arcgis.com/IAQQkLXctKHrf8Av/ArcGIS/rest/services/Wild_and_Scenic_River_System/FeatureServer/0/query?where=1%3D1&outFields=RIVER_NAME%2CCLASSIFICATION%2CSTATE&returnGeometry=true&f=geojson&outSR=4326';
     const res = await fetch(url);
     const data = await res.json();
     if (!data.features) throw new Error('No features');
-    // Normalize for popup: expects NAME or name
     data.features.forEach(f => {
       f.properties.NAME = f.properties.RIVER_NAME || 'Wild & Scenic River';
     });
     wsrLoaded = true;
     map.getSource('wsr-src').setData(data);
-    showStatus(`Wild & Scenic Rivers loaded`);
+    showStatus('Wild & Scenic Rivers loaded');
   } catch(e) {
     showStatus('Wild & Scenic Rivers data unavailable');
     console.error(e);
