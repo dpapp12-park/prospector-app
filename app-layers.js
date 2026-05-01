@@ -1432,7 +1432,7 @@ function addDemoLayers() {
     const p = e.features[0].properties;
     new mapboxgl.Popup({ closeButton: false }).setLngLat(e.lngLat).setHTML(`
       <div style="font-family:'DM Sans',sans-serif;background:#1A1810;border:1px solid rgba(244,67,54,0.5);border-radius:10px;padding:12px 16px;color:#E8D9B0;min-width:200px">
-        <div style="font-family:'Bebas Neue',sans-serif;font-size:16px;color:#F44336;letter-spacing:0.06em">⚠️ ${p.Mng_Name || p.Unit_Nm || p.name || 'Military Area'}</div>
+        <div style="font-family:'Bebas Neue',sans-serif;font-size:16px;color:#F44336;letter-spacing:0.06em">⚠️ ${p.Unit_Nm || p.unit_nm || 'Military Area'}</div>
         <div style="margin-top:8px;background:rgba(244,67,54,0.1);border:1px solid rgba(244,67,54,0.3);border-radius:6px;padding:8px">
           <div style="font-size:12px;color:#F44336;font-weight:500">No Public Access</div>
           <div style="font-size:11px;color:#6B6248;margin-top:3px">Military installation. No prospecting, detecting, or unauthorized entry. Federal law enforced.</div>

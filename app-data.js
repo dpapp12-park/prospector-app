@@ -19,30 +19,37 @@
 
 // ── RESTRICTED LANDS FETCH ──────────────────────────────
 let parksLoaded = false;
+// ── PAD-US v3.0 base URL (USGS) — single endpoint for parks, monuments, military, tribal
+// Des_Tp codes: NP=National Park, NM=National Monument
+// Mang_Name codes: DOD=Military, BIA/TRIB=Tribal
+// Fields: Unit_Nm (name), Mang_Name (manager), State_Nm (state), Des_Tp (type)
+const PADUS_BASE = 'https://services.arcgis.com/v01gqwM5QqNysAAi/arcgis/rest/services/Manager_Name/FeatureServer/0/query';
+
+function _padusUrl(where, bbox) {
+  const geom = encodeURIComponent(bbox);
+  return `${PADUS_BASE}?where=${encodeURIComponent(where)}&geometry=${geom}&geometryType=esriGeometryEnvelope&spatialRel=esriSpatialRelIntersects&inSR=4326&outFields=Unit_Nm%2CMang_Name%2CState_Nm%2CDes_Tp&returnGeometry=true&f=geojson&outSR=4326`;
+}
+
 async function fetchNationalParks() {
   if (parksLoaded) return;
   showStatus('Loading national parks...');
   const bounds = map.getBounds();
   const bbox = `${bounds.getWest()},${bounds.getSouth()},${bounds.getEast()},${bounds.getNorth()}`;
-
   try {
-    const res = await fetch(`https://services1.arcgis.com/fBc8EJBxQRMcHlei/arcgis/rest/services/NPS_Park_Boundaries/FeatureServer/0/query?where=1%3D1&geometry=${encodeURIComponent(bbox)}&geometryType=esriGeometryEnvelope&spatialRel=esriSpatialRelIntersects&outFields=UNIT_NAME%2CSTATE%2CUNIT_TYPE&returnGeometry=true&f=geojson&outSR=4326`);
+    const res = await fetch(_padusUrl("Des_Tp='NP'", bbox));
     const data = await res.json();
+    if (!data.features) throw new Error('No features in response');
+    // Normalize field names so existing popup code works
+    data.features.forEach(f => {
+      f.properties.UNIT_NAME = f.properties.Unit_Nm || 'National Park';
+      f.properties.STATE = f.properties.State_Nm || '';
+    });
     parksLoaded = true;
     map.getSource('natl-parks-src').setData(data);
-    showStatus(`${data.features?.length || 0} national park units loaded`);
+    showStatus(`${data.features.length} national park units loaded`);
   } catch(e) {
-    // Try alternate NPS endpoint
-    try {
-      const res2 = await fetch(`https://opendata.arcgis.com/datasets/b1598d3df2c047ef88251016af5b0f1e_0.geojson`);
-      const data2 = await res2.json();
-      parksLoaded = true;
-      map.getSource('natl-parks-src').setData(data2);
-      showStatus('National parks loaded');
-    } catch(e2) {
-      showStatus('National parks data unavailable');
-      console.error('Parks load failed:', e2);
-    }
+    showStatus('National parks data unavailable');
+    console.error('Parks load failed:', e);
   }
 }
 
@@ -94,11 +101,15 @@ async function fetchMonuments() {
   const bounds = map.getBounds();
   const bbox = `${bounds.getWest()},${bounds.getSouth()},${bounds.getEast()},${bounds.getNorth()}`;
   try {
-    const res = await fetch(`https://gis.blm.gov/arcgis/rest/services/lands/BLM_Natl_National_Monuments_and_NSAs/MapServer/1/query?where=1%3D1&geometry=${encodeURIComponent(bbox)}&geometryType=esriGeometryEnvelope&spatialRel=esriSpatialRelIntersects&outFields=NAME%2CSTATE%2CMANAGING_AGENCY&returnGeometry=true&f=geojson&outSR=4326`);
+    const res = await fetch(_padusUrl("Des_Tp='NM'", bbox));
     const data = await res.json();
+    if (!data.features) throw new Error('No features');
+    data.features.forEach(f => {
+      f.properties.NAME = f.properties.Unit_Nm || 'National Monument';
+    });
     monumentsLoaded = true;
     map.getSource('monuments-src').setData(data);
-    showStatus(`${data.features?.length || 0} national monuments loaded`);
+    showStatus(`${data.features.length} national monuments loaded`);
   } catch(e) {
     showStatus('Monument data unavailable');
     console.error(e);
@@ -109,9 +120,18 @@ let wsrLoaded = false;
 async function fetchWildScenic() {
   if (wsrLoaded) return;
   showStatus('Loading Wild & Scenic Rivers...');
+  const bounds = map.getBounds();
+  const bbox = `${bounds.getWest()},${bounds.getSouth()},${bounds.getEast()},${bounds.getNorth()}`;
   try {
-    const res = await fetch(`https://opendata.arcgis.com/datasets/2e3d5ddd3db04a12a81f6e88dbb16e72_0.geojson`);
+    // National Wild & Scenic River System — USFS/BLM/FWS/NPS national dataset
+    const url = `https://services1.arcgis.com/IAQQkLXctKHrf8Av/ArcGIS/rest/services/Wild_and_Scenic_River_System/FeatureServer/0/query?where=1%3D1&geometry=${encodeURIComponent(bbox)}&geometryType=esriGeometryEnvelope&spatialRel=esriSpatialRelIntersects&inSR=4326&outFields=RIVER_NAME%2CCLASSIFICATION%2CSTATE&returnGeometry=true&f=geojson&outSR=4326`;
+    const res = await fetch(url);
     const data = await res.json();
+    if (!data.features) throw new Error('No features');
+    // Normalize for popup: expects NAME or name
+    data.features.forEach(f => {
+      f.properties.NAME = f.properties.RIVER_NAME || 'Wild & Scenic River';
+    });
     wsrLoaded = true;
     map.getSource('wsr-src').setData(data);
     showStatus(`Wild & Scenic Rivers loaded`);
@@ -128,8 +148,12 @@ async function fetchTribalLands() {
   const bounds = map.getBounds();
   const bbox = `${bounds.getWest()},${bounds.getSouth()},${bounds.getEast()},${bounds.getNorth()}`;
   try {
-    const res = await fetch(`https://tigerweb.geo.census.gov/arcgis/rest/services/TIGERweb/Tracts_Blocks/MapServer/16/query?where=1%3D1&geometry=${encodeURIComponent(bbox)}&geometryType=esriGeometryEnvelope&spatialRel=esriSpatialRelIntersects&outFields=NAME%2CAIANNHCE&returnGeometry=true&f=geojson&outSR=4326`);
+    const res = await fetch(_padusUrl("Mang_Name='BIA' OR Mang_Name='TRIB'", bbox));
     const data = await res.json();
+    if (!data.features) throw new Error('No features');
+    data.features.forEach(f => {
+      f.properties.NAME = f.properties.Unit_Nm || 'Tribal Land';
+    });
     tribalLoaded = true;
     map.getSource('tribal-src').setData(data);
     showStatus(`Tribal lands loaded`);
@@ -146,11 +170,16 @@ async function fetchMilitaryAreas() {
   const bounds = map.getBounds();
   const bbox = `${bounds.getWest()},${bounds.getSouth()},${bounds.getEast()},${bounds.getNorth()}`;
   try {
-    const res = await fetch(`https://services.arcgis.com/P3ePLMYs2RVChkJx/arcgis/rest/services/DOD_Military_Installations_Boundaries/FeatureServer/0/query?where=1%3D1&geometry=${encodeURIComponent(bbox)}&geometryType=esriGeometryEnvelope&spatialRel=esriSpatialRelIntersects&outFields=Mng_Name,Unit_Nm&returnGeometry=true&f=geojson&outSR=4326`);
+    const res = await fetch(_padusUrl("Mang_Name='DOD'", bbox));
     const data = await res.json();
+    if (!data.features) throw new Error('No features');
+    data.features.forEach(f => {
+      f.properties.Mng_Name = 'DOD';
+      f.properties.Unit_Nm = f.properties.Unit_Nm || 'Military Area';
+    });
     militaryLoaded = true;
     map.getSource('military-src').setData(data);
-    showStatus(`${data.features?.length || 0} military areas loaded`);
+    showStatus(`${data.features.length} military areas loaded`);
   } catch(e) {
     showStatus('Military data unavailable');
     console.error(e);
