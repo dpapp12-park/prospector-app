@@ -130,10 +130,6 @@ function startMap(token) {
     showStatus('Map loaded — Oregon Mining Claims');
     initSupabase();
     initDrawSearch();
-    initFABDrag();
-
-    // Apply theme-specific map paint properties
-    _applyThemeMapStyle();
 
     // Fly to location requested from dashboard
     const flyReq = localStorage.getItem('unworked_gold_fly_to') || localStorage.getItem('prospector_fly_to');
@@ -219,13 +215,6 @@ function startMap(token) {
   map.getCanvas().addEventListener('touchend', () => clearTimeout(touchTimer), { passive: true });
 }
 
-function toggleStyles() {
-  styleSwitcherOpen = !styleSwitcherOpen;
-  document.getElementById('style-switcher').classList.toggle('open', styleSwitcherOpen);
-  document.getElementById('style-btn').classList.toggle('active', styleSwitcherOpen);
-  if (layerPanelOpen) toggleLayers();
-}
-
 function setStyle(name) {
   if (!map) return;
   currentStyle = name;
@@ -263,9 +252,7 @@ function setStyle(name) {
     }
 
     addDemoLayers();
-    _applyThemeMapStyle();
   });
-  toggleStyles();
   showStatus(`Style: ${name}`);
 }
 
@@ -290,85 +277,8 @@ function openFindPanel() {
   document.getElementById('overlay').classList.add('show');
 }
 
-function openSpotFromFAB() {
-  if (!map) return;
-  const center = map.getCenter();
-  openSpotPanel(center.lng, center.lat);
-}
-
-function initFABDrag() {
-  const fab = document.getElementById('fab');
-  let isDragging = false;
-  let startX, startY, fabStartX, fabStartY;
-  let dragMoved = false;
-
-  fab.addEventListener('mousedown', (e) => {
-    isDragging = true;
-    dragMoved = false;
-    startX = e.clientX;
-    startY = e.clientY;
-    const rect = fab.getBoundingClientRect();
-    fabStartX = rect.left;
-    fabStartY = rect.top;
-    fab.classList.add('dragging');
-    e.preventDefault();
-  });
-
-  document.addEventListener('mousemove', (e) => {
-    if (!isDragging) return;
-    const dx = e.clientX - startX;
-    const dy = e.clientY - startY;
-    if (Math.abs(dx) > 5 || Math.abs(dy) > 5) dragMoved = true;
-    fab.style.position = 'fixed';
-    fab.style.left = (fabStartX + dx) + 'px';
-    fab.style.top = (fabStartY + dy) + 'px';
-    fab.style.bottom = 'auto';
-    fab.style.right = 'auto';
-  });
-
-  document.addEventListener('mouseup', (e) => {
-    if (!isDragging) return;
-    isDragging = false;
-    fab.classList.remove('dragging');
-
-    if (!dragMoved) {
-      // Simple tap - open spot panel at center
-      resetFABPosition();
-      openSpotFromFAB();
-      return;
-    }
-
-    // Drop pin at cursor position
-    const mapCanvas = map.getCanvas();
-    const rect = mapCanvas.getBoundingClientRect();
-    const x = e.clientX - rect.left;
-    const y = e.clientY - rect.top;
-
-    if (x >= 0 && y >= 0 && x <= rect.width && y <= rect.height) {
-      const point = map.unproject([x, y]);
-      resetFABPosition();
-      openSpotPanel(point.lng, point.lat);
-    } else {
-      resetFABPosition();
-      showStatus('Drop pin on the map');
-    }
-  });
-}
-
-function resetFABPosition() {
-  const fab = document.getElementById('fab');
-  fab.style.position = 'absolute';
-  fab.style.left = 'auto';
-  fab.style.top = 'auto';
-  fab.style.bottom = '88px';
-  fab.style.right = '20px';
-}
-
 function closeAllPanels() {
   findPanelOpen = false;
-  layerPanelOpen = false;
-  document.getElementById('layer-panel').classList.remove('open');
-  document.getElementById('layer-btn').classList.remove('active');
   document.getElementById('claim-panel').classList.remove('open');
   document.getElementById('find-panel').classList.remove('open');
   document.getElementById('spot-panel').classList.remove('open');
@@ -378,7 +288,6 @@ function closeAllPanels() {
   document.getElementById('rock-id-panel').classList.remove('open');
   document.getElementById('outcrop-panel').classList.remove('open');
   document.getElementById('overlay').classList.remove('show');
-  if (styleSwitcherOpen) toggleStyles();
   if (aiMenuOpen) closeAIMenu();
 }
 
@@ -558,11 +467,6 @@ function toggle3D() {
   showStatus(terrain3DOn ? '3D terrain on' : 'Flat map');
 }
 
-function setNav(el) {
-  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
-  el.classList.add('active');
-}
-
 function updateRestrictionLegend() {
   const legend = document.getElementById('restriction-legend');
   if (!legend) return;
@@ -620,35 +524,6 @@ function showStatus(msg) {
 }
 
 
-
-// ── THEME MAP STYLE ──────────────────────────────────────
-// Applies map paint properties based on active UI theme.
-// Called on map load and after setStyle() reloads.
-// LiDAR themes: desaturated, cooler, slightly darker satellite.
-// ─────────────────────────────────────────────────────────
-function _applyThemeMapStyle() {
-  if (!map) return;
-  const theme = localStorage.getItem('ug_theme') || '';
-  const isLidar = theme === 'lidar' || theme === 'fullrail-lidar';
-
-  try {
-    if (isLidar) {
-      map.setPaintProperty('satellite', 'raster-saturation',   -0.75);
-      map.setPaintProperty('satellite', 'raster-contrast',      0.10);
-      map.setPaintProperty('satellite', 'raster-brightness-max', 0.80);
-      map.setPaintProperty('satellite', 'raster-hue-rotate',   200);
-    } else {
-      // Default — restore satellite to natural
-      map.setPaintProperty('satellite', 'raster-saturation',    0);
-      map.setPaintProperty('satellite', 'raster-contrast',      0);
-      map.setPaintProperty('satellite', 'raster-brightness-max', 1);
-      map.setPaintProperty('satellite', 'raster-hue-rotate',    0);
-    }
-  } catch(e) {
-    // Layer may not exist yet on some style loads — safe to ignore
-    console.warn('[theme] map paint not ready:', e.message);
-  }
-}
 
 // ── BOOT: read mapbox token from inline config, init map ──
 // Previously fetched from Supabase app_config table; that table was

@@ -50,7 +50,7 @@ window.PROSPECTOR_CONFIG = window.UNWORKED_GOLD_CONFIG;
 </script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Mono:wght@400;500&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="style.css?v=20260427-2">
+<link rel="stylesheet" href="style.css?v=20260502">
 
 </head>
 <body>
@@ -60,49 +60,9 @@ window.PROSPECTOR_CONFIG = window.UNWORKED_GOLD_CONFIG;
 
 <!-- Map -->
 <div id="map"></div>
-<div id="zoom-readout">z—</div>
-
-<!-- Custom Hillshade popup — shown/hidden by toggleCustomHillshade() -->
-<div id="custom-hs-panel" style="display:none;">
-  <div id="custom-hs-drag">
-    <span class="custom-hs-title">Custom Hillshade</span>
-    <div class="custom-hs-actions">
-      <button class="custom-hs-btn" id="custom-hs-min"  onclick="customHsMinimize()" title="Minimize">&#8722;</button>
-      <button class="custom-hs-btn" id="custom-hs-close" onclick="customHsClose()"   title="Close">&#215;</button>
-    </div>
-  </div>
-  <div id="custom-hs-body">
-    <div class="chs-row"><span class="chs-label">Azimuth</span><span class="chs-val" id="lidar-azimuth-value">315°</span></div>
-    <input type="range" class="chs-slider" id="lidar-azimuth-slider" min="0" max="360" value="315" step="1" oninput="updateCustomParam('azimuth',this.value)">
-    <div class="chs-row"><span class="chs-label">Altitude</span><span class="chs-val" id="lidar-altitude-value">45°</span></div>
-    <input type="range" class="chs-slider" id="lidar-altitude-slider" min="1" max="90" value="45" step="1" oninput="updateCustomParam('altitude',this.value)">
-    <div class="chs-row"><span class="chs-label">Z-Factor</span><span class="chs-val" id="lidar-zfactor-value">2×</span></div>
-    <input type="range" class="chs-slider" id="lidar-zfactor-slider" min="0.5" max="10" value="2" step="0.1" oninput="updateCustomParam('zfactor',this.value)">
-    <div class="chs-footer">
-      <button class="chs-reset" onclick="resetCustomHillshade()">Reset</button>
-    </div>
-  </div>
-</div>
 
 <!-- Overlay -->
 <div id="overlay" onclick="closeAllPanels()"></div>
-
-<!-- Top Bar -->
-<div id="topbar">
-  <div id="logo">
-    <div class="icon">⛏️</div>
-    <div>
-      <div class="wordmark">Unworked Gold</div>
-      <div class="tagline">Gold Mapping · v0.4.0</div>
-    </div>
-  </div>
-  <div id="top-actions">
-    <button class="icon-btn" onclick="toggleLayers()" id="layer-btn" title="Layers"><img class="ui-icon top-icon" src="assets/icons/icon_layers_idle.png" alt="Layers"></button>
-    <button class="icon-btn" onclick="toggleStyles()" id="style-btn" title="Map Style"><img class="ui-icon top-icon" src="assets/icons/icon_map_idle.png" alt="Map style"></button>
-    <button class="icon-btn" onclick="locateUser()" id="gps-btn" title="My Location"><img class="ui-icon top-icon" src="assets/icons/icon_gps_idle.png" alt="My location"></button>
-    <button class="icon-btn" onclick="toggleAIMenu()" id="ai-btn" title="AI Field Tools"><img class="ui-icon top-icon" src="assets/icons/icon_ai_idle.png" alt="AI tools"></button>
-  </div>
-</div>
 
 <!-- Search -->
 <div id="searchbar">
@@ -128,419 +88,6 @@ window.PROSPECTOR_CONFIG = window.UNWORKED_GOLD_CONFIG;
 <!-- Layer Tooltip -->
 <div id="layer-tooltip"></div>
 
-<!-- Layer Panel -->
-<div id="layer-panel">
-  <div id="layer-panel-handle"></div>
-  <div id="layer-panel-header">
-    <h3>Map Layers</h3>
-    <button id="layer-panel-close" onclick="toggleLayers()">✕</button>
-  </div>
-  <!-- ── LAYER UPGRADE GATE ─────────────────────────────── -->
-  <!-- Shown when user has no active subscription.          -->
-  <!-- applySubscriptionGating() in app-ai.js controls      -->
-  <!-- display and messaging (trial vs. expired).           -->
-  <div id="layer-upgrade-gate" style="display:none;">
-    <div class="lug-card">
-      <div class="lug-icon">⛏️</div>
-      <div class="lug-title">Your trial has ended</div>
-      <div class="lug-sub">Upgrade to Pro to unlock all map layers.</div>
-      <button class="lug-btn" onclick="redirectToCheckout()">Upgrade to Pro</button>
-      <div class="lug-footer">Basemap &amp; search still available</div>
-    </div>
-  </div>
-
-  <div id="layer-panel-scroll">
-
-    <div id="region-banner">
-      <div class="region-left">
-        <div class="region-dot"></div>
-        Currently in <span class="region-state">&nbsp;Oregon</span>
-      </div>
-      <button class="switch-region" onclick="showStatus('More states coming soon — California & Idaho next!')">Switch Region ›</button>
-    </div>
-
-    <!-- ── HISTORIC GOLD ── -->
-    <div class="layer-group" id="group-historic-gold">
-      <div class="group-header" onclick="toggleGroup('historic-gold')">
-        <div class="group-header-left">
-          <div class="group-title">Historic Gold</div>
-          <div class="group-count">4 Layers</div>
-        </div>
-        <div class="group-arrow" id="arrow-historic-gold">▼</div>
-      </div>
-      <div class="group-body" id="body-historic-gold">
-        <div class="layer-row" onclick="toggleLayer('gold-occurrences')">
-          <div class="layer-bullet" id="bullet-gold-occurrences">●</div>
-          <span class="layer-name" id="name-gold-occurrences">Gold Occurrences</span>
-          <button class="info-btn" onclick="showLayerInfo(event,'gold-occurrences')">i</button>
-        </div>
-        <div class="layer-row" onclick="toggleLayer('hist-mines')">
-          <div class="layer-bullet" id="bullet-hist-mines">●</div>
-          <span class="layer-name" id="name-hist-mines">Historic Mine Sites</span>
-          <button class="info-btn" onclick="showLayerInfo(event,'hist-mines')">i</button>
-        </div>
-        <div class="layer-row" onclick="toggleLayer('placer-heatmap')">
-          <div class="layer-bullet" id="bullet-placer-heatmap">●</div>
-          <span class="layer-name" id="name-placer-heatmap">Placer Gold Heatmap</span>
-          <button class="info-btn" onclick="showLayerInfo(event,'placer-heatmap')">i</button>
-        </div>
-        <div class="layer-row" onclick="toggleLayer('lode-heatmap')">
-          <div class="layer-bullet" id="bullet-lode-heatmap">●</div>
-          <span class="layer-name" id="name-lode-heatmap">Lode Gold Heatmap</span>
-          <button class="info-btn" onclick="showLayerInfo(event,'lode-heatmap')">i</button>
-        </div>
-      </div>
-    </div>
-    <div class="group-divider"></div>
-
-    <!-- ── INDICATOR MINERALS ── -->
-    <div class="layer-group is-collapsed" id="group-indicator-minerals">
-      <div class="group-header" onclick="toggleGroup('indicator-minerals')">
-        <div class="group-header-left">
-          <div class="group-title">Indicator Minerals</div>
-          <div class="group-count">5 Layers</div>
-        </div>
-        <div class="group-arrow" id="arrow-indicator-minerals">▼</div>
-      </div>
-      <div class="group-body collapsed" id="body-indicator-minerals">
-        <div class="layer-row" onclick="toggleLayer('mercury')">
-          <div class="layer-bullet" id="bullet-mercury" style="color:#9C27B0">●</div>
-          <span class="layer-name" id="name-mercury">Mercury Occurrences</span>
-          <button class="info-btn" onclick="showLayerInfo(event,'mercury')">i</button>
-        </div>
-        <div class="layer-row" onclick="toggleLayer('chromium')">
-          <div class="layer-bullet" id="bullet-chromium" style="color:#00BCD4">●</div>
-          <span class="layer-name" id="name-chromium">Chromium Occurrences</span>
-          <button class="info-btn" onclick="showLayerInfo(event,'chromium')">i</button>
-        </div>
-        <div class="layer-row" onclick="toggleLayer('copper')">
-          <div class="layer-bullet" id="bullet-copper" style="color:#E87722">●</div>
-          <span class="layer-name" id="name-copper">Copper Occurrences</span>
-          <span class="layer-badge pro">PRO</span>
-          <button class="info-btn" onclick="showLayerInfo(event,'copper')">i</button>
-        </div>
-        <div class="layer-row" onclick="toggleLayer('antimony')">
-          <div class="layer-bullet" id="bullet-antimony" style="color:#78909C">●</div>
-          <span class="layer-name" id="name-antimony">Antimony Occurrences</span>
-          <span class="layer-badge pro">PRO</span>
-          <button class="info-btn" onclick="showLayerInfo(event,'antimony')">i</button>
-        </div>
-        <div class="layer-row" onclick="toggleLayer('silver')">
-          <div class="layer-bullet" id="bullet-silver" style="color:#B0BEC5">●</div>
-          <span class="layer-name" id="name-silver">Silver Occurrences</span>
-          <span class="layer-badge pro">PRO</span>
-          <button class="info-btn" onclick="showLayerInfo(event,'silver')">i</button>
-        </div>
-      </div>
-    </div>
-    <div class="group-divider"></div>
-
-    <!-- ── GEOLOGY ── -->
-    <div class="layer-group is-collapsed" id="group-geology">
-      <div class="group-header" onclick="toggleGroup('geology')">
-        <div class="group-header-left">
-          <div class="group-title">Geology</div>
-          <div class="group-count">1 Layer</div>
-        </div>
-        <div class="group-arrow" id="arrow-geology">▼</div>
-      </div>
-      <div class="group-body collapsed" id="body-geology">
-        <div class="layer-row" onclick="toggleLayer('quaternary-faults')">
-          <div class="layer-bullet" id="bullet-quaternary-faults" style="color:#E91E63">●</div>
-          <span class="layer-name" id="name-quaternary-faults">Quaternary Faults</span>
-          <button class="info-btn" onclick="showLayerInfo(event,'quaternary-faults')">i</button>
-        </div>
-      </div>
-    </div>
-    <div class="group-divider"></div>
-
-    <!-- ── ACTIVE MINING CLAIMS ── -->
-    <div class="layer-group" id="group-active-claims">
-      <div class="group-header" onclick="toggleGroup('active-claims')">
-        <div class="group-header-left">
-          <div class="group-title">Active Mining Claims</div>
-          <div class="group-count">5 Layers</div>
-        </div>
-        <div class="group-arrow" id="arrow-active-claims">▼</div>
-      </div>
-      <div class="group-body" id="body-active-claims">
-        <div class="layer-row" onclick="toggleLayer('active-claims')">
-          <div class="layer-bullet on" id="bullet-active-claims">●</div>
-          <span class="layer-name on" id="name-active-claims">All Active Claims</span>
-          <button class="info-btn" onclick="showLayerInfo(event,'active-claims')">i</button>
-        </div>
-        <div class="layer-row" onclick="toggleLayer('placer-claims')">
-          <div class="layer-bullet" id="bullet-placer-claims">●</div>
-          <span class="layer-name" id="name-placer-claims">Active Placer Claims</span>
-          <button class="info-btn" onclick="showLayerInfo(event,'placer-claims')">i</button>
-        </div>
-        <div class="layer-row" onclick="toggleLayer('lode-claims')">
-          <div class="layer-bullet" id="bullet-lode-claims">●</div>
-          <span class="layer-name" id="name-lode-claims">Active Lode Claims</span>
-          <button class="info-btn" onclick="showLayerInfo(event,'lode-claims')">i</button>
-        </div>
-        <div class="layer-row" onclick="toggleLayer('tunnel-claims')">
-          <div class="layer-bullet" id="bullet-tunnel-claims">●</div>
-          <span class="layer-name" id="name-tunnel-claims">Active Tunnel Claims</span>
-          <button class="info-btn" onclick="showLayerInfo(event,'tunnel-claims')">i</button>
-        </div>
-        <div class="layer-row" onclick="toggleLayer('mill-claims')">
-          <div class="layer-bullet" id="bullet-mill-claims">●</div>
-          <span class="layer-name" id="name-mill-claims">Active Mill Claims</span>
-          <button class="info-btn" onclick="showLayerInfo(event,'mill-claims')">i</button>
-        </div>
-      </div>
-    </div>
-    <div class="group-divider"></div>
-
-    <!-- ── HISTORIC MINING HOTSPOTS ── -->
-    <div class="layer-group is-collapsed" id="group-hist-hotspots">
-      <div class="group-header" onclick="toggleGroup('hist-hotspots')">
-        <div class="group-header-left">
-          <div class="group-title">Historic Mining Hotspots</div>
-          <div class="group-count">2 Layers</div>
-        </div>
-        <div class="group-arrow" id="arrow-hist-hotspots">▼</div>
-      </div>
-      <div class="group-body collapsed" id="body-hist-hotspots">
-        <div class="layer-row" onclick="toggleLayer('closed-claims')">
-          <div class="layer-bullet" id="bullet-closed-claims">●</div>
-          <span class="layer-name" id="name-closed-claims">Closed / Lapsed Claims</span>
-          <button class="info-btn" onclick="showLayerInfo(event,'closed-claims')">i</button>
-        </div>
-        <div class="layer-row coming-soon" onclick="toggleLayer('placer-density')">
-          <div class="layer-bullet" id="bullet-placer-density">●</div>
-          <span class="layer-name" id="name-placer-density">Historic Claim Density</span>
-          <span class="layer-badge badge-pro">🔒 Pro · Soon</span>
-          <button class="info-btn" onclick="showLayerInfo(event,'placer-density')">i</button>
-        </div>
-      </div>
-    </div>
-    <div class="group-divider"></div>
-
-    <!-- ── LAND USE & ACCESS ── -->
-    <div class="layer-group is-collapsed" id="group-land-access">
-      <div class="group-header" onclick="toggleGroup('land-access')">
-        <div class="group-header-left">
-          <div class="group-title">Land Use & Access</div>
-          <div class="group-count">4 Layers</div>
-        </div>
-        <div class="group-arrow" id="arrow-land-access">▼</div>
-      </div>
-      <div class="group-body collapsed" id="body-land-access">
-        <div class="layer-row" onclick="toggleLayer('open-land')">
-          <div class="layer-bullet" id="bullet-open-land">●</div>
-          <span class="layer-name" id="name-open-land">Surface Mgmt Agencies</span>
-          <button class="info-btn" onclick="showLayerInfo(event,'open-land')">i</button>
-        </div>
-        <div class="layer-row" onclick="toggleLayer('open-to-claim')">
-          <div class="layer-bullet" id="bullet-open-to-claim">●</div>
-          <span class="layer-name" id="name-open-to-claim">Open to Claim (BLM)</span>
-          <button class="info-btn" onclick="showLayerInfo(event,'open-to-claim')">i</button>
-        </div>
-        <div class="layer-row" onclick="toggleLayer('plss')">
-          <div class="layer-bullet" id="bullet-plss">●</div>
-          <span class="layer-name" id="name-plss">PLSS Survey Grid</span>
-          <button class="info-btn" onclick="showLayerInfo(event,'plss')">i</button>
-        </div>
-        <div class="layer-row" onclick="toggleLayer('blm-roads')">
-          <div class="layer-bullet" id="bullet-blm-roads">●</div>
-          <span class="layer-name" id="name-blm-roads">BLM Roads & Trails</span>
-          <button class="info-btn" onclick="showLayerInfo(event,'blm-roads')">i</button>
-        </div>
-      </div>
-    </div>
-    <div class="group-divider"></div>
-
-    <!-- ── PROTECTED AREAS ── -->
-    <div class="layer-group is-collapsed" id="group-protected">
-      <div class="group-header" onclick="toggleGroup('protected')">
-        <div class="group-header-left">
-          <div class="group-title">Protected Areas</div>
-          <div class="group-count">6 Layers</div>
-        </div>
-        <div class="group-arrow" id="arrow-protected">▼</div>
-      </div>
-      <div class="group-body collapsed" id="body-protected">
-        <div class="layer-row" onclick="toggleLayer('natl-parks')">
-          <div class="layer-bullet" id="bullet-natl-parks">●</div>
-          <span class="layer-name" id="name-natl-parks">National Parks</span>
-          <button class="info-btn" onclick="showLayerInfo(event,'natl-parks')">i</button>
-        </div>
-        <div class="layer-row" onclick="toggleLayer('wilderness')">
-          <div class="layer-bullet" id="bullet-wilderness">●</div>
-          <span class="layer-name" id="name-wilderness">Wilderness Areas</span>
-          <button class="info-btn" onclick="showLayerInfo(event,'wilderness')">i</button>
-        </div>
-        <div class="layer-row" onclick="toggleLayer('monuments')">
-          <div class="layer-bullet" id="bullet-monuments">●</div>
-          <span class="layer-name" id="name-monuments">National Monuments</span>
-          <button class="info-btn" onclick="showLayerInfo(event,'monuments')">i</button>
-        </div>
-        <div class="layer-row" onclick="toggleLayer('wild-scenic')">
-          <div class="layer-bullet" id="bullet-wild-scenic">●</div>
-          <span class="layer-name" id="name-wild-scenic">Wild & Scenic Rivers</span>
-          <button class="info-btn" onclick="showLayerInfo(event,'wild-scenic')">i</button>
-        </div>
-        <div class="layer-row" onclick="toggleLayer('tribal')">
-          <div class="layer-bullet" id="bullet-tribal">●</div>
-          <span class="layer-name" id="name-tribal">Tribal Lands</span>
-          <button class="info-btn" onclick="showLayerInfo(event,'tribal')">i</button>
-        </div>
-        <div class="layer-row" onclick="toggleLayer('military')">
-          <div class="layer-bullet" id="bullet-military">●</div>
-          <span class="layer-name" id="name-military">Military Areas</span>
-          <button class="info-btn" onclick="showLayerInfo(event,'military')">i</button>
-        </div>
-      </div>
-    </div>
-    <div class="group-divider"></div>
-
-    <!-- ── WATERCOURSES ── -->
-    <div class="layer-group is-collapsed" id="group-water">
-      <div class="group-header" onclick="toggleGroup('water')">
-        <div class="group-header-left">
-          <div class="group-title">Watercourses</div>
-          <div class="group-count">1 Layer</div>
-        </div>
-        <div class="group-arrow" id="arrow-water">▼</div>
-      </div>
-      <div class="group-body collapsed" id="body-water">
-        <div class="layer-row" onclick="toggleLayer('stream-gauges')">
-          <div class="layer-bullet" id="bullet-stream-gauges">●</div>
-          <span class="layer-name" id="name-stream-gauges">Stream Gauges (Live)</span>
-          <button class="info-btn" onclick="showLayerInfo(event,'stream-gauges')">i</button>
-        </div>
-      </div>
-    </div>
-    <div class="group-divider"></div>
-
-    <!-- ── LIDAR HILLSHADE (11 styles + Custom Generator) ── -->
-    <div class="layer-group is-collapsed" id="group-lidar">
-      <div class="group-header" onclick="toggleGroup('lidar')">
-        <div class="group-header-left">
-          <div class="group-title">LiDAR Hillshade</div>
-          <div class="group-count"><span id="lidar-active-count">1</span>/10 On</div>
-        </div>
-        <div class="group-arrow" id="arrow-lidar">▼</div>
-      </div>
-      <div class="group-body collapsed" id="body-lidar">
-        <div class="lidar-style-row" onclick="toggleLidarStyle('hillshade-gray')" id="lidar-row-hillshade-gray">
-          <div class="layer-bullet" id="lidar-bullet-hillshade-gray">●</div>
-          <span class="layer-name" id="lidar-name-hillshade-gray">Standard Gray Hillshade</span>
-          <button class="info-btn" onclick="showLayerInfo(event,'lidar-hillshade-gray')">i</button>
-        </div>
-        <div class="lidar-style-row" onclick="toggleLidarStyle('hillshade-multi')" id="lidar-row-hillshade-multi">
-          <div class="layer-bullet" id="lidar-bullet-hillshade-multi">●</div>
-          <span class="layer-name" id="lidar-name-hillshade-multi">Hillshade Multidirectional</span>
-          <button class="info-btn" onclick="showLayerInfo(event,'lidar-hillshade-multi')">i</button>
-        </div>
-        <div class="lidar-style-row" onclick="toggleLidarStyle('hillshade-tinted')" id="lidar-row-hillshade-tinted">
-          <div class="layer-bullet" id="lidar-bullet-hillshade-tinted">●</div>
-          <span class="layer-name" id="lidar-name-hillshade-tinted">Hillshade Elevation Tinted</span>
-          <button class="info-btn" onclick="showLayerInfo(event,'lidar-hillshade-tinted')">i</button>
-        </div>
-        <div class="lidar-style-row" onclick="toggleLidarStyle('hillshade-stretch')" id="lidar-row-hillshade-stretch">
-          <div class="layer-bullet" id="lidar-bullet-hillshade-stretch">●</div>
-          <span class="layer-name" id="lidar-name-hillshade-stretch">Hillshade Gray-Stretch</span>
-          <button class="info-btn" onclick="showLayerInfo(event,'lidar-hillshade-stretch')">i</button>
-        </div>
-        <div class="lidar-style-row" onclick="toggleLidarStyle('low-angle')" id="lidar-row-low-angle">
-          <div class="layer-bullet" id="lidar-bullet-low-angle">●</div>
-          <span class="layer-name" id="lidar-name-low-angle">Low Angle Hillshade</span>
-          <button class="info-btn" onclick="showLayerInfo(event,'lidar-low-angle')">i</button>
-        </div>
-        <div class="lidar-style-row" onclick="toggleLidarStyle('east-lit')" id="lidar-row-east-lit">
-          <div class="layer-bullet" id="lidar-bullet-east-lit">●</div>
-          <span class="layer-name" id="lidar-name-east-lit">East-Lit Hillshade</span>
-          <button class="info-btn" onclick="showLayerInfo(event,'lidar-east-lit')">i</button>
-        </div>
-        <div class="lidar-style-row" onclick="toggleLidarStyle('south-lit')" id="lidar-row-south-lit">
-          <div class="layer-bullet" id="lidar-bullet-south-lit">●</div>
-          <span class="layer-name" id="lidar-name-south-lit">South-Lit Hillshade</span>
-          <button class="info-btn" onclick="showLayerInfo(event,'lidar-south-lit')">i</button>
-        </div>
-        <div class="lidar-style-row" onclick="toggleLidarStyle('slope-map')" id="lidar-row-slope-map">
-          <div class="layer-bullet" id="lidar-bullet-slope-map">●</div>
-          <span class="layer-name" id="lidar-name-slope-map">Slope Map</span>
-          <button class="info-btn" onclick="showLayerInfo(event,'lidar-slope-map')">i</button>
-        </div>
-        <div class="lidar-style-row" onclick="toggleLidarStyle('aspect-map')" id="lidar-row-aspect-map">
-          <div class="layer-bullet" id="lidar-bullet-aspect-map">●</div>
-          <span class="layer-name" id="lidar-name-aspect-map">Aspect Map</span>
-          <button class="info-btn" onclick="showLayerInfo(event,'lidar-aspect-map')">i</button>
-        </div>
-        <div class="lidar-style-row" onclick="toggleLidarStyle('contour')" id="lidar-row-contour">
-          <div class="layer-bullet" id="lidar-bullet-contour">●</div>
-          <span class="layer-name" id="lidar-name-contour">Contour Smoothed 25</span>
-          <span class="lidar-badge overlay">OVERLAY</span>
-          <button class="info-btn" onclick="showLayerInfo(event,'lidar-contour')">i</button>
-        </div>
-
-        <!-- Layer Controls (focused layer opacity) -->
-        <div class="lidar-controls" id="lidar-controls">
-          <div class="lidar-controls-label">Layer Controls</div>
-          <div class="lidar-focused-name" id="lidar-focused-name">Standard Gray Hillshade</div>
-          <div class="lidar-slider-row">
-            <span>Opacity</span>
-            <span class="lidar-slider-value" id="lidar-opacity-value">100%</span>
-          </div>
-          <input type="range" class="lidar-slider" id="lidar-opacity-slider" min="0" max="100" value="100" oninput="updateLidarOpacity(this.value)">
-        </div>
-      </div>
-    </div>
-    <div class="group-divider"></div>
-
-    <!-- ── TERRAIN & OVERLAYS ── -->
-    <div class="layer-group is-collapsed" id="group-terrain">
-      <div class="group-header" onclick="toggleGroup('terrain')">
-        <div class="group-header-left">
-          <div class="group-title">Terrain & Overlays</div>
-          <div class="group-count">2 Layers</div>
-        </div>
-        <div class="group-arrow" id="arrow-terrain">▼</div>
-      </div>
-      <div class="group-body collapsed" id="body-terrain">
-        <div class="layer-row" onclick="toggleLayer('terrain-3d')">
-          <div class="layer-bullet" id="bullet-terrain-3d">●</div>
-          <span class="layer-name" id="name-terrain-3d">3D Terrain</span>
-          <button class="info-btn" onclick="showLayerInfo(event,'terrain-3d')">i</button>
-        </div>
-        <div class="layer-row" onclick="toggleLayer('contours')">
-          <div class="layer-bullet" id="bullet-contours">●</div>
-          <span class="layer-name" id="name-contours">Contour Lines</span>
-          <button class="info-btn" onclick="showLayerInfo(event,'contours')">i</button>
-        </div>
-      </div>
-    </div>
-
-    <!-- hidden toggles for JS compat -->
-    <div style="display:none">
-      <div id="toggle-active-claims" class="toggle on"></div>
-      <div id="toggle-open-land" class="toggle"></div>
-      <div id="toggle-closed-claims" class="toggle"></div>
-      <div id="toggle-terrain-3d" class="toggle"></div>
-      <div id="toggle-lidar" class="toggle"></div>
-      <div id="toggle-contours" class="toggle"></div>
-      <div id="toggle-gold-occurrences" class="toggle"></div>
-      <div id="toggle-stream-gauges" class="toggle"></div>
-      <div id="toggle-hist-mines" class="toggle"></div>
-      <div id="toggle-mercury" class="toggle"></div>
-      <div id="toggle-chromium" class="toggle"></div>
-      <div id="toggle-copper" class="toggle"></div>
-      <div id="toggle-antimony" class="toggle"></div>
-      <div id="toggle-silver" class="toggle"></div>
-      <div id="toggle-quaternary-faults" class="toggle"></div>
-      <div id="toggle-open-to-claim" class="toggle"></div>
-      <div id="toggle-monuments" class="toggle"></div>
-      <div id="toggle-wild-scenic" class="toggle"></div>
-      <div id="toggle-tribal" class="toggle"></div>
-      <div id="toggle-natl-parks" class="toggle"></div>
-      <div id="toggle-wilderness" class="toggle"></div>
-    </div>
-
-  </div><!-- end scroll -->
-</div>
 
 <!-- Style Switcher -->
 <div id="style-switcher">
@@ -562,36 +109,7 @@ window.PROSPECTOR_CONFIG = window.UNWORKED_GOLD_CONFIG;
   </button>
 </div>
 
-<!-- FAB -->
-<div id="fab-hint">drag to<br>drop pin</div>
-<button id="fab" title="Drag to drop a pin or tap to save spot">📍</button>
-
-<!-- Bottom Nav -->
-<div id="bottom-nav">
-  <div class="nav-item active" onclick="setNav(this)">
-    <div class="nav-icon"><svg class="nav-icon-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><polygon points="3,7 9,4 15,7 21,4 21,17 15,20 9,17 3,20"/><line x1="9" y1="4" x2="9" y2="17"/><line x1="15" y1="7" x2="15" y2="20"/></svg></div>
-    <div class="nav-label">Map</div>
-  </div>
-  <div class="nav-item" onclick="setNav(this)">
-    <div class="nav-icon"><svg class="nav-icon-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><line x1="6" y1="3" x2="6" y2="21"/><polygon points="6,4 18,4 14,9 18,14 6,14"/></svg></div>
-    <div class="nav-label">Claims</div>
-  </div>
-  <div class="nav-item" onclick="setNav(this); openAccountPanel()">
-    <div class="nav-icon"><svg class="nav-icon-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 4h14v16H5z"/><line x1="9" y1="9" x2="15" y2="9"/><line x1="9" y1="13" x2="15" y2="13"/><line x1="9" y1="17" x2="13" y2="17"/></svg></div>
-    <div class="nav-label">Finds</div>
-  </div>
-  <div class="nav-item" onclick="setNav(this)">
-    <div class="nav-icon"><svg class="nav-icon-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3 v12"/><polyline points="7,10 12,15 17,10"/><line x1="5" y1="20" x2="19" y2="20"/></svg></div>
-    <div class="nav-label">Offline</div>
-  </div>
-  <div class="nav-item" onclick="setNav(this); openAuthPanel()">
-    <div class="nav-icon"><svg class="nav-icon-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"/><path d="M4 21 c0 -5 4 -8 8 -8 s8 3 8 8"/></svg></div>
-    <div class="nav-label">Sign In</div>
-  </div>
-</div>
-
-<!-- Beta Feedback -->
-<button id="feedback-fab" onclick="openFeedbackPanel()" title="Send beta feedback">💬 Feedback</button>
+<!-- Beta Feedback panel — entry point moves to Account dropdown in Step 2 -->
 <div id="feedback-panel">
   <div class="panel-handle"></div>
   <h3>Beta Feedback</h3>
@@ -753,19 +271,6 @@ window.PROSPECTOR_CONFIG = window.UNWORKED_GOLD_CONFIG;
   <div class="legend-item"><div class="legend-dot" style="background:rgba(0,188,212,0.8);border-radius:0"></div>⚠️ Wild & Scenic</div>
   <div class="legend-item"><div class="legend-dot" style="background:rgba(121,85,72,0.6)"></div>🚫 Tribal Land</div>
 </div>
-
-<!-- Custom Compass -->
-<div id="custom-compass" onclick="resetBearing()" title="Reset North">
-  <div id="compass-arrow">▲</div>
-</div>
-
-<!-- 3D Toggle -->
-<button id="terrain-toggle-btn" onclick="toggle3D()" title="Toggle 3D terrain" style="padding:0;overflow:hidden">3D</button>
-
-<!-- Draw Search Button -->
-<button id="draw-btn" onclick="toggleDraw()" title="Draw to search claims">⬡</button>
-<div id="draw-hint">Click and drag to draw a search box</div>
-<div id="draw-results"></div>
 
 <!-- Auth Panel -->
 <div id="auth-panel">
@@ -1026,7 +531,7 @@ function closePrivacyModal() {
 }
 </script>
 
-<script src="app.js?v=20260427"></script>
+<script src="app.js?v=20260502"></script>
 <script src="app-auth.js?v=20260427-2"></script>
 <script src="app-user.js?v=20260427"></script>
 <script src="app-data.js?v=20260501"></script>
@@ -1034,7 +539,7 @@ function closePrivacyModal() {
 <script src="app-search.js?v=20260427"></script>
 <script src="app-ai.js?v=20260427-2"></script>
 <script src="app-layers.js?v=20260501"></script>
-<script src="app-layer-loader.js?v=20260427"></script>
+<script src="app-layer-loader.js?v=20260502"></script>
 
 </body>
 </html>
