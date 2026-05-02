@@ -20,6 +20,18 @@
 
 // ── SUPABASE AUTH ─────────────────────────────────────────
 const SUPABASE_URL = 'https://condhfwpzlxrzuadgopc.supabase.co';
+
+// Cold-start anon key. Read from the inline config aliases set in
+// index.html. Matches the same fallback pattern app.js uses for the
+// Mapbox token. If both aliases are missing the field, BOOT_ANON_KEY
+// resolves to null and promptSupabaseKey()'s existing
+// `if (key && key.startsWith('eyJ'))` guard no-ops cleanly.
+// (Defined Session 37, 2026-05-02, replacing an undefined reference
+// that pre-dated the desktop UI rebuild.)
+const BOOT_ANON_KEY = window.UNWORKED_GOLD_CONFIG?.supabase_anon_key
+                   || window.PROSPECTOR_CONFIG?.supabase_anon_key
+                   || null;
+
 let sbClient = null;
 let currentUser = null;
 let authMode = 'signin';
