@@ -8,39 +8,11 @@
 <!-- Mapbox loaded dynamically on token submit -->
 <script>
 const APP_ENTRY_PATH = '/index.html';
-const BETA_LANDING_PATH = '/beta.html';
-const INDEX_GATE_BYPASS_KEYS = [
-  'unworked_gold_beta_access_granted',
-  'unworked_gold_beta_access_code_ok',
-  'prospector_beta_access_granted',
-  'prospector_beta_access_code_ok'
-];
 
-function shouldBypassLandingGate() {
-  try {
-    const params = new URLSearchParams(window.location.search || '');
-    if (params.get('beta_access') === '1') {
-      localStorage.setItem('unworked_gold_beta_access_granted', 'true');
-      return true;
-    }
-    if (window.location.pathname.endsWith(BETA_LANDING_PATH)) return true;
-    if (window.location.pathname.endsWith('/dashboard.html')) return true;
-    if (window.location.pathname.includes('/api/')) return true;
-    return false;
-  } catch (e) {
-    return false;
-  }
-}
-
-function redirectToBetaLanding() {
-  const target = `${window.location.origin}${BETA_LANDING_PATH}`;
-  window.location.replace(target);
-}
-
-function maybeGateToBetaLanding() {
-  if (currentUser || shouldBypassLandingGate()) return;
-  redirectToBetaLanding();
-}
+// Beta-landing redirect gate removed Session 37 (2026-05-02).
+// Closed-beta phase is over and the gate violated the [D-1] map-first
+// auth UX. Anonymous users now land directly on the map. See the
+// commit message for the full list of removed symbols.
 
 window.UNWORKED_GOLD_CONFIG = {
   supabase_url: 'https://condhfwpzlxrzuadgopc.supabase.co',
@@ -533,7 +505,7 @@ function closePrivacyModal() {
 </script>
 
 <script src="app.js?v=20260502"></script>
-<script src="app-auth.js?v=20260502-1"></script>
+<script src="app-auth.js?v=20260502-2"></script>
 <script src="app-user.js?v=20260427"></script>
 <script src="app-data.js?v=20260501"></script>
 <script src="app-lidar.js?v=20260427"></script>

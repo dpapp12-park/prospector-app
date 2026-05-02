@@ -45,13 +45,11 @@ function initSupabase() {
   sbClient = window.supabase.createClient(SUPABASE_URL, key);
   sbClient.auth.onAuthStateChange((event, session) => {
     currentUser = session?.user || null;
-    maybeGateToBetaLanding();
     updateAuthUI();
     if (currentUser && typeof refreshProStatus === 'function') refreshProStatus();
   });
   sbClient.auth.getSession().then(({ data: { session } }) => {
     currentUser = session?.user || null;
-    maybeGateToBetaLanding();
     updateAuthUI();
     if (currentUser && typeof refreshProStatus === 'function') refreshProStatus();
     // Handle return from Stripe checkout
@@ -71,17 +69,11 @@ function promptSupabaseKey() {
 function updateAuthUI() {
   const profileLabel = document.querySelector('.nav-item:last-child .nav-label');
   if (currentUser) {
-    try {
-      localStorage.setItem('unworked_gold_beta_access_granted', 'true');
-    } catch (e) {}
     if (profileLabel) profileLabel.textContent = 'Account';
     document.getElementById('user-email').textContent = currentUser.email;
     if (map) loadUserSpots();
   } else {
     if (profileLabel) profileLabel.textContent = 'Sign In';
-    if (window.location.pathname.endsWith('/index.html') || window.location.pathname === '/') {
-      window.location.replace('beta.html');
-    }
   }
 }
 
