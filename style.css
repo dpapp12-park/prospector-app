@@ -2793,3 +2793,25 @@
   font-size: 11px;
   letter-spacing: 0.01em;
 }
+
+/* ── TRANSITIONAL: hide kept-dormant chrome until Steps 2-11 wire it ──
+   Per Session 37 desktop UI rebuild. Each rule below is removed (or
+   replaced by the proper styling) when its element is restyled in its
+   step:
+     #searchbar         — Step 2 (top bar)
+     #status-pill       — Step 2 (loading pill)
+     #coord-display     — Step 2 (top-bar coord readout)
+     #active-layer-bar  — Step 9 (chip bar)
+     #style-switcher    — Step 8 (floating cluster style flyout)
+     #ai-tools-menu     — Step 11 (AI rail flyout)
+   #layer-tooltip is omitted: it's hover-triggered by showLayerInfo() and
+   already starts hidden via its own CSS, so no transitional rule needed.
+   ──────────────────────────────────────────────────────────────────── */
+#searchbar,
+#status-pill,
+#coord-display,
+#active-layer-bar,
+#style-switcher,
+#ai-tools-menu {
+  display: none;
+}
