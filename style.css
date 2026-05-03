@@ -29,8 +29,12 @@
     top: 56px;          /* leave room for #topbar (Step 2) */
     right: 0;
     bottom: 0;
-    left: 0;
+    left: 56px;         /* leave room for #left-rail (Step 3) */
     overflow: hidden;
+    transition: left 200ms ease-out;
+  }
+  body.flyout-open #map {
+    left: 416px;        /* 56 (rail) + 360 (flyout) — map narrows when flyout opens */
   }
 
   /* ── TOP BAR (Step 2 of Session 37 desktop UI rebuild) ──
@@ -187,6 +191,126 @@
   }
   #topbar #searchbar:focus-within {
     width: auto;     /* override the 480px focus-expansion from the legacy rule */
+  }
+
+  /* ── LEFT ICON RAIL (Step 3 of Session 37 desktop UI rebuild) ──
+     Spec section 2.2. 56px wide, fixed left, full height between top
+     bar and bottom edge. Six rail buttons stack vertically; each one
+     toggles a flyout. Active state: 1px gold border + faint gold tint.
+     Visual baseline locked per spec section 4. */
+  #left-rail {
+    position: fixed;
+    top: 56px;          /* below #topbar */
+    left: 0;
+    bottom: 0;
+    width: 56px;
+    z-index: 200;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 8px 0;
+    gap: 4px;
+    background: #161410;
+    border-right: 1px solid rgba(201, 168, 76, 0.30);
+    box-sizing: border-box;
+  }
+  .rail-btn {
+    width: 48px;
+    height: 56px;
+    background: transparent;
+    border: 1px solid transparent;
+    border-radius: 4px;
+    color: #C9A84C;
+    cursor: pointer;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 3px;
+    padding: 4px 0 6px;
+    font-family: 'DM Sans', sans-serif;
+    box-sizing: border-box;
+    transition: color 100ms ease-out, border-color 100ms ease-out, background 100ms ease-out;
+  }
+  .rail-btn:hover {
+    background: rgba(201, 168, 76, 0.08);
+  }
+  .rail-btn.active {
+    color: #C9A84C;     /* "full gold" per spec 2.2 — same hex, but border + tint distinguish active */
+    border-color: #C9A84C;
+    background: rgba(201, 168, 76, 0.10);
+  }
+  .rail-btn svg {
+    width: 24px;
+    height: 24px;
+    flex-shrink: 0;
+  }
+  .rail-label {
+    font-size: 9px;
+    font-weight: 500;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    line-height: 1;
+  }
+
+  /* ── FLYOUTS (Step 3 shells; bodies populated in Steps 4-11) ──
+     Spec section 2.3. 360px wide, fixed; slide in from left at 200ms.
+     Default state translateX(-100%) hides the flyout off-screen left.
+     The body.flyout-open class also narrows #map by the flyout width
+     (see #map rule above) so flyouts push the map rather than overlay
+     it ("Map narrows to accommodate" per spec 2.3). */
+  .flyout {
+    position: fixed;
+    top: 56px;          /* below #topbar */
+    left: 56px;         /* right of #left-rail */
+    bottom: 0;
+    width: 360px;
+    z-index: 180;       /* below topbar (200) so account dropdown can overlay; above map */
+    background: #0D0C09;
+    border-right: 1px solid rgba(201, 168, 76, 0.30);
+    transform: translateX(-100%);
+    transition: transform 200ms ease-out;
+    display: flex;
+    flex-direction: column;
+    box-sizing: border-box;
+  }
+  .flyout.open {
+    transform: translateX(0);
+  }
+  .flyout-header {
+    height: 56px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 16px;
+    border-bottom: 1px solid rgba(201, 168, 76, 0.18);
+    flex-shrink: 0;
+  }
+  .flyout-title {
+    font-family: 'DM Sans', sans-serif;
+    font-size: 16px;
+    font-weight: 700;
+    color: #F5E6C8;
+    margin: 0;
+    letter-spacing: 0.04em;
+  }
+  .flyout-close {
+    background: transparent;
+    border: none;
+    color: #9A8A6A;
+    font-size: 16px;
+    cursor: pointer;
+    padding: 4px 8px;
+    line-height: 1;
+    transition: color 100ms ease-out;
+  }
+  .flyout-close:hover {
+    color: #F5E6C8;
+  }
+  .flyout-body {
+    flex: 1;
+    overflow-y: auto;
+    padding: 16px;
   }
 
   .mapboxgl-ctrl-top-left {

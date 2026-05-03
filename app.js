@@ -629,6 +629,77 @@ function openBilling()   { closeAccountMenu(); window.open('dashboard.html?tab=b
 function openSettings()  { closeAccountMenu(); window.open('dashboard.html?tab=preferences', '_blank'); }
 
 
+// ── LEFT RAIL FLYOUTS (Step 3) ───────────────────────────
+// One-flyout-at-a-time. toggleFlyout(name) opens or closes the named
+// flyout; clicking another rail button while one is open closes the
+// current and opens the new one. ESC and outside-click also close.
+// Map narrows via body.flyout-open class (CSS sets #map left:416px);
+// after the 200ms slide we call map.resize() so Mapbox re-pages tiles.
+let _activeFlyout = null;
+
+function toggleFlyout(name) {
+  if (_activeFlyout === name) {
+    closeFlyouts();
+  } else {
+    openFlyout(name);
+  }
+}
+
+function openFlyout(name) {
+  // Close any currently-open flyout first (one-at-a-time rule)
+  document.querySelectorAll('.flyout.open').forEach(el => {
+    el.classList.remove('open');
+    el.setAttribute('aria-hidden', 'true');
+  });
+  document.querySelectorAll('.rail-btn.active').forEach(el => el.classList.remove('active'));
+
+  const fly = document.getElementById(name + '-flyout');
+  const btn = document.querySelector(`.rail-btn[data-flyout="${name}"]`);
+  if (!fly || !btn) {
+    console.warn('[flyout] unknown flyout name:', name);
+    return;
+  }
+  fly.classList.add('open');
+  fly.setAttribute('aria-hidden', 'false');
+  btn.classList.add('active');
+  document.body.classList.add('flyout-open');
+  _activeFlyout = name;
+
+  // Repaint Mapbox after the 200ms slide finishes so tiles match the
+  // narrowed container width.
+  setTimeout(() => { if (window.map && window.map.resize) window.map.resize(); }, 220);
+}
+
+function closeFlyouts() {
+  if (!_activeFlyout) return;
+  document.querySelectorAll('.flyout.open').forEach(el => {
+    el.classList.remove('open');
+    el.setAttribute('aria-hidden', 'true');
+  });
+  document.querySelectorAll('.rail-btn.active').forEach(el => el.classList.remove('active'));
+  document.body.classList.remove('flyout-open');
+  _activeFlyout = null;
+  setTimeout(() => { if (window.map && window.map.resize) window.map.resize(); }, 220);
+}
+
+// ESC closes any open flyout.
+document.addEventListener('keydown', (e) => {
+  if (e.key === 'Escape' && _activeFlyout) closeFlyouts();
+});
+
+// Outside-click closes any open flyout. Coexists with the account-menu
+// outside-click handler (different scope: that one only fires when the
+// account menu is open).
+document.addEventListener('click', (e) => {
+  if (!_activeFlyout) return;
+  const fly  = document.getElementById(_activeFlyout + '-flyout');
+  const rail = document.getElementById('left-rail');
+  if (fly && fly.contains(e.target)) return;
+  if (rail && rail.contains(e.target)) return;
+  closeFlyouts();
+});
+
+
 // ── BOOT: read mapbox token from inline config, init map ──
 // Previously fetched from Supabase app_config table; that table was
 // dropped in Session 29 security hardening. Mapbox public tokens (pk.*)

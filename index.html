@@ -23,7 +23,7 @@ window.PROSPECTOR_CONFIG = window.UNWORKED_GOLD_CONFIG;
 </script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Mono:wght@400;500&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="style.css?v=20260502-4">
+<link rel="stylesheet" href="style.css?v=20260503-1">
 
 </head>
 <body>
@@ -60,6 +60,60 @@ window.PROSPECTOR_CONFIG = window.UNWORKED_GOLD_CONFIG;
     </button>
   </div>
 </div>
+
+<!-- Left Rail (Step 3) — 6 icons stacked vertically, each opens a flyout (Pin/AI/Offline use placeholder shells in v1) -->
+<div id="left-rail">
+  <button class="rail-btn" data-flyout="layers" onclick="toggleFlyout('layers')" title="Layers" aria-label="Layers">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polygon points="12 3 21 8 12 13 3 8 12 3"/><polyline points="3 12 12 17 21 12"/><polyline points="3 16 12 21 21 16"/></svg>
+    <span class="rail-label">Layers</span>
+  </button>
+  <button class="rail-btn" data-flyout="pin" onclick="toggleFlyout('pin')" title="Drop waypoint" aria-label="Pin">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 2 C8 2 5 5 5 9 c0 5 7 13 7 13 s7 -8 7 -13 c0 -4 -3 -7 -7 -7 z"/><circle cx="12" cy="9" r="2.5"/></svg>
+    <span class="rail-label">Pin</span>
+  </button>
+  <button class="rail-btn" data-flyout="draw" onclick="toggleFlyout('draw')" title="Draw" aria-label="Draw">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polygon points="12 3 21 8 21 16 12 21 3 16 3 8 12 3"/></svg>
+    <span class="rail-label">Draw</span>
+  </button>
+  <button class="rail-btn" data-flyout="mycontent" onclick="toggleFlyout('mycontent')" title="My Content" aria-label="My Content">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 7 a2 2 0 0 1 2 -2 h4 l2 2 h8 a2 2 0 0 1 2 2 v9 a2 2 0 0 1 -2 2 H5 a2 2 0 0 1 -2 -2 V7 z"/></svg>
+    <span class="rail-label">Saved</span>
+  </button>
+  <button class="rail-btn" data-flyout="ai" onclick="toggleFlyout('ai')" title="AI Tools" aria-label="AI">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polygon points="12 3 14 10 21 12 14 14 12 21 10 14 3 12 10 10 12 3"/></svg>
+    <span class="rail-label">AI</span>
+  </button>
+  <button class="rail-btn" data-flyout="offline" onclick="toggleFlyout('offline')" title="Offline" aria-label="Offline">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7 18 a4 4 0 0 1 -1 -7.9 a5 5 0 0 1 9.5 -1.6 a4 4 0 0 1 0 8 H17 H7 z"/><line x1="12" y1="11" x2="12" y2="20"/><polyline points="9 17 12 20 15 17"/></svg>
+    <span class="rail-label">Offline</span>
+  </button>
+</div>
+
+<!-- Flyout shells (Step 3) — empty bodies are populated in Steps 4-11 -->
+<aside class="flyout" id="layers-flyout" role="dialog" aria-label="Layers" aria-hidden="true">
+  <div class="flyout-header"><h3 class="flyout-title">Layers</h3><button class="flyout-close" onclick="closeFlyouts()" aria-label="Close">✕</button></div>
+  <div class="flyout-body"></div>
+</aside>
+<aside class="flyout" id="pin-flyout" role="dialog" aria-label="Drop a waypoint" aria-hidden="true">
+  <div class="flyout-header"><h3 class="flyout-title">Drop a Waypoint</h3><button class="flyout-close" onclick="closeFlyouts()" aria-label="Close">✕</button></div>
+  <div class="flyout-body"></div>
+</aside>
+<aside class="flyout" id="draw-flyout" role="dialog" aria-label="Draw" aria-hidden="true">
+  <div class="flyout-header"><h3 class="flyout-title">Draw</h3><button class="flyout-close" onclick="closeFlyouts()" aria-label="Close">✕</button></div>
+  <div class="flyout-body"></div>
+</aside>
+<aside class="flyout" id="mycontent-flyout" role="dialog" aria-label="My Content" aria-hidden="true">
+  <div class="flyout-header"><h3 class="flyout-title">My Content</h3><button class="flyout-close" onclick="closeFlyouts()" aria-label="Close">✕</button></div>
+  <div class="flyout-body"></div>
+</aside>
+<aside class="flyout" id="ai-flyout" role="dialog" aria-label="AI Tools" aria-hidden="true">
+  <div class="flyout-header"><h3 class="flyout-title">AI Tools</h3><button class="flyout-close" onclick="closeFlyouts()" aria-label="Close">✕</button></div>
+  <div class="flyout-body"></div>
+</aside>
+<aside class="flyout" id="offline-flyout" role="dialog" aria-label="Offline" aria-hidden="true">
+  <div class="flyout-header"><h3 class="flyout-title">Offline</h3><button class="flyout-close" onclick="closeFlyouts()" aria-label="Close">✕</button></div>
+  <div class="flyout-body"></div>
+</aside>
 
 <!-- Account dropdown — anchored below #topbar-account-btn, items shown by toggleAccountMenu() based on currentUser -->
 <div id="topbar-account-menu" role="menu" aria-hidden="true">
@@ -530,7 +584,7 @@ function closePrivacyModal() {
 }
 </script>
 
-<script src="app.js?v=20260502-1"></script>
+<script src="app.js?v=20260503-1"></script>
 <script src="app-auth.js?v=20260502-3"></script>
 <script src="app-user.js?v=20260427"></script>
 <script src="app-data.js?v=20260501"></script>
