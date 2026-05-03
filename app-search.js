@@ -162,17 +162,10 @@ function searchClaimsInBox(start, end) {
 
 
 // ── SEARCH ──────────────────────────────────────────────
-let searchTimeout = null;
-
-document.getElementById('search-input').addEventListener('input', (e) => {
-  const q = e.target.value.trim();
-  clearTimeout(searchTimeout);
-  if (q.length < 2) {
-    hideSearchResults();
-    return;
-  }
-  searchTimeout = setTimeout(() => runSearch(q), 300);
-});
+// Enter-only submit per Session 37 spec section 2.1: "Submits on Enter,
+// not on paste, not on every keystroke." The previous debounced input
+// listener (autocomplete-style geocoding on every keystroke) was
+// removed in Step 2 of the desktop UI rebuild.
 
 document.getElementById('search-input').addEventListener('keydown', (e) => {
   if (e.key === 'Escape') {

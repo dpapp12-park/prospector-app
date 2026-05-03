@@ -169,16 +169,22 @@ function startMap(token) {
       if (arrow) arrow.style.transform = `rotate(${bearing}deg)`;
     });
 
-    // Update coordinate display on every move
-    const coordEl = document.getElementById('coord-display');
+    // Update coordinate display on every move.
+    // Two sinks: legacy #coord-display (hidden, kept for back-compat) and
+    // the Step-2 #topbar-coords readout (visible, spec format
+    // "39.987\u00b0N \u00b7 118.518\u00b0W \u00b7 z10.4" \u2014 3-decimal lat/lng, 1-decimal zoom).
+    const coordEl       = document.getElementById('coord-display');
+    const topbarCoordEl = document.getElementById('topbar-coords');
     const updateCoords = () => {
-      if (!coordEl) return;
       const c = map.getCenter();
-      const lat = c.lat >= 0 ? c.lat.toFixed(5) + '\u00b0N' : Math.abs(c.lat).toFixed(5) + '\u00b0S';
-      const lng = c.lng >= 0 ? c.lng.toFixed(5) + '\u00b0E' : Math.abs(c.lng).toFixed(5) + '\u00b0W';
-      coordEl.textContent = lat + '  ' + lng + '  z' + map.getZoom().toFixed(1);
-      const zEl = document.getElementById('zoom-readout');
-      if (zEl) zEl.textContent = 'z' + map.getZoom().toFixed(1);
+      const z = map.getZoom();
+      const latLegacy = c.lat >= 0 ? c.lat.toFixed(5) + '\u00b0N' : Math.abs(c.lat).toFixed(5) + '\u00b0S';
+      const lngLegacy = c.lng >= 0 ? c.lng.toFixed(5) + '\u00b0E' : Math.abs(c.lng).toFixed(5) + '\u00b0W';
+      if (coordEl) coordEl.textContent = latLegacy + '  ' + lngLegacy + '  z' + z.toFixed(1);
+
+      const lat3 = c.lat >= 0 ? c.lat.toFixed(3) + '\u00b0N' : Math.abs(c.lat).toFixed(3) + '\u00b0S';
+      const lng3 = c.lng >= 0 ? c.lng.toFixed(3) + '\u00b0E' : Math.abs(c.lng).toFixed(3) + '\u00b0W';
+      if (topbarCoordEl) topbarCoordEl.textContent = lat3 + ' \u00b7 ' + lng3 + ' \u00b7 z' + z.toFixed(1);
     };
     map.on('move', updateCoords);
     updateCoords();
@@ -476,12 +482,36 @@ function updateRestrictionLegend() {
 }
 
 // ── GOLD SPOT PRICE ─────────────────────────────────────
+// Per-session previous price for the top-bar tick. Reset on page load
+// per spec ("don't persist tick state across page loads").
+let _topbarLastAuPrice = null;
+
+function _renderTopbarAu(price) {
+  const auEl = document.getElementById('topbar-au');
+  if (!auEl) return;
+  if (price == null) {
+    auEl.classList.add('empty');
+    auEl.textContent = 'Au —';
+    return;
+  }
+  const rounded = Math.round(Number(price));
+  const fmt     = rounded.toLocaleString('en-US');
+  auEl.classList.remove('empty');
+  let tickHtml = '';
+  if (_topbarLastAuPrice != null && rounded !== _topbarLastAuPrice) {
+    const dir = rounded > _topbarLastAuPrice ? 'up' : 'down';
+    const arrow = dir === 'up' ? '▲' : '▼';
+    tickHtml = `<span class="topbar-au-tick ${dir}">${arrow}</span>`;
+  }
+  auEl.innerHTML = 'Au $' + fmt + tickHtml;
+  _topbarLastAuPrice = rounded;
+}
+
 async function fetchGoldPrice() {
   const valEl    = document.getElementById('gold-price-value');
   const changeEl = document.getElementById('gold-price-change');
   const tsEl     = document.getElementById('gold-price-ts');
-  if (!valEl) return;
-  valEl.textContent = '...';
+  if (valEl) valEl.textContent = '...';
   try {
     // metals.live — free, no key, browser-safe
     const res  = await fetch('https://api.metals.live/v1/spot/gold');
@@ -489,13 +519,13 @@ async function fetchGoldPrice() {
     const price = Array.isArray(data) ? data[0]?.price : data?.price;
     if (price) {
       const fmt = Number(price).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-      valEl.textContent = '$' + fmt;
+      if (valEl) valEl.textContent = '$' + fmt;
       localStorage.setItem('unworked_gold_gold_price', fmt);
       localStorage.setItem('unworked_gold_gold_price_ts', Date.now().toString());
-      changeEl.textContent = '';
-      changeEl.className = '';
+      if (changeEl) { changeEl.textContent = ''; changeEl.className = ''; }
       const now = new Date();
       if (tsEl) tsEl.textContent = now.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' });
+      _renderTopbarAu(price);
       return;
     }
   } catch(e) { /* fall through to backup */ }
@@ -505,13 +535,15 @@ async function fetchGoldPrice() {
     const d2    = await res2.json();
     const price2 = d2?.items?.[0]?.xauPrice;
     if (price2) {
-      valEl.textContent = '$' + Number(price2).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+      if (valEl) valEl.textContent = '$' + Number(price2).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
       if (tsEl) tsEl.textContent = 'live';
+      _renderTopbarAu(price2);
       return;
     }
   } catch(e2) { /* ignore */ }
-  valEl.textContent = '—';
+  if (valEl) valEl.textContent = '—';
   if (tsEl) tsEl.textContent = '';
+  _renderTopbarAu(null);   // P1.14: endpoint broken — show greyed "Au —"
 }
 
 
@@ -525,11 +557,91 @@ function showStatus(msg) {
 
 
 
+// ── TOP BAR ACCOUNT MENU (Step 2) ────────────────────────
+// Click the account button to open/close the dropdown. Items shown
+// depend on currentUser: signed-out gets Sign In + Feedback, signed-in
+// gets Dashboard / Billing / Settings / Feedback / Sign Out. Refreshed
+// from refreshTopbarAccount() on every auth-state change in app-auth.js.
+function toggleAccountMenu(ev) {
+  if (ev) ev.stopPropagation();
+  const menu = document.getElementById('topbar-account-menu');
+  if (!menu) return;
+  const isOpen = menu.classList.toggle('open');
+  menu.setAttribute('aria-hidden', isOpen ? 'false' : 'true');
+}
+
+function closeAccountMenu() {
+  const menu = document.getElementById('topbar-account-menu');
+  if (!menu) return;
+  menu.classList.remove('open');
+  menu.setAttribute('aria-hidden', 'true');
+}
+
+// Show/hide menu items based on currentUser. Also swap the account
+// button between signed-in (icon) and signed-out (text "Sign In") modes.
+// Called from app-auth.js auth-state callbacks.
+function refreshTopbarAccount() {
+  const signedIn = !!(typeof currentUser !== 'undefined' && currentUser);
+  const menu = document.getElementById('topbar-account-menu');
+  if (menu) {
+    menu.querySelectorAll('[data-when]').forEach(el => {
+      const when = el.getAttribute('data-when');
+      const show = when === 'both'
+        || (when === 'signed-in' && signedIn)
+        || (when === 'signed-out' && !signedIn);
+      el.style.display = show ? '' : 'none';
+    });
+    const emailEl = document.getElementById('topbar-account-email');
+    if (emailEl) {
+      if (signedIn && currentUser?.email) {
+        emailEl.textContent = currentUser.email;
+        emailEl.style.display = 'block';
+      } else {
+        emailEl.style.display = 'none';
+      }
+    }
+  }
+  const btn = document.getElementById('topbar-account-btn');
+  if (btn) {
+    if (signedIn) {
+      btn.classList.remove('signed-out');
+      btn.innerHTML = '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="8" r="4"/><path d="M4 21 c0 -5 4 -8 8 -8 s8 3 8 8"/></svg>';
+    } else {
+      btn.classList.add('signed-out');
+      btn.textContent = 'Sign In';
+    }
+  }
+}
+
+// Dismiss the dropdown on outside click.
+document.addEventListener('click', (e) => {
+  const menu = document.getElementById('topbar-account-menu');
+  const btn  = document.getElementById('topbar-account-btn');
+  if (!menu || !menu.classList.contains('open')) return;
+  if (menu.contains(e.target) || (btn && btn.contains(e.target))) return;
+  closeAccountMenu();
+});
+
+// Dashboard / Billing / Settings entry points. Open in a new tab so the
+// map session isn't lost. dashboard.html reads ?tab= to pre-select.
+function openDashboard() { closeAccountMenu(); window.open('dashboard.html', '_blank'); }
+function openBilling()   { closeAccountMenu(); window.open('dashboard.html?tab=billing', '_blank'); }
+function openSettings()  { closeAccountMenu(); window.open('dashboard.html?tab=preferences', '_blank'); }
+
+
 // ── BOOT: read mapbox token from inline config, init map ──
 // Previously fetched from Supabase app_config table; that table was
 // dropped in Session 29 security hardening. Mapbox public tokens (pk.*)
 // are inlined directly in window.UNWORKED_GOLD_CONFIG (index.html).
 window.addEventListener('load', () => {
+  // Prime the top-bar account menu in signed-out state. app-auth.js will
+  // call refreshTopbarAccount() again once Supabase resolves a session.
+  refreshTopbarAccount();
+
+  // Kick off the gold-price fetch. Endpoint is currently broken (P1.14);
+  // failure path renders "Au —" greyed via _renderTopbarAu(null).
+  fetchGoldPrice();
+
   const token =
     window.UNWORKED_GOLD_CONFIG?.mapbox_token ||
     window.PROSPECTOR_CONFIG?.mapbox_token ||

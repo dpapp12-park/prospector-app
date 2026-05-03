@@ -46,11 +46,13 @@ function initSupabase() {
   sbClient.auth.onAuthStateChange((event, session) => {
     currentUser = session?.user || null;
     updateAuthUI();
+    if (typeof refreshTopbarAccount === 'function') refreshTopbarAccount();
     if (currentUser && typeof refreshProStatus === 'function') refreshProStatus();
   });
   sbClient.auth.getSession().then(({ data: { session } }) => {
     currentUser = session?.user || null;
     updateAuthUI();
+    if (typeof refreshTopbarAccount === 'function') refreshTopbarAccount();
     if (currentUser && typeof refreshProStatus === 'function') refreshProStatus();
     // Handle return from Stripe checkout
     handleCheckoutReturn();

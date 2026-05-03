@@ -23,7 +23,7 @@ window.PROSPECTOR_CONFIG = window.UNWORKED_GOLD_CONFIG;
 </script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Mono:wght@400;500&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="style.css?v=20260502-1">
+<link rel="stylesheet" href="style.css?v=20260502-3">
 
 </head>
 <body>
@@ -37,14 +37,40 @@ window.PROSPECTOR_CONFIG = window.UNWORKED_GOLD_CONFIG;
 <!-- Overlay -->
 <div id="overlay" onclick="closeAllPanels()"></div>
 
-<!-- Search -->
-<div id="searchbar">
-  <div id="search-input-wrap">
-    <span class="search-icon">🔍</span>
-    <input id="search-input" type="text" placeholder="Search area, claim, or coords...">
-    <button id="search-filter-btn">▤</button>
+<!-- Top Bar (Step 2) — wordmark + search + coords/Au/account -->
+<div id="topbar">
+  <div class="topbar-wordmark"><span class="topbar-wordmark-name">UNWORKED</span> <span class="topbar-wordmark-accent">GOLD</span></div>
+
+  <div id="searchbar">
+    <div id="search-input-wrap">
+      <span class="search-icon">🔍</span>
+      <input id="search-input" type="text" placeholder="Search place, claim, coordinates...">
+    </div>
+    <div id="search-results"></div>
   </div>
-  <div id="search-results"></div>
+
+  <div class="topbar-right">
+    <span id="topbar-coords">—</span>
+    <span id="topbar-au" class="empty">Au —</span>
+    <button id="topbar-account-btn" onclick="toggleAccountMenu(event)" title="Account" aria-label="Account">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <circle cx="12" cy="8" r="4"/>
+        <path d="M4 21 c0 -5 4 -8 8 -8 s8 3 8 8"/>
+      </svg>
+    </button>
+  </div>
+</div>
+
+<!-- Account dropdown — anchored below #topbar-account-btn, items shown by toggleAccountMenu() based on currentUser -->
+<div id="topbar-account-menu" role="menu" aria-hidden="true">
+  <div id="topbar-account-email"></div>
+  <a class="topbar-account-item" data-when="signed-out" onclick="openAuthPanel()">Sign In</a>
+  <a class="topbar-account-item" data-when="signed-in" onclick="openDashboard()">Dashboard</a>
+  <a class="topbar-account-item" data-when="signed-in" onclick="openBilling()">Billing</a>
+  <a class="topbar-account-item" data-when="signed-in" onclick="openSettings()">Settings</a>
+  <a class="topbar-account-item" data-when="both" onclick="openFeedbackPanel()">Feedback</a>
+  <div class="topbar-account-divider" data-when="signed-in"></div>
+  <a class="topbar-account-item topbar-account-signout" data-when="signed-in" onclick="signOut()">Sign Out</a>
 </div>
 
 <!-- Status Pill -->
@@ -504,12 +530,12 @@ function closePrivacyModal() {
 }
 </script>
 
-<script src="app.js?v=20260502"></script>
-<script src="app-auth.js?v=20260502-2"></script>
+<script src="app.js?v=20260502-1"></script>
+<script src="app-auth.js?v=20260502-3"></script>
 <script src="app-user.js?v=20260427"></script>
 <script src="app-data.js?v=20260501"></script>
 <script src="app-lidar.js?v=20260427"></script>
-<script src="app-search.js?v=20260427"></script>
+<script src="app-search.js?v=20260502-1"></script>
 <script src="app-ai.js?v=20260427-2"></script>
 <script src="app-layers.js?v=20260501"></script>
 <script src="app-layer-loader.js?v=20260502"></script>
