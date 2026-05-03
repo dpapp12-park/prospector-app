@@ -320,15 +320,197 @@ function _syncDomState(id, on) {
 // LAYERS_BY_ID / CATEGORIES_BY_ID consumed by card-builder + tile-builder.
 
 
+/* ============================================================
+ * LAYERS FLYOUT RENDERER — Step 4 of Session 37 desktop UI rebuild
+ *
+ * Renders the entire #layers-flyout body from layers.json:
+ *   - Search bar (filters visible rows by name/desc/info/chipLabel)
+ *   - Currently Active section (Step 4 = empty state; Step 5 populates)
+ *   - Recipes section (Step 4 = collapsed placeholder; later wires data)
+ *   - 10 category sections, collapse state persisted to localStorage
+ *   - Sub-sections inside Indicators (Pathfinder, Geochemistry) and
+ *     LiDAR (Hillshade, Terrain Tools)
+ *   - Layer rows: checkbox + name + count badge + info icon
+ *
+ * Step 4 scope: rendering + search + collapse only. No layer toggles
+ * (Step 5), no opacity sliders (Step 6), no info-panel expansion
+ * (later), no Recipes content (later).
+ * ============================================================ */
+
+const LAYER_CAT_OPEN_KEY = (catId)        => `ug_layer_cat_${catId}_open`;
+const LAYER_SUB_OPEN_KEY = (catId, subId) => `ug_layer_sub_${catId}_${subId}_open`;
+
+function _layersIsCatOpen(catId) {
+  try { return localStorage.getItem(LAYER_CAT_OPEN_KEY(catId)) === '1'; } catch (e) { return false; }
+}
+function _layersIsSubOpen(catId, subId) {
+  try { return localStorage.getItem(LAYER_SUB_OPEN_KEY(catId, subId)) !== '0'; } catch (e) { return true; }
+}
+
+function _layersEscape(s) {
+  return String(s == null ? '' : s)
+    .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+}
+
+function _layerRowHtml(layer) {
+  const soonClass = layer.comingSoon ? 'layer-coming-soon' : '';
+  const soonTag   = layer.comingSoon ? '<span class="layer-soon-tag">Soon</span>' : '';
+  const countTxt  = (layer.count && !layer.comingSoon) ? `<span class="layer-count">${_layersEscape(layer.count)}</span>` : '';
+  const searchTxt = _layersEscape([layer.name, layer.desc, layer.info, layer.chipLabel].filter(Boolean).join(' ').toLowerCase());
+  return `<div class="layer-row ${soonClass}" data-layer-id="${_layersEscape(layer.id)}" data-search-text="${searchTxt}">
+    <span class="layer-checkbox" aria-hidden="true">
+      <svg viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <polyline points="2 6.5 5 9.5 10 3.5"/>
+      </svg>
+    </span>
+    <span class="layer-name">${_layersEscape(layer.name)}</span>
+    ${countTxt}${soonTag}
+    <button class="info-btn" type="button" onclick="event.stopPropagation()" aria-label="Layer info">i</button>
+  </div>`;
+}
+
+function _categorySectionHtml(cat) {
+  const layersInCat = Object.values(LAYERS_BY_ID).filter(l => l.categoryId === cat.id);
+  const collapsedClass = _layersIsCatOpen(cat.id) ? '' : 'is-collapsed';
+
+  let bodyHtml = '';
+  if (cat.subSections && cat.subSections.length) {
+    cat.subSections.forEach(sub => {
+      const subLayers = layersInCat.filter(l => l.subSection === sub.id);
+      const subCollapsed = _layersIsSubOpen(cat.id, sub.id) ? '' : 'is-collapsed';
+      bodyHtml += `<div class="subsection ${subCollapsed}" data-subsection="${_layersEscape(cat.id)}|${_layersEscape(sub.id)}">
+        <div class="subsection-header" onclick="toggleLayerSubsection('${_layersEscape(cat.id)}','${_layersEscape(sub.id)}')">
+          <span class="subsection-title">${_layersEscape(sub.label)}</span>
+          <span class="category-count">${subLayers.length}</span>
+          <span class="category-arrow">▼</span>
+        </div>
+        <div class="subsection-body">${subLayers.map(_layerRowHtml).join('')}</div>
+      </div>`;
+    });
+    // Loose layers that don't belong to any declared sub-section
+    const loose = layersInCat.filter(l => !l.subSection);
+    bodyHtml += loose.map(_layerRowHtml).join('');
+  } else {
+    bodyHtml += layersInCat.map(_layerRowHtml).join('');
+  }
+
+  return `<div class="category-section ${collapsedClass}" data-category="${_layersEscape(cat.id)}">
+    <div class="category-header" onclick="toggleLayerCategory('${_layersEscape(cat.id)}')">
+      <span class="category-title">${_layersEscape(cat.label)}</span>
+      <span class="category-count">${layersInCat.length}</span>
+      <span class="category-active-count">(0)</span>
+      <span class="category-arrow">▼</span>
+    </div>
+    <div class="category-body">${bodyHtml}</div>
+  </div>`;
+}
+
+function renderLayersFlyout() {
+  const body = document.querySelector('#layers-flyout .flyout-body');
+  if (!body) return;
+  if (!CATEGORIES_BY_ID || Object.keys(CATEGORIES_BY_ID).length === 0) return;
+
+  let html = '';
+  // Search
+  html += `<div class="layers-search">
+    <input id="layers-search-input" type="text" placeholder="Search layers..." autocomplete="off">
+  </div>`;
+  // Currently Active (Step 4 — empty state; Step 5 populates the list)
+  html += `<div class="currently-active-section">
+    <div class="currently-active-header">Currently Active <span id="active-layer-count">(0)</span></div>
+    <div id="active-layers-list">
+      <div class="layers-empty-state">No layers active — tap a category below to start.</div>
+    </div>
+    <div class="layers-actions" id="active-layers-actions" style="display:none">
+      <button class="hide-all-btn" type="button">Hide All</button>
+      <button class="clear-all-btn" type="button">Clear All</button>
+    </div>
+  </div>`;
+  // Recipes (Step 4 — collapsed placeholder)
+  html += `<div class="category-section is-collapsed" data-category="__recipes">
+    <div class="category-header" onclick="toggleLayerCategory('__recipes')">
+      <span class="category-title">Recipes</span>
+      <span class="category-arrow">▼</span>
+    </div>
+    <div class="category-body"><div class="layers-empty-state" style="padding:8px 14px">Curated recipes coming soon.</div></div>
+  </div>`;
+  // 10 Categories
+  Object.values(CATEGORIES_BY_ID).forEach(cat => { html += _categorySectionHtml(cat); });
+
+  body.innerHTML = html;
+
+  // Wire search input — filters visible rows by data-search-text
+  const searchInput = document.getElementById('layers-search-input');
+  if (searchInput) searchInput.addEventListener('input', _onLayersSearch);
+
+  console.info(`[layers-flyout] rendered ${Object.keys(LAYERS_BY_ID).length} layers across ${Object.keys(CATEGORIES_BY_ID).length} categories`);
+}
+
+function toggleLayerCategory(catId) {
+  const sec = document.querySelector(`.category-section[data-category="${catId}"]`);
+  if (!sec) return;
+  const willOpen = sec.classList.contains('is-collapsed');
+  sec.classList.toggle('is-collapsed', !willOpen);
+  if (catId !== '__recipes') {
+    try { localStorage.setItem(LAYER_CAT_OPEN_KEY(catId), willOpen ? '1' : '0'); } catch (e) {}
+  }
+}
+
+function toggleLayerSubsection(catId, subId) {
+  const sec = document.querySelector(`.subsection[data-subsection="${catId}|${subId}"]`);
+  if (!sec) return;
+  const willOpen = sec.classList.contains('is-collapsed');
+  sec.classList.toggle('is-collapsed', !willOpen);
+  try { localStorage.setItem(LAYER_SUB_OPEN_KEY(catId, subId), willOpen ? '1' : '0'); } catch (e) {}
+}
+
+// Search filter — empty/<3 chars shows everything; 3+ filters layer rows
+// by lowercase substring match against data-search-text and hides
+// (sub)sections that contain no visible rows.
+function _onLayersSearch(e) {
+  const q = e.target.value.trim().toLowerCase();
+  const rows        = document.querySelectorAll('#layers-flyout .layer-row');
+  const subsections = document.querySelectorAll('#layers-flyout .subsection');
+  const categories  = document.querySelectorAll('#layers-flyout .category-section[data-category]:not([data-category="__recipes"])');
+  const recipesSec  = document.querySelector('#layers-flyout .category-section[data-category="__recipes"]');
+
+  if (q.length < 3) {
+    rows.forEach(el => el.style.display = '');
+    subsections.forEach(el => el.style.display = '');
+    categories.forEach(el => el.style.display = '');
+    if (recipesSec) recipesSec.style.display = '';
+    return;
+  }
+
+  rows.forEach(el => {
+    el.style.display = (el.getAttribute('data-search-text') || '').includes(q) ? '' : 'none';
+  });
+  subsections.forEach(sec => {
+    const hasVisible = sec.querySelectorAll('.layer-row:not([style*="display: none"])').length > 0;
+    sec.style.display = hasVisible ? '' : 'none';
+  });
+  categories.forEach(sec => {
+    const hasVisible = sec.querySelectorAll('.layer-row:not([style*="display: none"])').length > 0;
+    sec.style.display = hasVisible ? '' : 'none';
+    // Auto-expand categories that contain matches so the user sees them
+    if (hasVisible) sec.classList.remove('is-collapsed');
+  });
+  // Recipes is hidden during active search since it has no rows to match
+  if (recipesSec) recipesSec.style.display = 'none';
+}
+
+
 /* ----------------------------------------------------------
- * BOOT — preload schema on DOMContentLoaded so registries are
- * ready when Step 4 wires the new Layers flyout. No rendering
- * here — the legacy v6 5+5 tile scaffold was removed in the
- * desktop UI rebuild (Session 37, 2026-05-02).
+ * BOOT — preload schema, then render the Layers flyout body.
  * ---------------------------------------------------------- */
+async function _initLayersUI() {
+  await loadLayerSchema();
+  renderLayersFlyout();
+}
 if (document.readyState === 'loading') {
-  document.addEventListener('DOMContentLoaded', loadLayerSchema);
+  document.addEventListener('DOMContentLoaded', _initLayersUI);
 } else {
-  setTimeout(loadLayerSchema, 0);
+  setTimeout(_initLayersUI, 0);
 }
 
