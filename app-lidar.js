@@ -30,7 +30,7 @@
 const LIDAR_STYLES = [
   { id: 'hillshade-gray',    label: 'Standard Gray Hillshade',    type: 'named', rasterFunction: 'Hillshade Gray' },
   { id: 'hillshade-multi',   label: 'Hillshade Multidirectional', type: 'named', rasterFunction: 'Hillshade Multidirectional',
-    paint: { 'raster-opacity': 1.0, 'raster-contrast': 0.35, 'raster-brightness-max': 0.92 } },
+    paint: { 'raster-contrast': 0.35, 'raster-brightness-max': 0.92 } },     /* Step 5 / spec 3.8.1: opacity 1.0 removed so the global 0.7 default applies */
   { id: 'hillshade-tinted',  label: 'Hillshade Elevation Tinted', type: 'named', rasterFunction: 'Hillshade Elevation Tinted' },
   { id: 'hillshade-stretch', label: 'Hillshade Gray-Stretch',     type: 'named', rasterFunction: 'Hillshade Gray-Stretch' },
   { id: 'low-angle',         label: 'Low Angle Hillshade',        type: 'param', azimuth: 315, altitude: 15, zfactor: 2 },
@@ -47,7 +47,7 @@ const LIDAR_STYLES = [
 let activeLidarStyles = new Set();
 let focusedLidarId = 'hillshade-gray';
 let lidarLayerOpacity = {};
-LIDAR_STYLES.forEach(s => { lidarLayerOpacity[s.id] = 100; });
+LIDAR_STYLES.forEach(s => { lidarLayerOpacity[s.id] = 70; });   /* Step 5 / spec 3.8.1: default 70% so basemap shows through */
 let customHillshadeParams = { azimuth: 315, altitude: 45, zfactor: 2 };
 let lidarCustomDebounceTimer = null;
 
@@ -94,12 +94,29 @@ function buildCustomHillshadeUrl() {
 
 // ── LIDAR HILLSHADE — MAP REGISTRATION ──────────────────
 // Called from addDemoLayers (initial load + setStyle re-init).
-// Adds 11 raster source/layer pairs, all inserted below
-// 'active-claims-fill' so claim polygons remain readable.
-// Visibility per-layer reflects activeLidarStyles Set.
-// Opacity reflects lidarLayerOpacity map (user-adjustable).
-// Per-style paint tuning (e.g. contrast boost for Multidirectional)
-// comes from the style.paint field in LIDAR_STYLES.
+// Adds raster source/layer pairs, inserted BELOW the basemap label
+// layer so place names + road shields stay readable on top of the
+// hillshade. (Spec 3.8.1, Step 5 fix — was 'active-claims-fill'
+// which sat above labels and made the map unusable in the field.)
+// Visibility per-layer reflects activeLidarStyles Set. Opacity
+// reflects lidarLayerOpacity map (user-adjustable, default 70%).
+// Per-style paint tuning (e.g. contrast for Multidirectional) comes
+// from the style.paint field in LIDAR_STYLES.
+
+// Returns the id of the first symbol layer whose id contains "label",
+// so addLayer(..., id) inserts a raster BELOW it. If none found
+// (e.g. style still loading), returns undefined which appends to top.
+function _belowLabelsBeforeId() {
+  if (!map) return undefined;
+  try {
+    const layers = (map.getStyle() || {}).layers || [];
+    const lyr = layers.find(l => l.type === 'symbol' && /label/i.test(l.id));
+    return lyr ? lyr.id : undefined;
+  } catch (e) {
+    return undefined;
+  }
+}
+
 function registerLidarLayers() {
   if (!map) return;
   LIDAR_STYLES.forEach(style => {
@@ -117,9 +134,9 @@ function registerLidarLayers() {
       });
     }
     if (!map.getLayer(lyrId)) {
-      // Start from per-style paint (if any) else default, then overlay
-      // the user's stored opacity for this style.
-      const paint = Object.assign({ 'raster-opacity': 1.0 }, style.paint || {});
+      // Start from per-style paint (if any), then default opacity 0.7
+      // (spec 3.8.1) overlaid by the user's stored opacity for this style.
+      const paint = Object.assign({ 'raster-opacity': 0.7 }, style.paint || {});
       const storedPct = lidarLayerOpacity[style.id];
       if (typeof storedPct === 'number') {
         paint['raster-opacity'] = storedPct / 100;
@@ -130,7 +147,7 @@ function registerLidarLayers() {
         source: srcId,
         layout: { visibility: activeLidarStyles.has(style.id) ? 'visible' : 'none' },
         paint: paint
-      }, 'active-claims-fill');
+      }, _belowLabelsBeforeId());
     }
   });
   // On first mount, mirror state to DOM (handles setStyle re-init too).
@@ -213,7 +230,7 @@ function setFocusedLidarLayer(styleId) {
   // Reflect stored opacity for newly focused layer
   const slider = document.getElementById('lidar-opacity-slider');
   const val    = document.getElementById('lidar-opacity-value');
-  const pct    = (typeof lidarLayerOpacity[styleId] === 'number') ? lidarLayerOpacity[styleId] : 100;
+  const pct    = (typeof lidarLayerOpacity[styleId] === 'number') ? lidarLayerOpacity[styleId] : 70;   /* Step 5 / spec 3.8.1: default 70% */
   if (slider) slider.value = pct;
   if (val)    val.textContent = `${pct}%`;
 }
@@ -303,8 +320,8 @@ function registerCustomHillshadeLayer() {
       type: 'raster',
       source: 'custom-hs-src',
       layout: { visibility: customHillshadeActive ? 'visible' : 'none' },
-      paint: { 'raster-opacity': 1.0 }
-    }, 'active-claims-fill');
+      paint: { 'raster-opacity': 0.7 }     /* Step 5 / spec 3.8.1 */
+    }, _belowLabelsBeforeId());            /* Step 5 / spec 3.8.1: insert below basemap labels */
   }
 }
 

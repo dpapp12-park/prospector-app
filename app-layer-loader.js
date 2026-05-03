@@ -287,27 +287,24 @@ function _flipVisibility(mapLayers, on) {
 }
 
 function _syncDomState(id, on) {
-  // Mockup-style card glow: whole card gets .on class.
-  const card = document.getElementById(`card-${id}`);
-  if (card) card.classList.toggle('on', on);
-
-  // Card status text ("ON ●" vs "+ ADD") — matches mockup.
-  const status = document.getElementById(`card-status-${id}`);
-  if (status) status.textContent = on ? 'ON \u25CF' : '+ ADD';
-
-  // Legacy bullet + name (kept for any code that targets them by ID).
-  const bullet = document.getElementById(`card-bullet-${id}`);
-  const name   = document.getElementById(`card-name-${id}`);
-  if (bullet) bullet.classList.toggle('on', on);
-  if (name)   name.classList.toggle('on', on);
-
-  // Hidden compat toggle in old layer panel (kept during migration).
-  const compatToggle = document.getElementById(`toggle-${id}`);
-  if (compatToggle) compatToggle.classList.toggle('on', on);
-
-  // After any dispatch, refresh tile state (badge counts + has-active).
-  if (typeof _refreshRailState === 'function') _refreshRailState();
+  // Step 5: toggle .is-on on every .layer-row matching this id (there
+  // can be two — the canonical row in the category section and the
+  // mirror row in Currently Active). For LiDAR layers, query the
+  // canonical state (activeLidarStyles Set) since the dispatch un-flips
+  // layerState[id] for that branch.
+  const layer = LAYERS_BY_ID[id];
+  let actualOn = on;
+  if (layer && layer.behavior === 'lidar' && typeof activeLidarStyles !== 'undefined') {
+    actualOn = activeLidarStyles.has(layer.lidarStyleId);
+  }
+  document.querySelectorAll(`.layer-row[data-layer-id="${id}"]`).forEach(row => {
+    row.classList.toggle('is-on', actualOn);
+  });
+  // Re-render the Currently Active section + (N) counts on category headers.
+  if (typeof _renderActiveLayersSection === 'function') _renderActiveLayersSection();
+  if (typeof _updateCategoryActiveCounts === 'function') _updateCategoryActiveCounts();
 }
+
 
 
 /* ----------------------------------------------------------
@@ -423,8 +420,8 @@ function renderLayersFlyout() {
       <div class="layers-empty-state">No layers active — tap a category below to start.</div>
     </div>
     <div class="layers-actions" id="active-layers-actions" style="display:none">
-      <button class="hide-all-btn" type="button">Hide All</button>
-      <button class="clear-all-btn" type="button">Clear All</button>
+      <button class="hide-all-btn" type="button" onclick="hideAllLayers()">Hide All</button>
+      <button class="clear-all-btn" type="button" onclick="clearAllLayers()">Clear All</button>
     </div>
   </div>`;
   // Recipes (Step 4 — collapsed placeholder)
@@ -444,7 +441,139 @@ function renderLayersFlyout() {
   const searchInput = document.getElementById('layers-search-input');
   if (searchInput) searchInput.addEventListener('input', _onLayersSearch);
 
+  // Step 5: click delegation for layer rows. Click anywhere on a row
+  // (except the info button) toggles the layer via dispatchLayerToggle.
+  // Coming-soon rows are skipped (non-interactive). Same delegate also
+  // covers the mirror rows in Currently Active.
+  body.addEventListener('click', (e) => {
+    if (e.target.closest('.info-btn')) return;
+    if (e.target.closest('.hide-all-btn') || e.target.closest('.clear-all-btn')) return;
+    if (e.target.closest('.category-header') || e.target.closest('.subsection-header')) return;
+    const row = e.target.closest('.layer-row');
+    if (!row) return;
+    if (row.classList.contains('layer-coming-soon')) return;
+    const id = row.getAttribute('data-layer-id');
+    if (id) dispatchLayerToggle(id);
+  });
+
+  // Initial render of Currently Active section + category counts to
+  // reflect any defaultOn layers (e.g. layerState['active-claims'] = true).
+  _renderActiveLayersSection();
+  _updateCategoryActiveCounts();
+  // Mirror initial .is-on state on rows for any layers already active at boot.
+  Object.entries(layerState || {}).forEach(([id, on]) => {
+    if (!on) return;
+    document.querySelectorAll(`#layers-flyout .layer-row[data-layer-id="${id}"]`).forEach(row => {
+      row.classList.add('is-on');
+    });
+  });
+
   console.info(`[layers-flyout] rendered ${Object.keys(LAYERS_BY_ID).length} layers across ${Object.keys(CATEGORIES_BY_ID).length} categories`);
+}
+
+// Step 5: union of vector layerState (key=true) and LiDAR activeLidarStyles
+// resolved back to their layer.id. Used by Currently Active rendering and
+// the per-category active-count badges.
+function _getActiveLayerIds() {
+  const ids = new Set();
+  Object.entries(layerState || {}).forEach(([id, on]) => { if (on && LAYERS_BY_ID[id]) ids.add(id); });
+  if (typeof activeLidarStyles !== 'undefined' && activeLidarStyles.size > 0) {
+    activeLidarStyles.forEach(styleId => {
+      const layer = Object.values(LAYERS_BY_ID).find(l => l.behavior === 'lidar' && l.lidarStyleId === styleId);
+      if (layer) ids.add(layer.id);
+    });
+  }
+  return Array.from(ids);
+}
+
+// Step 5: Hide All / Show All toggle. Sets visibility:none on every
+// active layer's mapLayers without un-toggling them; click again to
+// restore. Per spec 3.3.
+let _layersHidden = false;
+function hideAllLayers() {
+  if (!window.map) return;
+  const goingToHide = !_layersHidden;
+  const vis = goingToHide ? 'none' : 'visible';
+  _getActiveLayerIds().forEach(id => {
+    const layer = LAYERS_BY_ID[id];
+    if (!layer) return;
+    if (layer.behavior === 'lidar') {
+      const lyrId = `lidar-layer-${layer.lidarStyleId}`;
+      if (window.map.getLayer(lyrId)) window.map.setLayoutProperty(lyrId, 'visibility', vis);
+    } else {
+      (layer.mapLayers || []).forEach(lyrId => {
+        if (window.map.getLayer(lyrId)) window.map.setLayoutProperty(lyrId, 'visibility', vis);
+      });
+    }
+  });
+  _layersHidden = goingToHide;
+  const btn = document.querySelector('#active-layers-actions .hide-all-btn');
+  if (btn) btn.textContent = _layersHidden ? 'Show All' : 'Hide All';
+}
+
+// Step 5: Clear All un-toggles every active layer. Iterates a snapshot
+// because dispatchLayerToggle mutates layerState mid-loop.
+function clearAllLayers() {
+  const snapshot = _getActiveLayerIds();
+  snapshot.forEach(id => {
+    if (typeof dispatchLayerToggle === 'function') dispatchLayerToggle(id);
+  });
+  _layersHidden = false;
+}
+
+// Step 5: rebuilds the Currently Active section. 0 active = empty
+// state line + actions hidden. 1+ active = mirror rows (with .is-on
+// class so the checkbox renders filled) + Hide All / Clear All
+// actions visible. Called from _syncDomState on every toggle.
+function _renderActiveLayersSection() {
+  const list = document.getElementById('active-layers-list');
+  const actions = document.getElementById('active-layers-actions');
+  const countEl = document.getElementById('active-layer-count');
+  if (!list) return;
+
+  const activeIds = _getActiveLayerIds();
+  if (countEl) countEl.textContent = `(${activeIds.length})`;
+
+  if (activeIds.length === 0) {
+    list.innerHTML = '<div class="layers-empty-state">No layers active — tap a category below to start.</div>';
+    if (actions) actions.style.display = 'none';
+    _layersHidden = false;
+    return;
+  }
+
+  list.innerHTML = activeIds.map(id => {
+    const layer = LAYERS_BY_ID[id];
+    if (!layer) return '';
+    return `<div class="layer-row is-on" data-layer-id="${_layersEscape(id)}">
+      <span class="layer-checkbox" aria-hidden="true">
+        <svg viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <polyline points="2 6.5 5 9.5 10 3.5"/>
+        </svg>
+      </span>
+      <span class="layer-name">${_layersEscape(layer.name)}</span>
+    </div>`;
+  }).join('');
+
+  if (actions) actions.style.display = '';
+  const hideBtn = actions ? actions.querySelector('.hide-all-btn') : null;
+  if (hideBtn) hideBtn.textContent = _layersHidden ? 'Show All' : 'Hide All';
+}
+
+// Step 5: updates the (N) badge on every category header. Adds the
+// .has-active class for the gold tint when a category has 1+ active.
+function _updateCategoryActiveCounts() {
+  const activeIds = new Set(_getActiveLayerIds());
+  Object.values(CATEGORIES_BY_ID).forEach(cat => {
+    const layers = Object.values(LAYERS_BY_ID).filter(l => l.categoryId === cat.id);
+    const activeCount = layers.filter(l => activeIds.has(l.id)).length;
+    const sec = document.querySelector(`.category-section[data-category="${cat.id}"]`);
+    if (!sec) return;
+    const el = sec.querySelector('.category-active-count');
+    if (el) {
+      el.textContent = `(${activeCount})`;
+      el.classList.toggle('has-active', activeCount > 0);
+    }
+  });
 }
 
 function toggleLayerCategory(catId) {
