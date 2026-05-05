@@ -42,7 +42,7 @@ async function loadLayerSchema() {
 
   let schema;
   try {
-    const resp = await fetch('layers.json?v=20260425');
+    const resp = await fetch('layers.json?v=20260504-3');
     if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
     schema = await resp.json();
   } catch (err) {
@@ -263,6 +263,12 @@ async function dispatchLayerToggle(id) {
     default:
       console.error(`[layer-loader] unknown behavior "${layer.behavior}" for "${id}"`);
   }
+
+  // Step 6: when a raster layer turns ON, apply the persisted (or
+  // schema-default) opacity to its map paint property BEFORE the user
+  // sees the layer. _applyLayerOpacity is a no-op for vectors and for
+  // layers that lack defaultOpacityPct in layers.json.
+  if (newState && typeof _applyLayerOpacity === 'function') _applyLayerOpacity(id);
 
   // Mirror existing UI state: bullet, name class, hidden compat toggle
   _syncDomState(id, newState);
@@ -544,6 +550,24 @@ function _renderActiveLayersSection() {
   list.innerHTML = activeIds.map(id => {
     const layer = LAYERS_BY_ID[id];
     if (!layer) return '';
+    // Step 6: schema-driven opacity slider. layers.json rows for raster
+    // layers carry defaultOpacityPct (Option A). Presence => render
+    // slider; absence => vector-style row only. Slider's value reflects
+    // localStorage (per-session persistence) falling back to schema
+    // default. The slider operates on layer.id (the schema id), and
+    // _applyLayerOpacity iterates layer.mapLayers internally so the
+    // raster paint property gets set on the actual Mapbox layer.
+    let sliderHtml = '';
+    if (layer.defaultOpacityPct != null) {
+      const pct = _getStoredOpacityPct(id);
+      sliderHtml = `<div class="layer-opacity-row">
+        <input type="range" class="layer-opacity-slider"
+               min="0" max="100" value="${pct}"
+               oninput="updateLayerOpacity('${_layersEscape(id)}', this.value)"
+               aria-label="${_layersEscape(layer.name)} opacity">
+        <span class="layer-opacity-value" id="opacity-val-${_layersEscape(id)}">${pct}%</span>
+      </div>`;
+    }
     return `<div class="layer-row is-on" data-layer-id="${_layersEscape(id)}">
       <span class="layer-checkbox" aria-hidden="true">
         <svg viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -551,6 +575,7 @@ function _renderActiveLayersSection() {
         </svg>
       </span>
       <span class="layer-name">${_layersEscape(layer.name)}</span>
+      ${sliderHtml}
     </div>`;
   }).join('');
 
@@ -574,6 +599,54 @@ function _updateCategoryActiveCounts() {
       el.classList.toggle('has-active', activeCount > 0);
     }
   });
+}
+
+// ── STEP 6: PER-LAYER OPACITY (raster layers only) ───────
+// Schema-driven (Option A): a layers.json row carrying
+// defaultOpacityPct gets a slider in the Currently Active mirror row.
+// Slider value persists in localStorage under ug_layer_opacity_${id};
+// _applyLayerOpacity is called from dispatchLayerToggle on every
+// turn-on so the persisted (or schema-default) value applies before
+// the user sees the layer.
+
+function _getStoredOpacityPct(layerId) {
+  const layer = LAYERS_BY_ID[layerId];
+  if (!layer || layer.defaultOpacityPct == null) return null;
+  let stored = null;
+  try { stored = localStorage.getItem(`ug_layer_opacity_${layerId}`); } catch (e) {}
+  if (stored != null) {
+    const n = parseInt(stored, 10);
+    if (!Number.isNaN(n) && n >= 0 && n <= 100) return n;
+  }
+  return layer.defaultOpacityPct;
+}
+
+function _applyLayerOpacity(layerId) {
+  const layer = LAYERS_BY_ID[layerId];
+  if (!layer || layer.defaultOpacityPct == null) return;
+  const pct = _getStoredOpacityPct(layerId);
+  if (pct == null) return;
+  const opacity = pct / 100;
+  if (!window.map || !layer.mapLayers) return;
+  // Iterate every map layer the schema row owns; setPaintProperty for
+  // 'raster-opacity' is a no-op on non-raster layer types (e.g. the
+  // 'topo-labels' symbol partner of Contours), so we don't have to
+  // discriminate here.
+  layer.mapLayers.forEach(mlid => {
+    if (window.map.getLayer(mlid)) {
+      try { window.map.setPaintProperty(mlid, 'raster-opacity', opacity); } catch (e) {}
+    }
+  });
+}
+
+// Global — called from the slider's oninput attribute.
+function updateLayerOpacity(layerId, value) {
+  const pct = parseInt(value, 10);
+  if (Number.isNaN(pct)) return;
+  try { localStorage.setItem(`ug_layer_opacity_${layerId}`, String(pct)); } catch (e) {}
+  _applyLayerOpacity(layerId);
+  const valEl = document.getElementById(`opacity-val-${layerId}`);
+  if (valEl) valEl.textContent = `${pct}%`;
 }
 
 function toggleLayerCategory(catId) {

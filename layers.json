@@ -370,6 +370,7 @@
       "behavior": "lidar", "lidarStyleId": "hillshade-gray",
       "mapLayers": ["lidar-layer-hillshade-gray"],
       "comingSoon": false, "defaultOn": false, "pairsWith": [],
+      "defaultOpacityPct": 70,
       "subControl": { "type": "opacitySlider", "min": 0, "max": 100, "default": 100, "appliesTo": "focused", "onChange": "updateLidarOpacity" } },
 
     { "id": "lidar-hillshade-multi", "categoryId": "lidar", "subSection": "hillshade",
@@ -380,6 +381,7 @@
       "behavior": "lidar", "lidarStyleId": "hillshade-multi",
       "mapLayers": ["lidar-layer-hillshade-multi"],
       "comingSoon": false, "defaultOn": false, "pairsWith": [],
+      "defaultOpacityPct": 70,
       "subControl": { "type": "opacitySlider", "min": 0, "max": 100, "default": 100, "appliesTo": "focused", "onChange": "updateLidarOpacity" } },
 
     { "id": "lidar-hillshade-tinted", "categoryId": "lidar", "subSection": "hillshade",
@@ -390,6 +392,7 @@
       "behavior": "lidar", "lidarStyleId": "hillshade-tinted",
       "mapLayers": ["lidar-layer-hillshade-tinted"],
       "comingSoon": false, "defaultOn": false, "pairsWith": [],
+      "defaultOpacityPct": 70,
       "subControl": { "type": "opacitySlider", "min": 0, "max": 100, "default": 100, "appliesTo": "focused", "onChange": "updateLidarOpacity" } },
 
     { "id": "lidar-hillshade-stretch", "categoryId": "lidar", "subSection": "hillshade",
@@ -400,6 +403,7 @@
       "behavior": "lidar", "lidarStyleId": "hillshade-stretch",
       "mapLayers": ["lidar-layer-hillshade-stretch"],
       "comingSoon": false, "defaultOn": false, "pairsWith": [],
+      "defaultOpacityPct": 70,
       "subControl": { "type": "opacitySlider", "min": 0, "max": 100, "default": 100, "appliesTo": "focused", "onChange": "updateLidarOpacity" } },
 
     { "id": "lidar-low-angle", "categoryId": "lidar", "subSection": "hillshade",
@@ -410,6 +414,7 @@
       "behavior": "lidar", "lidarStyleId": "low-angle",
       "mapLayers": ["lidar-layer-low-angle"],
       "comingSoon": false, "defaultOn": false, "pairsWith": [],
+      "defaultOpacityPct": 70,
       "subControl": { "type": "opacitySlider", "min": 0, "max": 100, "default": 100, "appliesTo": "focused", "onChange": "updateLidarOpacity" } },
 
     { "id": "lidar-east-lit", "categoryId": "lidar", "subSection": "hillshade",
@@ -420,6 +425,7 @@
       "behavior": "lidar", "lidarStyleId": "east-lit",
       "mapLayers": ["lidar-layer-east-lit"],
       "comingSoon": false, "defaultOn": false, "pairsWith": [],
+      "defaultOpacityPct": 70,
       "subControl": { "type": "opacitySlider", "min": 0, "max": 100, "default": 100, "appliesTo": "focused", "onChange": "updateLidarOpacity" } },
 
     { "id": "lidar-south-lit", "categoryId": "lidar", "subSection": "hillshade",
@@ -430,6 +436,7 @@
       "behavior": "lidar", "lidarStyleId": "south-lit",
       "mapLayers": ["lidar-layer-south-lit"],
       "comingSoon": false, "defaultOn": false, "pairsWith": [],
+      "defaultOpacityPct": 70,
       "subControl": { "type": "opacitySlider", "min": 0, "max": 100, "default": 100, "appliesTo": "focused", "onChange": "updateLidarOpacity" } },
 
     { "id": "lidar-slope-map", "categoryId": "lidar", "subSection": "hillshade",
@@ -440,6 +447,7 @@
       "behavior": "lidar", "lidarStyleId": "slope-map",
       "mapLayers": ["lidar-layer-slope-map"],
       "comingSoon": false, "defaultOn": false, "pairsWith": [],
+      "defaultOpacityPct": 100,
       "subControl": { "type": "opacitySlider", "min": 0, "max": 100, "default": 100, "appliesTo": "focused", "onChange": "updateLidarOpacity" } },
 
     { "id": "lidar-aspect-map", "categoryId": "lidar", "subSection": "hillshade",
@@ -450,6 +458,7 @@
       "behavior": "lidar", "lidarStyleId": "aspect-map",
       "mapLayers": ["lidar-layer-aspect-map"],
       "comingSoon": false, "defaultOn": false, "pairsWith": [],
+      "defaultOpacityPct": 100,
       "subControl": { "type": "opacitySlider", "min": 0, "max": 100, "default": 100, "appliesTo": "focused", "onChange": "updateLidarOpacity" } },
 
     { "id": "lidar-contour", "categoryId": "lidar", "subSection": "hillshade",
@@ -460,6 +469,7 @@
       "behavior": "lidar", "lidarStyleId": "contour",
       "mapLayers": ["lidar-layer-contour"],
       "comingSoon": false, "defaultOn": false, "pairsWith": [],
+      "defaultOpacityPct": 100,
       "subControl": { "type": "opacitySlider", "min": 0, "max": 100, "default": 100, "appliesTo": "focused", "onChange": "updateLidarOpacity" } },
 
     { "_comment": "Q6 = a: Custom Hillshade as a card. Replaces standalone panel near zoom indicator.",
@@ -471,6 +481,7 @@
       "behavior": "custom", "customDispatch": "toggleCustomHillshade",
       "mapLayers": ["custom-hs-layer"],
       "comingSoon": false, "defaultOn": false, "pairsWith": [],
+      "defaultOpacityPct": 70,
       "subControl": {
         "type": "multiInput",
         "inputs": [
@@ -499,6 +510,7 @@
       "info": "Elevation lines at regular intervals. Closer lines = steeper ground.",
       "count": null, "chipLabel": "📈 Contours", "thumb": "contour",
       "behavior": "simple", "mapLayers": ["topo-layer", "topo-labels"],
-      "comingSoon": false, "defaultOn": false, "pairsWith": [] }
+      "comingSoon": false, "defaultOn": false, "pairsWith": [],
+      "defaultOpacityPct": 100 }
   ]
 }
