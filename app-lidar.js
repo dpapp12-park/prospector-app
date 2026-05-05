@@ -4,7 +4,6 @@
 //
 // CONTENTS:
 //   STATE:     LIDAR_STYLES (10 styles), activeLidarStyles,
-//              focusedLidarId, lidarLayerOpacity,
 //              customHillshadeParams, lidarCustomDebounceTimer,
 //              customHillshadeActive
 //   BUILDERS:  buildLidarSourceUrl, buildCustomHillshadeUrl
@@ -39,13 +38,14 @@ const LIDAR_STYLES = [
   { id: 'contour',           label: 'Contour Smoothed 25',        type: 'named', rasterFunction: 'Contour Smoothed 25', allowRetry: true }
 ];
 // Boot with no LiDAR style active — basemap is fully visible on first load.
-// User clicks a row in the LiDAR panel to turn one on. focusedLidarId stays
-// pointed at hillshade-gray so the opacity slider has a sensible default
-// when the panel opens; it becomes meaningful only after a style is active.
+// activeLidarStyles tracks which styles the user has toggled on. Default
+// per-layer opacity is 0.7 (spec 3.8.1) and is set on the layer's paint
+// when registerLidarLayers adds it to the map. The legacy focused-style
+// state model and its per-layer opacity-storage object were removed
+// Session 38 once Step 1 stripped the focused-only opacity slider;
+// Step 6 will reintroduce per-active-row sliders without resurrecting
+// either piece of legacy state.
 let activeLidarStyles = new Set();
-let focusedLidarId = 'hillshade-gray';
-let lidarLayerOpacity = {};
-LIDAR_STYLES.forEach(s => { lidarLayerOpacity[s.id] = 70; });   /* Step 5 / spec 3.8.1: default 70% so basemap shows through */
 let customHillshadeParams = { azimuth: 315, altitude: 45, zfactor: 2 };
 let lidarCustomDebounceTimer = null;
 
@@ -96,10 +96,11 @@ function buildCustomHillshadeUrl() {
 // layer so place names + road shields stay readable on top of the
 // hillshade. (Spec 3.8.1, Step 5 fix — was 'active-claims-fill'
 // which sat above labels and made the map unusable in the field.)
-// Visibility per-layer reflects activeLidarStyles Set. Opacity
-// reflects lidarLayerOpacity map (user-adjustable, default 70%).
-// Per-style paint tuning (e.g. contrast for Multidirectional) comes
-// from the style.paint field in LIDAR_STYLES.
+// Visibility per-layer reflects activeLidarStyles Set. Opacity is
+// the global default 0.7 (spec 3.8.1); Step 6 will reintroduce
+// per-active-row opacity sliders without resurrecting the focused-
+// style state model. Per-style paint tuning (e.g. contrast for
+// Multidirectional) comes from the style.paint field in LIDAR_STYLES.
 
 // Returns the id of the first symbol layer whose id contains "label",
 // so addLayer(..., id) inserts a raster BELOW it. If none found
@@ -132,13 +133,10 @@ function registerLidarLayers() {
       });
     }
     if (!map.getLayer(lyrId)) {
-      // Start from per-style paint (if any), then default opacity 0.7
-      // (spec 3.8.1) overlaid by the user's stored opacity for this style.
+      // Default opacity 0.7 (spec 3.8.1), with per-style paint overrides
+      // (e.g. contrast boost for Multidirectional). Step 6 will layer
+      // per-active-row opacity overrides on top via setPaintProperty.
       const paint = Object.assign({ 'raster-opacity': 0.7 }, style.paint || {});
-      const storedPct = lidarLayerOpacity[style.id];
-      if (typeof storedPct === 'number') {
-        paint['raster-opacity'] = storedPct / 100;
-      }
       map.addLayer({
         id: lyrId,
         type: 'raster',
@@ -152,34 +150,20 @@ function registerLidarLayers() {
   updateLidarActiveCount();
 }
 
-// ── LIDAR HILLSHADE — TOGGLE + FOCUS ────────────────────
-// Click behavior:
-//   inactive row                → turn ON + focus
-//   active but not focused      → set focus (don't toggle off)
-//   active AND focused          → toggle OFF (unless last one on)
+// ── LIDAR HILLSHADE — TOGGLE ─────────────────────────────
+// Click behavior (post-Session-38, focused-style model removed):
+//   inactive row → activate
+//   active row   → deactivate
+// Zero-active is allowed (Finding #1a, Session 24). Step 6 will add
+// per-active-row opacity sliders that don't depend on a focused style.
 function toggleLidarStyle(styleId) {
   const style = LIDAR_STYLES.find(s => s.id === styleId);
   if (!style) return;
 
-  const isActive  = activeLidarStyles.has(styleId);
-  const isFocused = (focusedLidarId === styleId);
-
-  if (!isActive) {
-    activeLidarStyles.add(styleId);
-    focusedLidarId = styleId;
-  } else if (!isFocused) {
-    focusedLidarId = styleId;
-  } else {
-    // Click on the focused-and-active row turns it off. Zero-active is
-    // allowed (matches the new boot-zero default from Finding #1a). If
-    // any styles remain active, focus the first one; if none remain,
-    // focusedLidarId stays pointed at the just-deactivated style so the
-    // LAYER CONTROLS readout stays meaningful when the user re-enables.
-    // See Finding #11a (Session 24).
+  if (activeLidarStyles.has(styleId)) {
     activeLidarStyles.delete(styleId);
-    if (activeLidarStyles.size > 0) {
-      focusedLidarId = Array.from(activeLidarStyles)[0];
-    }
+  } else {
+    activeLidarStyles.add(styleId);
   }
 
   // Mirror active state to bullets + name classes on every row

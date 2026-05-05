@@ -245,7 +245,7 @@ async function dispatchLayerToggle(id) {
 
     case 'lidar':
       // Routes to existing app-lidar.js — handles its own state model
-      // (activeLidarStyles Set, focusedLidarId, opacity slider focus).
+      // (activeLidarStyles Set is the source of truth post-Session-38).
       // We don't manipulate layerState here — toggleLidarStyle owns it.
       layerState[id] = !newState;  // un-flip; toggleLidarStyle is source of truth
       toggleLidarStyle(layer.lidarStyleId);

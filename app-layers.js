@@ -1671,23 +1671,10 @@ function updateActiveLayerBar() {
       </div>`)
     .join('');
 
-  // LiDAR gets one combined chip — focused style when N=1, count when N>1.
-  // Click opens the layer panel so user can customize (at-least-one-on rule
-  // means we don't offer an X to kill it from the chip bar).
-  let lidarChipHtml = '';
-  if (lidarCount > 0) {
-    const focusedStyle = LIDAR_STYLES.find(s => s.id === focusedLidarId);
-    const focusedLabel = focusedStyle ? focusedStyle.label : 'LiDAR Hillshade';
-    const chipLabel = (lidarCount === 1)
-      ? `🗻 ${focusedLabel}`
-      : `🗻 LiDAR Hillshade (${lidarCount})`;
-    lidarChipHtml = `
-      <div class="layer-chip" onclick="toggleLayers()">
-        ${chipLabel}
-      </div>`;
-  }
-
-  chips.innerHTML = chipHtml + lidarChipHtml;
+  // Legacy LiDAR-aggregated-chip block (focused-style label) deleted
+  // Session 38. Step 9 will rebuild the chip bar with whatever LiDAR
+  // representation the new spec calls for.
+  chips.innerHTML = chipHtml;
   bar.classList.add('visible');
 }
 
