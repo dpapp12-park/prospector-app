@@ -987,47 +987,96 @@
     pointer-events: none;
   }
 
-  /* ── MAP STYLE SWITCHER ── */
-  #style-switcher {
+  /* ── FLOATING CLUSTER (Step 8) — bottom-right map controls ──
+     Six 40px buttons stacked vertically, 16px from edges, 8px gap.
+     Spec section 2.4. New IDs (#fab-zoom-in/out/gps/north/style/3d)
+     deliberately avoid reusing the stripped IDs from commit 598825d
+     (Option B picked by Demetri to dodge Step 2 cascade collisions). */
+  #floating-cluster {
     position: absolute;
-    top: 70px;
-    right: 68px;
-    z-index: 100;
+    bottom: 16px;
+    right: 16px;
+    z-index: 10;
     display: flex;
     flex-direction: column;
+    gap: 8px;
+  }
+  .fab-btn {
+    width: 40px;
+    height: 40px;
+    background: rgba(13, 12, 9, 0.80);              /* #0D0C09 @ 80% per spec 2.4 */
+    border: 1px solid rgba(201, 168, 76, 0.30);     /* gold @ 30% resting */
+    border-radius: 8px;
+    color: #C9A84C;
+    cursor: pointer;
+    transition: border-color 100ms ease-out, background 100ms ease-out;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: 'DM Mono', monospace;
+    font-size: 14px;
+    font-weight: 500;
+    line-height: 1;
+    padding: 0;
+    backdrop-filter: blur(8px);
+    user-select: none;
+  }
+  .fab-btn:hover {
+    border-color: #C9A84C;                          /* gold @ 100% on hover */
+  }
+  .fab-btn.active {
+    border-color: #C9A84C;
+    background: rgba(201, 168, 76, 0.15);
+  }
+  /* "3D" needs a smaller font so two characters fit cleanly */
+  #fab-3d { font-size: 11px; letter-spacing: 0.04em; }
+
+  /* ── MAP STYLE SWITCHER (Step 8 reposition) ──
+     Anchored to the LEFT of #fab-style in the cluster. Container
+     #style-switcher and the three .style-btn thumbnails inside it
+     survived the Step 1 strip; only the positioning + layout
+     changed in Step 8 (column → row, top-right → bottom-right).
+     Hidden by default; toggleStyles() flips .open. */
+  #style-switcher {
+    position: absolute;
+    bottom: 64px;       /* aligns with #fab-style's bottom edge: 16 (cluster) + 40 (3D btn) + 8 (gap) */
+    right: 64px;        /* 16 (cluster margin) + 40 (cluster width) + 8 (gap) */
+    z-index: 10;
+    display: flex;
+    flex-direction: row;
     gap: 6px;
+    padding: 6px;
+    background: rgba(13, 12, 9, 0.80);
+    border: 1px solid rgba(201, 168, 76, 0.30);
+    border-radius: 8px;
+    backdrop-filter: blur(8px);
     opacity: 0;
     pointer-events: none;
-    transform: translateY(-8px);
-    transition: opacity 0.2s, transform 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+    transform: translateX(8px);
+    transition: opacity 200ms ease-out, transform 200ms ease-out;
   }
-
   #style-switcher.open {
     opacity: 1;
     pointer-events: auto;
-    transform: translateY(0);
+    transform: translateX(0);
   }
-
   .style-btn {
-    background: var(--panel-bg);
-    border: 1px solid var(--panel-border);
-    color: var(--cream);
+    background: rgba(13, 12, 9, 0.60);
+    border: 1px solid rgba(201, 168, 76, 0.30);
+    color: #F5E6C8;
     font-family: 'DM Mono', monospace;
     font-size: 10px;
-    letter-spacing: 0.08em;
-    padding: 8px 14px;
-    border-radius: 8px;
+    letter-spacing: 0.06em;
+    padding: 8px 12px;
+    border-radius: 6px;
     cursor: pointer;
-    text-align: right;
-    backdrop-filter: blur(8px);
-    transition: all 0.15s;
+    transition: border-color 100ms ease-out, color 100ms ease-out, background 100ms ease-out;
     white-space: nowrap;
-    align-self: flex-end;
   }
-
   .style-btn:hover, .style-btn.active {
-    border-color: var(--gold);
-    color: var(--gold-bright);
+    border-color: #C9A84C;
+    color: #C9A84C;
+    background: rgba(201, 168, 76, 0.10);
   }
 
   /* Token input hidden */
@@ -2947,17 +2996,17 @@
                           the DOM hidden; updateCoords() still writes to
                           it for back-compat but no one sees it.
      #active-layer-bar  — Step 9 (chip bar)
-     #style-switcher    — Step 8 (floating cluster style flyout)
      #ai-tools-menu     — Step 11 (AI rail flyout)
    #searchbar removed from this list in Step 2 — it now lives in #topbar
    and is styled by the #topbar #searchbar override above.
+   #style-switcher removed from this list in Step 8 — it now opens to
+   the left of the floating cluster's #fab-style button.
    #layer-tooltip is omitted: it's hover-triggered by showLayerInfo() and
    already starts hidden via its own CSS, so no transitional rule needed.
    ──────────────────────────────────────────────────────────────────── */
 #status-pill,
 #coord-display,
 #active-layer-bar,
-#style-switcher,
 #ai-tools-menu {
   display: none;
 }

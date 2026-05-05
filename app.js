@@ -262,6 +262,21 @@ function setStyle(name) {
   showStatus(`Style: ${name}`);
 }
 
+// ── STYLE SWITCHER (Step 8 rebuild) ──────────────────────
+// Was deleted in Step 1 strip along with the old #style-btn topbar
+// icon. Reinstated here, hooked to the new #fab-style button in the
+// floating bottom-right cluster. The legacy `if (layerPanelOpen)
+// toggleLayers()` accordion-close branch is intentionally NOT
+// restored — accordion-era state was stripped in Step 1.
+// Note: styleSwitcherOpen survived Step 1 (declared at app.js:63).
+function toggleStyles() {
+  styleSwitcherOpen = !styleSwitcherOpen;
+  const switcher = document.getElementById('style-switcher');
+  if (switcher) switcher.classList.toggle('open', styleSwitcherOpen);
+  const fabStyle = document.getElementById('fab-style');
+  if (fabStyle) fabStyle.classList.toggle('active', styleSwitcherOpen);
+}
+
 function locateUser() {
   if (!map) return;
   if (!navigator.geolocation) { showStatus('Geolocation not available'); return; }
@@ -432,16 +447,14 @@ let terrain3DOn = false;
 
 // ── 3D TERRAIN — SINGLE SOURCE OF TRUTH ─────────────────
 // All paths that turn 3D terrain on or off route through here:
-//   • toggle3D()                — floating "3D" button
+//   • toggle3D()                — bottom-right cluster's 3D button (Step 8)
 //   • toggleLayer('terrain-3d') — Layer Panel row (in app-layers.js)
 //   • setStyle()                — basemap re-init after style.load
 // Updates in lockstep:
 //   • map.setTerrain + camera ease
 //   • global terrain3DOn flag
 //   • layerState['terrain-3d']
-//   • Bottom-right cluster's 3D toggle button (Step 8 will pick the
-//     new ID; old floating #terrain-toggle-btn DOM removed Session 37,
-//     CSS deleted Session 39, JS rewire pending below)
+//   • #fab-3d .active class (the floating cluster button)
 //   • #bullet-terrain-3d / #name-terrain-3d / #toggle-terrain-3d
 //     (Layer Panel row visuals + hidden compat toggle)
 function setTerrain3D(on) {
@@ -458,12 +471,9 @@ function setTerrain3D(on) {
     map.easeTo({ pitch: 0, bearing: 0, duration: 600 });
   }
 
-  // TODO Step 8: rewire to new ID — the bottom-right cluster's 3D toggle
-  // button replaces the old #terrain-toggle-btn floating button (stripped
-  // in commit 58a17f3, CSS deleted in this commit). Step 8 will pick its
-  // new ID and reactivate the .active-class mirror here.
-  // const btn = document.getElementById('terrain-toggle-btn');
-  // if (btn) btn.classList.toggle('active', next);
+  // Mirror 3D-on state to the floating cluster's 3D button (Step 8).
+  const fab3d = document.getElementById('fab-3d');
+  if (fab3d) fab3d.classList.toggle('active', next);
 
   const bullet = document.getElementById('bullet-terrain-3d');
   const name   = document.getElementById('name-terrain-3d');

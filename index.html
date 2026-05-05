@@ -23,7 +23,7 @@ window.PROSPECTOR_CONFIG = window.UNWORKED_GOLD_CONFIG;
 </script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Mono:wght@400;500&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="style.css?v=20260505-1">
+<link rel="stylesheet" href="style.css?v=20260505-2">
 
 </head>
 <body>
@@ -33,6 +33,16 @@ window.PROSPECTOR_CONFIG = window.UNWORKED_GOLD_CONFIG;
 
 <!-- Map -->
 <div id="map"></div>
+
+<!-- Floating bottom-right cluster (Step 8) — zoom / GPS / north / style / 3D -->
+<div id="floating-cluster">
+  <button class="fab-btn" id="fab-zoom-in"  onclick="map.zoomIn()"   title="Zoom in"  aria-label="Zoom in">+</button>
+  <button class="fab-btn" id="fab-zoom-out" onclick="map.zoomOut()"  title="Zoom out" aria-label="Zoom out">−</button>
+  <button class="fab-btn" id="fab-gps"      onclick="locateUser()"   title="My location" aria-label="My location">⊕</button>
+  <button class="fab-btn" id="fab-north"    onclick="resetBearing()" title="Reset north" aria-label="Reset north">N</button>
+  <button class="fab-btn" id="fab-style"    onclick="toggleStyles()" title="Map style" aria-label="Map style">⛶</button>
+  <button class="fab-btn" id="fab-3d"       onclick="toggle3D()"     title="3D terrain" aria-label="3D terrain">3D</button>
+</div>
 
 <!-- Overlay -->
 <div id="overlay" onclick="closeAllPanels()"></div>
@@ -584,7 +594,7 @@ function closePrivacyModal() {
 }
 </script>
 
-<script src="app.js?v=20260505-1"></script>
+<script src="app.js?v=20260505-2"></script>
 <script src="app-auth.js?v=20260502-3"></script>
 <script src="app-user.js?v=20260427"></script>
 <script src="app-data.js?v=20260501"></script>
