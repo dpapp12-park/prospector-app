@@ -439,7 +439,9 @@ let terrain3DOn = false;
 //   • map.setTerrain + camera ease
 //   • global terrain3DOn flag
 //   • layerState['terrain-3d']
-//   • #terrain-toggle-btn (floating button) "active" class
+//   • Bottom-right cluster's 3D toggle button (Step 8 will pick the
+//     new ID; old floating #terrain-toggle-btn DOM removed Session 37,
+//     CSS deleted Session 39, JS rewire pending below)
 //   • #bullet-terrain-3d / #name-terrain-3d / #toggle-terrain-3d
 //     (Layer Panel row visuals + hidden compat toggle)
 function setTerrain3D(on) {
@@ -456,8 +458,12 @@ function setTerrain3D(on) {
     map.easeTo({ pitch: 0, bearing: 0, duration: 600 });
   }
 
-  const btn = document.getElementById('terrain-toggle-btn');
-  if (btn) btn.classList.toggle('active', next);
+  // TODO Step 8: rewire to new ID — the bottom-right cluster's 3D toggle
+  // button replaces the old #terrain-toggle-btn floating button (stripped
+  // in commit 58a17f3, CSS deleted in this commit). Step 8 will pick its
+  // new ID and reactivate the .active-class mirror here.
+  // const btn = document.getElementById('terrain-toggle-btn');
+  // if (btn) btn.classList.toggle('active', next);
 
   const bullet = document.getElementById('bullet-terrain-3d');
   const name   = document.getElementById('name-terrain-3d');
