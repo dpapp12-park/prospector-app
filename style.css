@@ -1005,7 +1005,7 @@
     width: 40px;
     height: 40px;
     background: rgba(13, 12, 9, 0.80);              /* #0D0C09 @ 80% per spec 2.4 */
-    border: 1px solid rgba(201, 168, 76, 0.30);     /* gold @ 30% resting */
+    border: 1px solid rgba(201, 168, 76, 0.20);     /* gold @ 20% resting (Step 8 polish: was 30%, dropped for hover contrast) */
     border-radius: 8px;
     color: #C9A84C;
     cursor: pointer;
@@ -1023,6 +1023,7 @@
   }
   .fab-btn:hover {
     border-color: #C9A84C;                          /* gold @ 100% on hover */
+    background: rgba(201, 168, 76, 0.08);           /* Step 8 polish: faint gold fill so hover reads at a glance on the dark map */
   }
   .fab-btn.active {
     border-color: #C9A84C;
