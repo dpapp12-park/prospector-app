@@ -9,10 +9,8 @@
 //              customHillshadeActive
 //   BUILDERS:  buildLidarSourceUrl, buildCustomHillshadeUrl
 //   LIFECYCLE: registerLidarLayers, registerCustomHillshadeLayer
-//   TOGGLES:   toggleLidarStyle, toggleCustomHillshade,
-//              setFocusedLidarLayer
-//   CONTROLS:  updateLidarOpacity, updateCustomParam,
-//              resetCustomHillshade
+//   TOGGLES:   toggleLidarStyle, toggleCustomHillshade
+//   CONTROLS:  updateCustomParam, resetCustomHillshade
 //   UTIL:      syncLidarWaterMask, updateLidarActiveCount
 //
 // All requests go through hillshade-proxy.dpapp12.workers.dev →
@@ -151,7 +149,6 @@ function registerLidarLayers() {
     }
   });
   // On first mount, mirror state to DOM (handles setStyle re-init too).
-  setFocusedLidarLayer(focusedLidarId);
   updateLidarActiveCount();
 }
 
@@ -205,48 +202,9 @@ function toggleLidarStyle(styleId) {
     });
   }
 
-  setFocusedLidarLayer(focusedLidarId);
   syncLidarWaterMask();
   updateLidarActiveCount();
   updateActiveLayerBar();
-}
-
-// ── LIDAR HILLSHADE — FOCUSED LAYER UI SYNC ─────────────
-// Updates: focused row border, Layer Controls panel name,
-// Custom params visibility, opacity slider to stored value.
-function setFocusedLidarLayer(styleId) {
-  const style = LIDAR_STYLES.find(s => s.id === styleId);
-  if (!style) return;
-  focusedLidarId = styleId;
-
-  LIDAR_STYLES.forEach(s => {
-    const row = document.getElementById(`lidar-row-${s.id}`);
-    if (row) row.classList.toggle('focused', s.id === styleId);
-  });
-
-  const nameEl = document.getElementById('lidar-focused-name');
-  if (nameEl) nameEl.textContent = style.label;
-
-  // Reflect stored opacity for newly focused layer
-  const slider = document.getElementById('lidar-opacity-slider');
-  const val    = document.getElementById('lidar-opacity-value');
-  const pct    = (typeof lidarLayerOpacity[styleId] === 'number') ? lidarLayerOpacity[styleId] : 70;   /* Step 5 / spec 3.8.1: default 70% */
-  if (slider) slider.value = pct;
-  if (val)    val.textContent = `${pct}%`;
-}
-
-// ── LIDAR HILLSHADE — OPACITY (focused layer only) ──────
-function updateLidarOpacity(value) {
-  const pct = Number(value);
-  lidarLayerOpacity[focusedLidarId] = pct;
-  const val = document.getElementById('lidar-opacity-value');
-  if (val) val.textContent = `${pct}%`;
-  if (map) {
-    const lyrId = `lidar-layer-${focusedLidarId}`;
-    if (map.getLayer(lyrId)) {
-      map.setPaintProperty(lyrId, 'raster-opacity', pct / 100);
-    }
-  }
 }
 
 // ── LIDAR HILLSHADE — CUSTOM GENERATOR ──────────────────
