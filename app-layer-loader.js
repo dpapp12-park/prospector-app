@@ -560,10 +560,21 @@ function _renderActiveLayersSection() {
     let sliderHtml = '';
     if (layer.defaultOpacityPct != null) {
       const pct = _getStoredOpacityPct(id);
+      // Hotfix to ac23392: range-input click on release was bubbling
+      // through the body delegate (.layer-row → dispatchLayerToggle →
+      // layer toggled off, which mutated innerHTML and detached the
+      // slider, which then made the document outside-click handler see
+      // a detached e.target → flyout closed). stopPropagation at the
+      // input source prevents both handlers from firing on release.
+      // pointerdown/pointerup added belt-and-suspenders for any
+      // future handler that listens via pointer events instead of click.
       sliderHtml = `<div class="layer-opacity-row">
         <input type="range" class="layer-opacity-slider"
                min="0" max="100" value="${pct}"
                oninput="updateLayerOpacity('${_layersEscape(id)}', this.value)"
+               onclick="event.stopPropagation()"
+               onpointerdown="event.stopPropagation()"
+               onpointerup="event.stopPropagation()"
                aria-label="${_layersEscape(layer.name)} opacity">
         <span class="layer-opacity-value" id="opacity-val-${_layersEscape(id)}">${pct}%</span>
       </div>`;
