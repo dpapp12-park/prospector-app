@@ -23,7 +23,7 @@ window.PROSPECTOR_CONFIG = window.UNWORKED_GOLD_CONFIG;
 </script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Mono:wght@400;500&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="style.css?v=20260505-3">
+<link rel="stylesheet" href="style.css?v=20260505-5">
 
 </head>
 <body>
@@ -143,10 +143,8 @@ window.PROSPECTOR_CONFIG = window.UNWORKED_GOLD_CONFIG;
 <!-- Coordinate Display -->
 <div id="coord-display">—</div>
 
-<!-- Active Layer Indicator Bar -->
-<div id="active-layer-bar">
-  <div id="active-layer-chips"></div>
-</div>
+<!-- Active Layer Chip Bar (Step 9) — populated by _renderChipBar() -->
+<div id="chip-bar" role="toolbar" aria-label="Active layers"></div>
 
 <!-- Layer Tooltip -->
 <div id="layer-tooltip"></div>
@@ -598,11 +596,11 @@ function closePrivacyModal() {
 <script src="app-auth.js?v=20260502-3"></script>
 <script src="app-user.js?v=20260427"></script>
 <script src="app-data.js?v=20260501"></script>
-<script src="app-lidar.js?v=20260504-2"></script>
+<script src="app-lidar.js?v=20260505-4"></script>
 <script src="app-search.js?v=20260502-1"></script>
 <script src="app-ai.js?v=20260427-2"></script>
-<script src="app-layers.js?v=20260504-2"></script>
-<script src="app-layer-loader.js?v=20260504-4"></script>
+<script src="app-layers.js?v=20260505-4"></script>
+<script src="app-layer-loader.js?v=20260505-4"></script>
 
 </body>
 </html>

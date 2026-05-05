@@ -188,7 +188,7 @@ function toggleLidarStyle(styleId) {
 
   syncLidarWaterMask();
   updateLidarActiveCount();
-  updateActiveLayerBar();
+  _renderChipBar();
 }
 
 // ── LIDAR HILLSHADE — CUSTOM GENERATOR ──────────────────

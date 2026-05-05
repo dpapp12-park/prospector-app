@@ -274,7 +274,7 @@ async function dispatchLayerToggle(id) {
   _syncDomState(id, newState);
 
   // Active-layer chip bar update
-  updateActiveLayerBar();
+  _renderChipBar();
 
   return newState;
 }
@@ -309,6 +309,38 @@ function _syncDomState(id, on) {
   // Re-render the Currently Active section + (N) counts on category headers.
   if (typeof _renderActiveLayersSection === 'function') _renderActiveLayersSection();
   if (typeof _updateCategoryActiveCounts === 'function') _updateCategoryActiveCounts();
+  // Step 9: re-render the active-layer chip bar at the top of the map.
+  if (typeof _renderChipBar === 'function') _renderChipBar();
+}
+
+// Step 9: render the active-layer chip bar.
+//   - One chip per active layer (LiDAR styles each get their own chip,
+//     no aggregation per Fork 1)
+//   - X click stops propagation (Step 6 hotfix lesson) and calls
+//     dispatchLayerToggle to remove the layer (Note: the spec wrote
+//     `toggleLayer` but for LiDAR ids that legacy fn no-ops the actual
+//     style toggle; dispatchLayerToggle routes correctly via behavior)
+//   - body.has-chips class controls the map's top inset (88px when
+//     chip bar is populated, 56px when empty — matches spec 2.5
+//     "below the 56px top bar, above the map" without overlap)
+//   - #chip-bar:empty CSS rule auto-hides when no chips render
+function _renderChipBar() {
+  const bar = document.getElementById('chip-bar');
+  if (!bar) return;
+  const activeIds = (typeof _getActiveLayerIds === 'function') ? _getActiveLayerIds() : [];
+  bar.innerHTML = activeIds.map(id => {
+    const layer = LAYERS_BY_ID[id];
+    if (!layer) return '';
+    const safeId = _layersEscape(id);
+    const safeName = _layersEscape(layer.name);
+    return `<div class="chip" data-layer-id="${safeId}">` +
+             `<span class="chip-label">${safeName}</span>` +
+             `<button class="chip-remove" type="button" ` +
+                     `onclick="event.stopPropagation(); dispatchLayerToggle('${safeId}')" ` +
+                     `aria-label="Remove ${safeName}">✕</button>` +
+           `</div>`;
+  }).join('');
+  document.body.classList.toggle('has-chips', activeIds.length > 0);
 }
 
 
@@ -466,6 +498,7 @@ function renderLayersFlyout() {
   // reflect any defaultOn layers (e.g. layerState['active-claims'] = true).
   _renderActiveLayersSection();
   _updateCategoryActiveCounts();
+  _renderChipBar();
   // Mirror initial .is-on state on rows for any layers already active at boot.
   Object.entries(layerState || {}).forEach(([id, on]) => {
     if (!on) return;

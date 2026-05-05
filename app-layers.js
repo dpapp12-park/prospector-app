@@ -5,7 +5,9 @@
 // CONTENTS (in order):
 //   1. addDemoLayers()            — registers every Mapbox source/layer
 //   2. toggleLayer / toggleLayers / toggleGroup — user-facing toggles
-//   3. LAYER_CHIP_LABELS + updateActiveLayerBar() — active-layer indicator bar
+//   3. (Active-layer chip bar moved to app-layer-loader.js Step 9 —
+//      legacy chip-label map and render fn deleted; the 9 call sites
+//      in the legacy toggleLayer below were renamed to _renderChipBar)
 //   4. LAYER_DESCRIPTIONS + tooltip state + showLayerInfo/hideTooltip
 //
 // LOAD ORDER: must load AFTER app.js, which declares shared globals
@@ -1498,7 +1500,7 @@ function toggleLayer(id) {
     // ensure the floating-button 'active' class and camera animation
     // stay in lockstep on every toggle path.
     setTerrain3D(layerState[id]);
-    updateActiveLayerBar();
+    _renderChipBar();
     return;
   }
 
@@ -1508,7 +1510,7 @@ function toggleLayer(id) {
     layerState[id] = false;
     if (bullet) bullet.classList.remove('on');
     if (name) name.classList.remove('on');
-    updateActiveLayerBar();
+    _renderChipBar();
     return;
   }
 
@@ -1517,14 +1519,14 @@ function toggleLayer(id) {
     if (layerState[id] && !goldLoaded) fetchGoldOccurrences();
     const htgt = mapLayerMap[id];
     if (htgt && map.getLayer(htgt)) map.setLayoutProperty(htgt, 'visibility', layerState[id] ? 'visible' : 'none');
-    updateActiveLayerBar();
+    _renderChipBar();
     return;
   }
   if (id === 'lode-heatmap') {
     if (layerState[id] && !minesLoaded) fetchHistoricMines();
     const htgt = mapLayerMap[id];
     if (htgt && map.getLayer(htgt)) map.setLayoutProperty(htgt, 'visibility', layerState[id] ? 'visible' : 'none');
-    updateActiveLayerBar();
+    _renderChipBar();
     return;
   }
 
@@ -1539,7 +1541,7 @@ function toggleLayer(id) {
       layerState[id] = false;
       if (bullet) bullet.classList.remove('on');
       if (name) name.classList.remove('on');
-      updateActiveLayerBar();
+      _renderChipBar();
       return;
     }
     fetchCopper();
@@ -1550,7 +1552,7 @@ function toggleLayer(id) {
       layerState[id] = false;
       if (bullet) bullet.classList.remove('on');
       if (name) name.classList.remove('on');
-      updateActiveLayerBar();
+      _renderChipBar();
       return;
     }
     fetchAntimony();
@@ -1561,7 +1563,7 @@ function toggleLayer(id) {
       layerState[id] = false;
       if (bullet) bullet.classList.remove('on');
       if (name) name.classList.remove('on');
-      updateActiveLayerBar();
+      _renderChipBar();
       return;
     }
     fetchSilver();
@@ -1579,14 +1581,14 @@ function toggleLayer(id) {
   updateRestrictionLegend();
 
   const target = mapLayerMap[id];
-  if (!target) { updateActiveLayerBar(); return; }
+  if (!target) { _renderChipBar(); return; }
 
   const layers = Array.isArray(target) ? target : [target];
   const vis = layerState[id] ? 'visible' : 'none';
   layers.forEach(l => {
     if (map.getLayer(l)) map.setLayoutProperty(l, 'visibility', vis);
   });
-  updateActiveLayerBar();
+  _renderChipBar();
 }
 
 function toggleLayers() {
@@ -1613,70 +1615,6 @@ function toggleGroup(id) {
   }
 }
 
-
-// ── ACTIVE LAYER INDICATOR BAR ──────────────────────────
-const LAYER_CHIP_LABELS = {
-  'placer-claims':   '⬡ Placer',
-  'lode-claims':     '⬡ Lode',
-  'tunnel-claims':   '⬡ Tunnel',
-  'mill-claims':     '⬡ Mill',
-  'closed-claims':   '● Closed Claims',
-  'gold-occurrences':'🥇 Gold Sites',
-  'hist-mines':      '🕳 Mine Sites',
-  'placer-heatmap':  '🔥 Gold Heat',
-  'lode-heatmap':    '🔥 Mine Heat',
-  'mercury':         '☿ Mercury',
-  'chromium':        '⬡ Chromium',
-  'copper':          '🟤 Copper',
-  'antimony':        '⬡ Antimony',
-  'silver':          '🪙 Silver',
-  'quaternary-faults':'〰 Faults',
-  'stream-gauges':   '💧 Gauges',
-  'open-land':       '🟠 Land Mgmt',
-  'open-to-claim':   '✅ Open BLM',
-  'plss':            '📐 Survey Grid',
-  'blm-roads':       '🛤 BLM Roads',
-  'natl-parks':      '❌ Natl Parks',
-  'wilderness':      '⚠️ Wilderness',
-  'monuments':       '🏛 Monuments',
-  'wild-scenic':     '🌊 Wild Scenic',
-  'tribal':          '🏔 Tribal',
-  'military':        '⚠️ Military',
-  'contours':        '📈 Contours',
-  'terrain-3d':      '⛰ 3D Terrain',
-};
-
-function updateActiveLayerBar() {
-  const bar   = document.getElementById('active-layer-bar');
-  const chips = document.getElementById('active-layer-chips');
-  if (!bar || !chips) return;
-
-  // active-claims is always on — don't clutter the bar with it
-  const activeIds = Object.entries(layerState)
-    .filter(([id, on]) => on && id !== 'active-claims')
-    .map(([id]) => id);
-
-  const lidarCount = (typeof activeLidarStyles !== 'undefined') ? activeLidarStyles.size : 0;
-
-  if (activeIds.length === 0 && lidarCount === 0) {
-    bar.classList.remove('visible');
-    return;
-  }
-
-  const chipHtml = activeIds
-    .filter(id => LAYER_CHIP_LABELS[id])
-    .map(id => `
-      <div class="layer-chip" onclick="toggleLayer('${id}')">
-        ${LAYER_CHIP_LABELS[id]}<span class="chip-x">✕</span>
-      </div>`)
-    .join('');
-
-  // Legacy LiDAR-aggregated-chip block (focused-style label) deleted
-  // Session 38. Step 9 will rebuild the chip bar with whatever LiDAR
-  // representation the new spec calls for.
-  chips.innerHTML = chipHtml;
-  bar.classList.add('visible');
-}
 
 // ── LAYER INFO TOOLTIPS ──────────────────────────────────
 const LAYER_DESCRIPTIONS = {

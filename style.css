@@ -2578,58 +2578,6 @@
     margin-left: auto;
   }
 
-  /* ── ACTIVE LAYER INDICATOR BAR ── */
-  #active-layer-bar {
-    position: fixed;
-    bottom: 72px;
-    left: 0; right: 0;
-    z-index: 100;
-    padding: 0 8px 0 12px;
-    pointer-events: none;
-    opacity: 0;
-    transform: translateY(6px);
-    transition: opacity 0.2s ease, transform 0.2s ease;
-  }
-  #active-layer-bar.visible {
-    opacity: 1;
-    transform: translateY(0);
-    pointer-events: auto;
-  }
-  #active-layer-chips {
-    display: flex;
-    gap: 5px;
-    overflow-x: auto;
-    -webkit-overflow-scrolling: touch;
-    scrollbar-width: none;
-    padding: 4px 0;
-  }
-  #active-layer-chips::-webkit-scrollbar { display: none; }
-  .layer-chip {
-    display: inline-flex;
-    align-items: center;
-    gap: 4px;
-    background: rgba(13,12,9,0.88);
-    border: 1px solid rgba(201,168,76,0.4);
-    border-radius: 20px;
-    padding: 4px 10px 4px 9px;
-    font-family: 'DM Mono', monospace;
-    font-size: 10px;
-    letter-spacing: 0.03em;
-    color: #C9A84C;
-    white-space: nowrap;
-    cursor: pointer;
-    backdrop-filter: blur(14px);
-    -webkit-backdrop-filter: blur(14px);
-    flex-shrink: 0;
-    transition: background 0.12s;
-  }
-  .layer-chip:hover { background: rgba(201,168,76,0.16); }
-  .layer-chip .chip-x {
-    font-size: 10px;
-    color: rgba(201,168,76,0.55);
-    margin-left: 1px;
-    line-height: 1;
-  }
 
   /* ── COORDINATE DISPLAY ── */
   #coord-display {
@@ -2996,18 +2944,18 @@
                           coords in the top bar). The element stays in
                           the DOM hidden; updateCoords() still writes to
                           it for back-compat but no one sees it.
-     #active-layer-bar  — Step 9 (chip bar)
      #ai-tools-menu     — Step 11 (AI rail flyout)
-   #searchbar removed from this list in Step 2 — it now lives in #topbar
-   and is styled by the #topbar #searchbar override above.
-   #style-switcher removed from this list in Step 8 — it now opens to
-   the left of the floating cluster's #fab-style button.
+   Removed from this list in earlier steps:
+     #searchbar (Step 2 — now lives in #topbar)
+     #style-switcher (Step 8 — now opens left of #fab-style)
+     #active-layer-bar (Step 9 — replaced by new #chip-bar; the
+                         legacy element + chips div were deleted from
+                         index.html in the same commit)
    #layer-tooltip is omitted: it's hover-triggered by showLayerInfo() and
    already starts hidden via its own CSS, so no transitional rule needed.
    ──────────────────────────────────────────────────────────────────── */
 #status-pill,
 #coord-display,
-#active-layer-bar,
 #ai-tools-menu {
   display: none;
 }
@@ -3073,4 +3021,87 @@
   text-align: right;
   min-width: 36px;
   flex-shrink: 0;
+}
+
+/* ── STEP 9: ACTIVE LAYER CHIP BAR ──
+   Spec section 2.5. 32px tall, fixed position below the top bar
+   (top:56px), starts at the rail's right edge (left:56px), spans
+   to the viewport right. One chip per active layer; LiDAR styles
+   each get their own chip (Fork 1 — no aggregation). New IDs
+   (#chip-bar / .chip / .chip-label / .chip-remove) deliberately
+   avoid reusing the stripped #active-layer-chips / .layer-chip /
+   .chip-x family per Option B. Auto-hides when empty via
+   #chip-bar:empty. The map's top inset is bumped from 56px to 88px
+   when body.has-chips is set (toggled by _renderChipBar). */
+#chip-bar {
+  position: fixed;
+  top: 56px;
+  left: 56px;
+  right: 0;
+  height: 32px;
+  z-index: 150;        /* above map (10) and #floating-cluster (10), below #topbar (200) */
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 0 12px;
+  background: #161410;
+  border-bottom: 1px solid rgba(201, 168, 76, 0.18);
+  overflow-x: auto;
+  overflow-y: hidden;
+  scrollbar-width: none;          /* Firefox */
+  -ms-overflow-style: none;       /* legacy Edge */
+  box-sizing: border-box;
+  transition: left 200ms ease-out;        /* mirror #map shift timing */
+}
+#chip-bar::-webkit-scrollbar { display: none; }
+#chip-bar:empty { display: none; }      /* auto-hide when no chips render */
+
+/* When a flyout is open, shift the chip bar right to align with the
+   already-shifted #map (same body.flyout-open class, same 416px offset
+   = 56 rail + 360 flyout). Mirrors the #map rule at line ~36 so the
+   bar tracks the map and stays clear of the flyout panel. */
+body.flyout-open #chip-bar { left: 416px; }
+
+/* When chip bar is populated, push the map's top edge down by 32px
+   so the bar doesn't overlap basemap content. _renderChipBar toggles
+   the body.has-chips class. */
+body.has-chips #map { top: 88px; }      /* 56 (top bar) + 32 (chip bar) */
+
+.chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 3px 4px 3px 10px;
+  background: rgba(13, 12, 9, 0.80);
+  border: 1px solid rgba(201, 168, 76, 0.30);
+  border-radius: 4px;
+  font-family: 'DM Sans', sans-serif;
+  font-size: 12px;
+  color: #C9A84C;
+  white-space: nowrap;
+  flex-shrink: 0;
+  transition: border-color 100ms ease-out, background 100ms ease-out;
+}
+.chip:hover {
+  border-color: #C9A84C;
+  background: rgba(201, 168, 76, 0.06);    /* slightly lighter than .fab-btn 8% so chips don't compete with map */
+}
+
+.chip-label {
+  letter-spacing: 0.02em;
+}
+
+.chip-remove {
+  background: transparent;
+  border: none;
+  color: rgba(201, 168, 76, 0.55);
+  font-size: 11px;
+  line-height: 1;
+  padding: 2px 4px;
+  cursor: pointer;
+  border-radius: 3px;
+  transition: color 100ms ease-out;
+}
+.chip-remove:hover {
+  color: #C9A84C;
 }
