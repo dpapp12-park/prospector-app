@@ -16,6 +16,7 @@
 
 let map = null;
 let userLocation = null; // { lng, lat } set when user hits GPS button
+let pinModeActive = false; // Step 11 partial: armed by #fab-pin, consumed by canvas capture-phase click listener in initMap()
 
 // Haversine distance in miles between two lat/lng points
 function distanceMiles(lat1, lng1, lat2, lng2) {
@@ -196,6 +197,39 @@ function startMap(token) {
     const { lng, lat } = e.lngLat;
     showStatus(`${lat.toFixed(5)}°N  ${lng.toFixed(5)}°W`);
   });
+
+  // ─────────────────────────────────────────────────────────────────
+  // PIN-MODE CLICK INTERCEPTION (Step 11 partial)
+  //
+  // Why this is on the canvas with capture:true (and not map.on('click')):
+  //
+  // Mapbox GL JS has TWO click-listener tiers, and they fire independently:
+  //   1) Layer-specific listeners — map.on('click', 'layer-id', fn)
+  //      Used by ~22 of our layers (active-claims, gold-occurrences,
+  //      hist-mines, copper, mercury, etc.) to open feature popups.
+  //   2) Global listener — map.on('click', fn)
+  //      Tier 1 fires FIRST, then tier 2. Mapbox does not provide a
+  //      way to cancel tier 1 from a tier 2 listener. So a global
+  //      `map.on('click', fn)` cannot stop a claim popup from opening.
+  //
+  // To intercept BEFORE Mapbox dispatches to either tier, we attach a
+  // capture-phase listener on the underlying <canvas>. Capture fires
+  // before Mapbox's bubble-phase canvas handler runs, and
+  // stopImmediatePropagation() prevents Mapbox from processing the
+  // click at all — neither tier fires.
+  //
+  // Trade-off: this bypasses Mapbox's event system slightly. Future
+  // devs adding a new layer click handler don't need to know about
+  // pin-mode — interception is centralized here.
+  // ─────────────────────────────────────────────────────────────────
+  map.getCanvas().addEventListener('click', (ev) => {
+    if (!pinModeActive) return;          // not armed → let Mapbox dispatch normally
+    ev.stopImmediatePropagation();
+    const rect = map.getCanvas().getBoundingClientRect();
+    const point = map.unproject([ev.clientX - rect.left, ev.clientY - rect.top]);
+    openSpotPanel(point.lng, point.lat);
+    setPinMode(false);                   // single-shot — disarm after one drop
+  }, /* capture */ true);
 
   // Touch long press for mobile only (not mouse)
   let touchTimer = null;
@@ -487,6 +521,43 @@ function toggle3D() {
   if (!map) return;
   setTerrain3D(!terrain3DOn);
   showStatus(terrain3DOn ? '3D terrain on' : 'Flat map');
+}
+
+// ── PIN TOOL (Step 11 partial) ───────────────────────────
+// Arms "drop spot" mode. Next map click is intercepted by the
+// canvas capture-phase listener registered in initMap() and routed
+// to openSpotPanel(lng, lat). Pin mode is single-shot — disarms
+// after one drop. ESC also disarms.
+function setPinMode(on) {
+  pinModeActive = !!on;
+  const btn = document.getElementById('fab-pin');
+  if (btn) btn.classList.toggle('active', pinModeActive);
+  if (map && map.getCanvas()) {
+    map.getCanvas().style.cursor = pinModeActive ? 'crosshair' : '';
+  }
+}
+function togglePinMode() {
+  setPinMode(!pinModeActive);
+}
+document.addEventListener('keydown', (e) => {
+  if (e.key === 'Escape' && pinModeActive) setPinMode(false);
+});
+
+// ── COMING-SOON TOAST (Step 11 partial) ──────────────────
+// Lightweight ephemeral notice for placeholder fab buttons (Draw
+// today, possibly AI/Offline later). Single-purpose; not a general
+// toast system. Auto-removes after 3s.
+function showComingSoonToast(toolName) {
+  const toast = document.createElement('div');
+  toast.className = 'toast';
+  toast.textContent = `${toolName} — coming soon`;
+  document.body.appendChild(toast);
+  // Trigger fade-in on next frame so the initial opacity:0 paints first
+  requestAnimationFrame(() => toast.classList.add('toast-show'));
+  setTimeout(() => {
+    toast.classList.remove('toast-show'); // fade out
+    setTimeout(() => toast.remove(), 220); // remove after fade-out finishes
+  }, 3000);
 }
 
 function updateRestrictionLegend() {

@@ -3105,3 +3105,44 @@ body.has-chips #map { top: 88px; }      /* 56 (top bar) + 32 (chip bar) */
 .chip-remove:hover {
   color: #C9A84C;
 }
+
+/* ── STEP 11 PARTIAL: HIDE LEFT-RAIL PIN + DRAW ──
+   Pin moved to the floating cluster as a click-to-arm tool; Draw is
+   placeholder-only and lives in the cluster too. The original rail
+   buttons in index.html are kept (not deleted) so we retain the
+   wiring/markup for the still-pending left-rail rescope decision —
+   they may come back in some other form, or get fully removed. Hide
+   them via display:none in the meantime so users don't see two Pin
+   entry points (rail one would open an empty broken flyout). */
+#left-rail .rail-btn[data-flyout="pin"],
+#left-rail .rail-btn[data-flyout="draw"] {
+  display: none;
+}
+
+/* ── STEP 11 PARTIAL: COMING-SOON TOAST ──
+   Lightweight ephemeral notice triggered by showComingSoonToast() in
+   app.js for placeholder fab buttons (Draw for now). Centered above
+   the floating cluster. Fades in/out via .toast-show class toggle. */
+.toast {
+  position: fixed;
+  bottom: 80px;
+  left: 50%;
+  transform: translateX(-50%) translateY(4px);
+  z-index: 250;                                    /* above #topbar (200) so it isn't clipped */
+  background: rgba(13, 12, 9, 0.92);
+  border: 1px solid rgba(201, 168, 76, 0.45);
+  color: #C9A84C;
+  font-family: 'DM Mono', monospace;
+  font-size: 13px;
+  letter-spacing: 0.02em;
+  padding: 8px 14px;
+  border-radius: 4px;
+  backdrop-filter: blur(8px);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 200ms ease-out, transform 200ms ease-out;
+}
+.toast.toast-show {
+  opacity: 1;
+  transform: translateX(-50%) translateY(0);
+}
